@@ -1,0 +1,43 @@
+package knippnpmnvm_test
+
+import (
+	"testing"
+
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktest"
+)
+
+var publicTasks = []string{
+	"ci",
+	"config:init",
+	"dependencies",
+	"dev-dependencies",
+	"exports",
+	"files",
+	"help",
+	"init",
+	"install",
+	"install:undo",
+	"lint",
+	"lint:fix",
+	"production",
+	"upgrade",
+	"version",
+}
+
+var publicVars = []string{
+	"CONFIG",
+	"EXTRA_ARGS",
+	"VERSION",
+}
+
+func TestTaskfileModuleContract(t *testing.T) {
+	tasktest.AssertModule(t, "knip-pnpm-nvm", publicTasks, publicVars)
+}
+
+func TestRepresentativeDryRuns(t *testing.T) {
+	tasktest.AssertDryRunContains(t, "knip-pnpm-nvm",
+		[]string{"lint", "--", "--debug"},
+		"pnpm:exec",
+		"--debug",
+	)
+}

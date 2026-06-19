@@ -1,0 +1,44 @@
+package knipbun_test
+
+import (
+	"testing"
+
+	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktest"
+)
+
+var publicTasks = []string{
+	"ci",
+	"config:init",
+	"dependencies",
+	"dev-dependencies",
+	"exports",
+	"files",
+	"help",
+	"init",
+	"install",
+	"install:undo",
+	"lint",
+	"lint:fix",
+	"production",
+	"upgrade",
+	"version",
+}
+
+var publicVars = []string{
+	"CONFIG",
+	"EXTRA_ARGS",
+	"VERSION",
+}
+
+func TestTaskfileModuleContract(t *testing.T) {
+	tasktest.AssertModule(t, "knip-bun", publicTasks, publicVars)
+}
+
+func TestRepresentativeDryRuns(t *testing.T) {
+	tasktest.AssertDryRunContains(t, "knip-bun",
+		[]string{"production", "CONFIG=knip.json"},
+		"bun:exec",
+		"--production",
+		"knip.json",
+	)
+}
