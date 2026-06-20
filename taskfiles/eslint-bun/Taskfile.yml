@@ -40,7 +40,9 @@ tasks:
           PACKAGES: >-
             eslint{{if .VERSION_OVERRIDE}}@{{.VERSION_OVERRIDE}}
             {{- else if .VERSION}}@{{.VERSION}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
     desc: Remove the locally installed ESLint devDependency
@@ -91,7 +93,9 @@ tasks:
         vars:
           BINARY: eslint
           ARGS: "--init"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   lint:
     desc: Lint targets with ESLint
@@ -108,7 +112,9 @@ tasks:
             --cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}
             {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}
             {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
       - echo "✅ eslint passed"
 
   lint:fix:
@@ -127,7 +133,9 @@ tasks:
             --fix
             {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}
             {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
       - echo "✅ eslint fixes applied"
 
   ci:
@@ -146,7 +154,9 @@ tasks:
             --max-warnings=0
             {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}
             {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
       - echo "✅ eslint passed"
 
   cache:clean:
@@ -169,4 +179,6 @@ tasks:
         vars:
           BINARY: eslint
           ARGS: "--help"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}

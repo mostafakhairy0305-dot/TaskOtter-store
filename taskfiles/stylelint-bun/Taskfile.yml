@@ -42,7 +42,9 @@ tasks:
           PACKAGES: >-
             stylelint{{if .VERSION_OVERRIDE}}@{{.VERSION_OVERRIDE}}
             {{- else if .VERSION}}@{{.VERSION}}{{end}} stylelint-config-standard
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
     desc: Remove the locally installed Stylelint devDependencies
@@ -173,4 +175,6 @@ tasks:
         vars:
           BINARY: stylelint
           ARGS: "--help"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}

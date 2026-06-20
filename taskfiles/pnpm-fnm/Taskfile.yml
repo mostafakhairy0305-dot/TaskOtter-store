@@ -487,7 +487,10 @@ tasks:
         msg: 'fnm is not installed. Run: task node:setup'
     cmds:
       - >-
-        bash -c '{{.FNM_LOAD}}; {{.FNM_USE}}; command -v corepack >/dev/null 2>&1 || { echo "corepack is not available. Run: task manager:setup"; exit 1; }; node --version; corepack pnpm --version'
+        bash -c '{{.FNM_LOAD}}; {{.FNM_USE}};
+        command -v corepack >/dev/null 2>&1 ||
+        { echo "corepack is not available. Run: task manager:setup"; exit 1; };
+        node --version; corepack pnpm --version'
 
   _version:windows:
     internal: true

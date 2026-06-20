@@ -39,7 +39,9 @@ tasks:
           PACKAGES: >-
             @biomejs/biome{{if .VERSION_OVERRIDE}}@{{.VERSION_OVERRIDE}}
             {{- else if .VERSION}}@{{.VERSION}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
     desc: Remove the locally installed Biome devDependency
@@ -81,7 +83,9 @@ tasks:
         vars:
           BINARY: biome
           ARGS: init
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   check:
     desc: Run Biome check
@@ -234,4 +238,6 @@ tasks:
         vars:
           BINARY: biome
           ARGS: "--help"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}

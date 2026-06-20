@@ -160,7 +160,9 @@ tasks:
         if [ -n "${GO_MODULE:-}" ]; then
           module_opts="--go_opt=module=${GO_MODULE} --go-grpc_opt=module=${GO_MODULE}"
         fi
-        if [ -z "$(find "{{.RESOLVED_PROTO_PATH}}" -type f -name "{{.RESOLVED_PROTO_PATTERN}}" ! -path "*/.git/*" -print -quit)" ]; then
+        if [ -z "$(find "{{.RESOLVED_PROTO_PATH}}" -type f \
+          -name "{{.RESOLVED_PROTO_PATTERN}}" \
+          ! -path "*/.git/*" -print -quit)" ]; then
           echo "No .proto files found under {{.RESOLVED_PROTO_PATH}} matching -name {{.RESOLVED_PROTO_PATTERN}}"
           exit 1
         fi
@@ -239,9 +241,9 @@ tasks:
       - echo 'Installing protoc v{{.PROTOC_VERSION}} for Linux ({{.PROTOC_ARCH}})...'
       - mkdir -p "{{.PROTOC_TMP_DIR}}"
       - >-
-        curl -fsSL
-        -o "{{.PROTOC_ARCHIVE}}"
-        "https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip"
+        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}";
+        archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip";
+        curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
       - unzip -o "{{.PROTOC_ARCHIVE}}" -d "{{.PROTOC_TMP_DIR}}"
       - cmd: cp "{{.PROTOC_TMP_DIR}}/bin/protoc" /usr/local/bin/protoc
         if: '[ "$(id -u)" -eq 0 ]'
@@ -410,9 +412,9 @@ tasks:
       - echo 'Upgrading protoc to v{{.PROTOC_VERSION}} for Linux ({{.PROTOC_ARCH}})...'
       - mkdir -p "{{.PROTOC_TMP_DIR}}"
       - >-
-        curl -fsSL
-        -o "{{.PROTOC_ARCHIVE}}"
-        "https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip"
+        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}";
+        archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip";
+        curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
       - unzip -o "{{.PROTOC_ARCHIVE}}" -d "{{.PROTOC_TMP_DIR}}"
       - cmd: cp "{{.PROTOC_TMP_DIR}}/bin/protoc" /usr/local/bin/protoc
         if: '[ "$(id -u)" -eq 0 ]'

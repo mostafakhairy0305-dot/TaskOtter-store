@@ -207,7 +207,9 @@ tasks:
         msg: Scoop is required to install ShellCheck on Windows. Install it from https://scoop.sh and re-run this task.
     cmds:
       - echo Installing ShellCheck via Scoop...
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop install shellcheck{{if .VERSION}}@{{.VERSION}}{{end}}"
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "scoop install shellcheck{{if .VERSION}}@{{.VERSION}}{{end}}"
       - echo ShellCheck installed. Restart your terminal if shellcheck is not found.
 
   _install:undo:macos:

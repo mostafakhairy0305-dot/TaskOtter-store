@@ -38,7 +38,9 @@ tasks:
           PACKAGES: >-
             @usebruno/cli{{if .VERSION_OVERRIDE}}@{{.VERSION_OVERRIDE}}
             {{- else if .VERSION}}@{{.VERSION}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
     desc: Remove the locally installed Bruno CLI devDependency
@@ -80,7 +82,9 @@ tasks:
             {{- else}}{{.COLLECTION}}{{end}}
             {{- if .ENV_OVERRIDE}} --env "{{.ENV_OVERRIDE}}"
             {{- else}}{{if .ENV}} --env "{{.ENV}}"{{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   ci:
     desc: Run Bruno collection in CI mode with --bail (COLLECTION=path)
@@ -99,7 +103,9 @@ tasks:
             {{- if .ENV_OVERRIDE}} --env "{{.ENV_OVERRIDE}}"
             {{- else}}{{if .ENV}} --env "{{.ENV}}"{{end}}{{end}}
             --bail
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   version:
     desc: Show the locally resolved Bruno CLI version
@@ -116,4 +122,6 @@ tasks:
         vars:
           BINARY: bru
           ARGS: "--help"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}

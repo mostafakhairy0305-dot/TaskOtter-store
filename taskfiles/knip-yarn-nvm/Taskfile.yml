@@ -36,7 +36,9 @@ tasks:
           PACKAGES: >-
             knip{{if .VERSION_OVERRIDE}}@{{.VERSION_OVERRIDE}}
             {{- else if .VERSION}}@{{.VERSION}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
     desc: Remove the locally installed Knip devDependency
@@ -68,7 +70,9 @@ tasks:
         vars:
           BINARY: knip
           ARGS: "--init"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   config:init:
     desc: Alias for knip:init
@@ -85,7 +89,9 @@ tasks:
           ARGS: >-
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
       - echo "✅ knip passed"
 
   production:
@@ -99,7 +105,9 @@ tasks:
             --production
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   dependencies:
     desc: Report unused production dependencies with Knip
@@ -112,7 +120,9 @@ tasks:
             --dependencies
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   dev-dependencies:
     desc: Report unused development dependencies with Knip
@@ -125,7 +135,9 @@ tasks:
             --devDependencies
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   files:
     desc: Report unused files with Knip
@@ -138,7 +150,9 @@ tasks:
             --files
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   exports:
     desc: Report unused exports with Knip
@@ -151,7 +165,9 @@ tasks:
             --exports
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   lint:fix:
     desc: Run Knip fix mode when supported by the installed version
@@ -164,7 +180,9 @@ tasks:
             --fix
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   ci:
     desc: Run Knip production checks for CI
@@ -177,7 +195,9 @@ tasks:
             --production
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
       - echo "✅ knip passed"
 
   version:
@@ -198,4 +218,6 @@ tasks:
         vars:
           BINARY: knip
           ARGS: "--help"
-          EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
+          EXTRA_ARGS: >-
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}

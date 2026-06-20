@@ -1473,7 +1473,8 @@ tasks:
         "$v = '{{.VERSION}}';
         if (Get-Command winget -ErrorAction SilentlyContinue) {
         Write-Host 'winget detected. Installing gh via winget...';
-        winget install --id GitHub.cli $(if ($v) { '--version', $v }) --accept-source-agreements --accept-package-agreements }
+        winget install --id GitHub.cli $(if ($v) { '--version', $v })
+        --accept-source-agreements --accept-package-agreements }
         elseif (Get-Command choco -ErrorAction SilentlyContinue) {
         Write-Host 'Chocolatey detected. Installing gh via choco...';
         choco install gh -y $(if ($v) { '--version', $v }) }
