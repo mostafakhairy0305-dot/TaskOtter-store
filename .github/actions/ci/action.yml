@@ -18,18 +18,9 @@ runs:
       run: |
         go version
         task --version
-    - name: Lint YAML
+    - name: Run CI
       shell: bash
-      run: task -t taskfiles/yamllint/Taskfile.yml ci
-    - name: GitHub actions YAML
-      shell: bash
-      run: task -t taskfiles/actionlint/Taskfile.yml lint
-    - name: GitHub actions Audit
-      shell: bash
-      run: task -t taskfiles/zizmor/Taskfile.yml lint
-    - name: Shell linting
-      shell: bash
-      run: task -t taskfiles/shellcheck/Taskfile.yml lint
+      run: task -t Taskfile.yml ci
     - name: Vet
       shell: bash
       run: go vet ./...
