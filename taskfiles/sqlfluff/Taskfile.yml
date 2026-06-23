@@ -19,6 +19,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available sqlfluff automation tasks
     summary: Display the list of available sqlfluff-related tasks defined in this Taskfile.
     cmds:
@@ -36,6 +37,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove sqlfluff from the current operating system
     summary: |
       Remove sqlfluff via uv tool uninstall on all platforms.
@@ -50,6 +52,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade sqlfluff to the latest release
     summary: |
       Upgrade sqlfluff via uv tool upgrade on all platforms.
@@ -59,6 +62,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed sqlfluff version
     summary: Print the active sqlfluff version via sqlfluff --version. Auto-installs sqlfluff if missing.
     deps:
@@ -67,6 +71,7 @@ tasks:
       - bash -c '{{.UV_LOAD}}; sqlfluff --version'
 
   lint:
+    run: once
     desc: Lint SQL files with sqlfluff (TARGETS=path)
     summary: |
       Run sqlfluff lint against TARGETS (default .). Pass CONFIG to use a
@@ -92,6 +97,7 @@ tasks:
         && echo "✅ sqlfluff passed" || { echo "❌ sqlfluff failed"; exit 1; }'
 
   fix:
+    run: once
     desc: Auto-fix SQL files with sqlfluff (TARGETS=path)
     summary: |
       Run sqlfluff fix against TARGETS (default .) to automatically fix
@@ -117,6 +123,7 @@ tasks:
         && echo "✅ sqlfluff fixes applied"'
 
   parse:
+    run: once
     desc: Parse SQL files and print the parse tree (TARGETS=path)
     summary: |
       Run sqlfluff parse against TARGETS (default .) and print the parse
@@ -142,6 +149,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   config:init:
+    run: once
     desc: Create a default .sqlfluff configuration file
     summary: |
       Write a sensible default .sqlfluff file in the current directory.
@@ -160,6 +168,7 @@ tasks:
       - echo 'Created .sqlfluff with default configuration.'
 
   _install:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -175,6 +184,7 @@ tasks:
       - echo 'sqlfluff installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -190,6 +200,7 @@ tasks:
       - echo sqlfluff installed.
 
   _install:undo:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -201,6 +212,7 @@ tasks:
       - echo 'sqlfluff removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -213,6 +225,7 @@ tasks:
       - echo sqlfluff removed.
 
   _upgrade:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -225,6 +238,7 @@ tasks:
       - echo 'sqlfluff upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:

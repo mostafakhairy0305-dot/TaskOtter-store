@@ -21,12 +21,14 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available zizmor automation tasks
     summary: Display the list of available zizmor-related tasks defined in this Taskfile.
     cmds:
       - task --list
 
   lint:
+    run: once
     desc: Audit GitHub Actions workflows for security issues (TARGETS=path)
     summary: |
       Run zizmor against TARGETS (default: .github) to detect security issues
@@ -79,6 +81,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove zizmor from the current operating system
     summary: |
       Remove the zizmor binary from /usr/local/bin on macOS and Linux, or
@@ -93,6 +96,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade zizmor to the pinned ZIZMOR_VERSION
     summary: |
       Re-download and install the ZIZMOR_VERSION binary, replacing any existing
@@ -103,6 +107,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed zizmor version
     summary: Print the active zizmor version via zizmor --version. Auto-installs zizmor if missing.
     deps:
@@ -111,6 +116,7 @@ tasks:
       - zizmor --version
 
   _install:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -153,6 +159,7 @@ tasks:
       - echo 'zizmor installed.'
 
   _install:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -200,6 +207,7 @@ tasks:
       - echo 'zizmor installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     vars:
@@ -244,6 +252,7 @@ tasks:
       - echo zizmor installed. Ensure %USERPROFILE%\bin is in your PATH.
 
   _install:undo:unix:
+    run: once
     internal: true
     platforms: [darwin, linux]
     set: [errexit, nounset, pipefail]
@@ -258,6 +267,7 @@ tasks:
       - echo 'zizmor removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:
@@ -268,6 +278,7 @@ tasks:
       - echo zizmor removed.
 
   _upgrade:unix:
+    run: once
     internal: true
     platforms: [darwin, linux]
     set: [errexit, nounset, pipefail]
@@ -313,6 +324,7 @@ tasks:
       - echo 'zizmor upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:

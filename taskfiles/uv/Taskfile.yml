@@ -24,6 +24,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available uv automation tasks
     summary: Display the list of available uv-related tasks defined in this Taskfile.
     cmds:
@@ -44,6 +45,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove uv from the current operating system
     summary: |
       Remove uv via uv self uninstall on all platforms.
@@ -58,6 +60,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade uv to the latest release
     summary: Run uv self update to upgrade the uv binary to the latest release. Auto-installs uv if missing.
     deps:
@@ -67,6 +70,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed uv version
     summary: Print the active uv version via uv --version. Auto-installs uv if missing.
     deps:
@@ -105,6 +109,7 @@ tasks:
             {{- else}}{{.PYTHON_VERSION}}{{end}}
 
   venv:
+    run: once
     desc: Create a Python virtual environment with uv (VENV=path)
     summary: |
       Create a virtual environment at VENV (default .venv) using uv venv.
@@ -137,6 +142,7 @@ tasks:
           ARGS: 'pip install -r "{{.REQUIREMENTS}}" {{.EXTRA_ARGS}}'
 
   run:
+    run: once
     desc: Run a script or command with uv (FILE=path)
     summary: |
       Execute FILE via uv run, which automatically manages the virtual environment.
@@ -195,6 +201,7 @@ tasks:
             {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   tool:upgrade:
+    run: once
     desc: Upgrade an installed uv tool (TOOL=name)
     summary: |
       Run uv tool upgrade TOOL to upgrade a previously installed tool to its
@@ -223,6 +230,7 @@ tasks:
             {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   _uv:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -232,6 +240,7 @@ tasks:
       - bash -lc '{{.UV_LOAD}}; uv {{.ARGS}}'
 
   _uv:windows:
+    run: once
     internal: true
     platforms: [windows]
     requires:
@@ -240,6 +249,7 @@ tasks:
       - uv {{.ARGS}}
 
   _install:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -258,6 +268,7 @@ tasks:
       - echo 'uv installed. Restart your shell or tasks will use UV_LOAD to locate the binary.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -277,6 +288,7 @@ tasks:
       - echo uv installed. Restart your terminal to use uv.
 
   _install:undo:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -288,6 +300,7 @@ tasks:
       - echo 'uv removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -300,6 +313,7 @@ tasks:
       - echo uv removed. Restart your terminal.
 
   _upgrade:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -312,6 +326,7 @@ tasks:
       - echo 'uv upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:
@@ -325,6 +340,7 @@ tasks:
       - echo uv upgraded.
 
   _version:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -335,6 +351,7 @@ tasks:
       - bash -lc '{{.UV_LOAD}}; uv --version'
 
   _version:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:

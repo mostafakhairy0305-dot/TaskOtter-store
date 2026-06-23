@@ -32,12 +32,14 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Yarn automation tasks
     summary: Display the list of available Yarn-related tasks defined in this Taskfile.
     cmds:
       - task --list
 
   node:setup:
+    run: once
     desc: Install Node.js using the selected node manager
     summary: |
       Install Node.js through the node manager selected by fnm.
@@ -48,12 +50,14 @@ tasks:
       - task: _node:setup:windows
 
   manager:setup:
+    run: once
     desc: Enable Corepack for Yarn commands
     summary: Ensure Corepack is installed and enable its package manager shims for Yarn projects.
     cmds:
       - task: corepack:setup
 
   manager:pin:
+    run: once
     desc: Pin Yarn in package.json with Corepack
     summary: Use Corepack to write yarn@PACKAGE_MANAGER_VERSION to the current project's packageManager field.
     requires:
@@ -65,6 +69,7 @@ tasks:
           VERSION: "{{.PACKAGE_MANAGER_VERSION}}"
 
   version:
+    run: once
     desc: Show the active Node.js and Yarn versions
     summary: Print the Node.js and Yarn versions after loading the selected Node.js runtime.
     cmds:
@@ -82,6 +87,7 @@ tasks:
         vars: { ARGS: install }
 
   ci:
+    run: once
     desc: Validate a lockfile-safe Yarn install
     summary: Run yarn install --immutable and fail if Yarn would modify yarn.lock.
     cmds:
@@ -89,6 +95,7 @@ tasks:
       - task: _ci:windows
 
   add:
+    run: once
     desc: Install packages globally with Yarn (PACKAGES=<pkgs>)
     requires:
       vars: [PACKAGES]
@@ -101,6 +108,7 @@ tasks:
           ARGS: "global add {{.PACKAGES}} {{.EXTRA_ARGS}}"
 
   remove:
+    run: once
     desc: Remove globally-installed packages with Yarn (PACKAGES=<pkgs>)
     requires:
       vars: [PACKAGES]
@@ -113,6 +121,7 @@ tasks:
           ARGS: "global remove {{.PACKAGES}} {{.EXTRA_ARGS}}"
 
   install:undo:
+    run: once
     desc: Disable the Yarn Corepack shim
     summary: |
       Run corepack disable yarn to remove the Corepack-managed Yarn shim
@@ -129,6 +138,7 @@ tasks:
         vars: { ARGS: "disable yarn" }
 
   upgrade:
+    run: once
     desc: Upgrade Yarn to the latest release
     summary: |
       Run corepack prepare yarn@latest --activate to upgrade the
@@ -140,6 +150,7 @@ tasks:
         vars: { ARGS: "prepare yarn@latest --activate" }
 
   exec:
+    run: once
     desc: Execute a global binary via Yarn (BINARY=<name>)
     requires:
       vars: [BINARY]
@@ -156,6 +167,7 @@ tasks:
           EXTRA_ARGS: "{{.EXTRA_ARGS}}"
 
   run:
+    run: once
     desc: Run a package.json script with Yarn
     summary: Run SCRIPT through yarn run and forward arguments passed after -- to that script.
     requires:
@@ -171,6 +183,7 @@ tasks:
           CLI_ARGS: "{{.CLI_ARGS}}"
 
   dev:
+    run: once
     desc: Start the development script with Yarn
     summary: Execute the dev script defined in package.json through yarn run dev.
     cmds:
@@ -180,6 +193,7 @@ tasks:
         vars: { ARGS: run dev }
 
   test:
+    run: once
     desc: Run the project test script with Yarn
     summary: Execute the test script defined in package.json through yarn test.
     cmds:
@@ -189,6 +203,7 @@ tasks:
         vars: { ARGS: test }
 
   build:
+    run: once
     desc: Build the project with Yarn
     summary: Execute the build script defined in package.json through yarn run build.
     cmds:
@@ -198,6 +213,7 @@ tasks:
         vars: { ARGS: run build }
 
   lint:
+    run: once
     desc: Lint the project with Yarn
     summary: Execute the lint script defined in package.json through yarn run lint.
     cmds:
@@ -207,6 +223,7 @@ tasks:
         vars: { ARGS: run lint }
 
   format:
+    run: once
     desc: Format source files with Yarn
     summary: Execute the format script defined in package.json through yarn run format.
     cmds:
@@ -216,6 +233,7 @@ tasks:
         vars: { ARGS: run format }
 
   typecheck:
+    run: once
     desc: Type check the project with Yarn
     summary: Execute the typecheck script defined in package.json through yarn run typecheck.
     cmds:
@@ -225,6 +243,7 @@ tasks:
         vars: { ARGS: run typecheck }
 
   update:
+    run: once
     desc: Update dependencies with yarn up
     summary: Run yarn up against all dependency patterns to update project resolutions with modern Yarn.
     cmds:
@@ -234,6 +253,7 @@ tasks:
         vars: { ARGS: "up '*'" }
 
   audit:
+    run: once
     desc: Run a Yarn vulnerability audit
     summary: Run yarn npm audit and propagate vulnerability findings for CI enforcement.
     cmds:
@@ -243,6 +263,7 @@ tasks:
         vars: { ARGS: npm audit }
 
   audit:report:
+    run: once
     desc: Report Yarn audit findings without failing
     summary: Run yarn npm audit for local review while ignoring its vulnerability exit code.
     cmds:
@@ -254,6 +275,7 @@ tasks:
         ignore_error: true
 
   audit:json:
+    run: once
     desc: Output Yarn audit findings as JSON
     summary: Run yarn npm audit --json for tooling and propagate the Yarn audit exit code.
     cmds:
@@ -263,6 +285,7 @@ tasks:
         vars: { ARGS: npm audit --json }
 
   cache:clean:
+    run: once
     desc: Clear the Yarn cache
     summary: Run yarn cache clean to remove Yarn cache entries available to the active project.
     cmds:
@@ -272,6 +295,7 @@ tasks:
         vars: { ARGS: cache clean }
 
   clean:
+    run: once
     desc: Remove the node_modules directory
     summary: Delete node_modules when the project uses a node_modules Yarn linker.
     prompt:
@@ -282,6 +306,7 @@ tasks:
       - task: _clean:windows
 
   clean:all:
+    run: once
     desc: Remove node_modules and yarn.lock
     summary: Delete node_modules and yarn.lock so a later Yarn install regenerates the lockfile.
     prompt:
@@ -292,6 +317,7 @@ tasks:
       - task: _clean:all:windows
 
   _node:setup:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -311,6 +337,7 @@ tasks:
         fi
 
   _node:setup:windows:
+    run: once
     internal: true
     platforms: [windows]
     env:
@@ -330,6 +357,7 @@ tasks:
         else { task fnm:node:install }""
 
   _yarn:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -353,6 +381,7 @@ tasks:
         corepack yarn {{.ARGS}}'
 
   _yarn:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -381,6 +410,7 @@ tasks:
         corepack yarn {{.ARGS}}"
 
   _ci:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     preconditions:
@@ -391,6 +421,7 @@ tasks:
         vars: { ARGS: install --immutable }
 
   _ci:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:
@@ -403,6 +434,7 @@ tasks:
         vars: { ARGS: install --immutable }
 
   _run:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     env:
@@ -416,6 +448,7 @@ tasks:
           ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _run:windows:
+    run: once
     internal: true
     platforms: [windows]
     env:
@@ -431,6 +464,7 @@ tasks:
           ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _version:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -447,6 +481,7 @@ tasks:
         node --version; corepack yarn --version'
 
   _version:windows:
+    run: once
     internal: true
     platforms: [windows]
     env:
@@ -465,6 +500,7 @@ tasks:
         node --version; corepack yarn --version"
 
   _clean:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -473,6 +509,7 @@ tasks:
       - rm -rf node_modules
 
   _clean:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -484,6 +521,7 @@ tasks:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item -Recurse -Force 'node_modules'"
 
   _exec:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -494,6 +532,7 @@ tasks:
       - bash -c "{{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
 
   _exec:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -503,6 +542,7 @@ tasks:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "& {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
 
   _clean:all:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -511,6 +551,7 @@ tasks:
       - rm -f yarn.lock
 
   _clean:all:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"

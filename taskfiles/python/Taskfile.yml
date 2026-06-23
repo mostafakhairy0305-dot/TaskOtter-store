@@ -24,6 +24,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Python automation tasks
     summary: Display the list of available Python-related tasks defined in this Taskfile.
     cmds:
@@ -43,6 +44,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove the uv-managed Python from the current operating system
     summary: |
       Remove the Python version installed by this Taskfile via
@@ -58,6 +60,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade Python to the latest patch of PYTHON_PIN_VERSION
     summary: |
       Reinstall PYTHON_PIN_VERSION via uv python install --reinstall to pick up
@@ -69,6 +72,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed Python version
     summary: Print the active Python version. Auto-installs Python if missing.
     deps:
@@ -78,6 +82,7 @@ tasks:
       - task: _version:windows
 
   verify:
+    run: once
     desc: Verify the Python installation and pip availability
     summary: |
       Print the active Python and pip versions to confirm both are installed
@@ -90,6 +95,7 @@ tasks:
       - task: _verify:windows
 
   venv:
+    run: once
     desc: Create a Python virtual environment (VENV=path)
     summary: |
       Create a virtual environment at the path given by VENV (default .venv)
@@ -111,6 +117,7 @@ tasks:
       - task: _pip:install:windows
 
   run:
+    run: once
     desc: Run a Python script (FILE=path)
     summary: |
       Execute FILE with python3 (Unix) or python (Windows).
@@ -127,6 +134,7 @@ tasks:
       - task: _run:windows
 
   _install:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -138,6 +146,7 @@ tasks:
       - echo 'Python installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -150,6 +159,7 @@ tasks:
       - echo Python installed. Restart your terminal to use python.
 
   _install:undo:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -161,6 +171,7 @@ tasks:
       - echo 'Python removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -173,6 +184,7 @@ tasks:
       - echo Python removed.
 
   _upgrade:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -182,6 +194,7 @@ tasks:
       - echo 'Python upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:
@@ -190,6 +203,7 @@ tasks:
       - echo Python upgraded.
 
   _version:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -200,6 +214,7 @@ tasks:
       - bash -lc '{{.UV_LOAD}}; python3 --version'
 
   _version:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:
@@ -211,6 +226,7 @@ tasks:
       - python --version
 
   _verify:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -222,6 +238,7 @@ tasks:
       - bash -lc '{{.UV_LOAD}}; pip3 --version'
 
   _verify:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:
@@ -234,6 +251,7 @@ tasks:
       - pip --version
 
   _venv:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -246,6 +264,7 @@ tasks:
       - echo 'Virtual environment ready.'
 
   _venv:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:
@@ -259,6 +278,7 @@ tasks:
       - echo Virtual environment ready.
 
   _pip:install:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -269,6 +289,7 @@ tasks:
       - bash -lc '{{.UV_LOAD}}; pip3 install -r "{{.REQUIREMENTS}}" {{.EXTRA_ARGS}}'
 
   _pip:install:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:
@@ -280,6 +301,7 @@ tasks:
       - pip install -r "{{.REQUIREMENTS}}" {{.EXTRA_ARGS}}
 
   _run:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -294,6 +316,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _run:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:

@@ -26,6 +26,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: List available TypeScript tasks
     summary: Show all TypeScript tasks defined in this Taskfile.
     silent: true
@@ -33,6 +34,7 @@ tasks:
       - task --list
 
   version:
+    run: once
     desc: Show installed tsc and tsx versions
     summary: |
       Print the tsc and tsx versions resolved from node_modules or global PATH.
@@ -43,6 +45,7 @@ tasks:
       - task: _version:windows
 
   tsserver:info:
+    run: once
     desc: Show tsserver location and editor integration guidance
     summary: |
       Print the tsserver binary path and explain that it is a long-running stdio
@@ -80,6 +83,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove the locally installed TypeScript dev dependencies
     summary: Remove typescript, tsx, and @types/node from local devDependencies.
     aliases:
@@ -94,6 +98,7 @@ tasks:
           PM: "{{.PM}}"
 
   upgrade:
+    run: once
     desc: Upgrade TypeScript dev dependencies to the latest release
     summary: Reinstall typescript, tsx, and @types/node at their latest versions.
     cmds:
@@ -103,6 +108,7 @@ tasks:
           PM: "{{.PM}}"
 
   run:
+    run: once
     desc: Run a TypeScript file with tsx — no type-checking (FILE=src/index.ts)
     summary: |
       Execute a TypeScript file directly using tsx. Types are stripped via esbuild;
@@ -123,6 +129,7 @@ tasks:
           ARGS: "{{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}"
 
   dev:
+    run: once
     desc: Run a TypeScript file in watch mode with tsx (FILE=src/index.ts)
     summary: |
       Start tsx in watch mode. The process restarts on every file change.
@@ -142,6 +149,7 @@ tasks:
           ARGS: "watch {{if .TSX_FLAGS}}{{.TSX_FLAGS}} {{end}}{{.FILE}}"
 
   typecheck:
+    run: once
     desc: Type-check the project without emitting files (tsc --noEmit)
     summary: |
       Run tsc --noEmit for a full static type-check. No files are written.
@@ -161,6 +169,7 @@ tasks:
           ARGS: "--noEmit{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
 
   typecheck:watch:
+    run: once
     desc: Type-check in watch mode — recheck on every file change (tsc --noEmit --watch)
     summary: |
       Run tsc --noEmit --watch to rerun the type-checker on every save.
@@ -178,6 +187,7 @@ tasks:
           ARGS: "--noEmit --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
 
   typecheck:files:
+    run: once
     desc: Type-check specific files without a tsconfig (FILES="src/a.ts src/b.ts")
     summary: |
       WARNING: This task bypasses tsconfig.json entirely. When TypeScript receives
@@ -205,6 +215,7 @@ tasks:
           ARGS: "--noEmit {{.TSC_FLAGS}} {{.FILES}}"
 
   build:
+    run: once
     desc: Compile TypeScript to JavaScript (tsc)
     summary: |
       Run tsc to compile the project. Performs a full type-check and emits
@@ -226,6 +237,7 @@ tasks:
           ARGS: "--noEmitOnError{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
 
   build:watch:
+    run: once
     desc: Compile TypeScript in watch mode — recompile on every file change (tsc --watch)
     summary: |
       Run tsc --noEmitOnError --watch to keep the compiler running and recompile on
@@ -244,6 +256,7 @@ tasks:
           ARGS: "--noEmitOnError --watch{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
 
   build:clean:
+    run: once
     desc: Remove the output directory then compile TypeScript (clean build)
     summary: |
       Delete OUT_DIR and run a full tsc compile with --noEmitOnError. Guarantees
@@ -258,6 +271,7 @@ tasks:
       - task: _build:clean:windows
 
   emit:dts:
+    run: once
     desc: Emit only .d.ts declaration files without JavaScript (tsc --emitDeclarationOnly)
     summary: |
       Run tsc --declaration --emitDeclarationOnly. Useful for library authors
@@ -275,6 +289,7 @@ tasks:
           ARGS: "--declaration --emitDeclarationOnly --outDir '{{.OUT_DIR}}'{{if .TSC_FLAGS}} {{.TSC_FLAGS}}{{end}}"
 
   config:show:
+    run: once
     desc: Show the fully resolved tsconfig.json (tsc --showConfig)
     summary: |
       Run tsc --showConfig to display the effective config after resolving all
@@ -292,6 +307,7 @@ tasks:
           ARGS: --showConfig
 
   config:init:
+    run: once
     desc: Generate a starter tsconfig.json in the current directory (tsc --init)
     summary: |
       Run tsc --init to create a tsconfig.json with sensible defaults and
@@ -309,6 +325,7 @@ tasks:
           ARGS: --init
 
   config:files:
+    run: once
     desc: List all files included in the TypeScript compilation (tsc --listFiles)
     summary: |
       Run tsc --listFiles --noEmit to print every file the compiler processes.
@@ -326,6 +343,7 @@ tasks:
           ARGS: --listFiles --noEmit
 
   config:diagnostics:
+    run: once
     desc: Show tsc performance diagnostics (tsc --diagnostics)
     summary: |
       Run tsc --noEmit --diagnostics to report files checked, memory usage,
@@ -343,6 +361,7 @@ tasks:
           ARGS: --noEmit --diagnostics
 
   config:trace:
+    run: once
     desc: Generate a tsc performance trace for analysis (tsc --generateTrace)
     summary: |
       Run tsc --generateTrace to emit a JSON trace of every compiler phase.
@@ -361,6 +380,7 @@ tasks:
           TRACE_DIR: "{{.TRACE_DIR}}"
 
   start:
+    run: once
     desc: Run the compiled JavaScript with node (OUTFILE=dist/index.js)
     summary: |
       Execute the compiled output using plain node — no TypeScript tooling.
@@ -374,6 +394,7 @@ tasks:
       - task: _start:windows
 
   ci:
+    run: once
     desc: Type-check the project for CI — exits non-zero on any type error
     summary: |
       Run tsc --noEmit as a strict CI gate. Functionally identical to typecheck
@@ -391,6 +412,7 @@ tasks:
       - echo "✅ tsc passed"
 
   clean:
+    run: once
     desc: Remove the compiled output directory (OUT_DIR=dist)
     summary: |
       Delete the tsc output directory. Defaults to dist/. Override with OUT_DIR=build.
@@ -406,6 +428,7 @@ tasks:
       - task: _clean:windows
 
   clean:all:
+    run: once
     desc: Remove dist/, tsconfig.tsbuildinfo, and .tsc-trace/ (full build reset)
     summary: |
       Delete the output directory, incremental build cache (tsconfig.tsbuildinfo),
@@ -422,6 +445,7 @@ tasks:
       - task: _clean:all:windows
 
   _tsc:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -440,6 +464,7 @@ tasks:
         fi
 
   _tsc:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -461,6 +486,7 @@ tasks:
         else { tsc --project '{{.TSCONFIG}}' {{.ARGS}} }"
 
   _tsc:noconfig:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -477,6 +503,7 @@ tasks:
         fi
 
   _tsc:noconfig:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -493,6 +520,7 @@ tasks:
         else { tsc {{.ARGS}} }"
 
   _tsx:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -511,6 +539,7 @@ tasks:
         fi
 
   _tsx:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -531,6 +560,7 @@ tasks:
         else { tsx {{.ARGS}} }"
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -548,6 +578,7 @@ tasks:
             {{if .VERSION}}typescript@{{.VERSION}} tsx @types/node{{else}}typescript tsx @types/node{{end}}
 
   _version:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -587,6 +618,7 @@ tasks:
         echo 'Managed by your editor. Do not start it manually.'
 
   _version:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -618,6 +650,7 @@ tasks:
         Write-Host 'Managed by your editor. Do not start it manually.'"
 
   _tsserver:info:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -651,6 +684,7 @@ tasks:
         echo '  TypeScript: Go to Project Config'
 
   _tsserver:info:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -681,6 +715,7 @@ tasks:
         Write-Host '  TypeScript: Go to Project Config'"
 
   _build:clean:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -694,6 +729,7 @@ tasks:
       - echo 'Clean build complete.'
 
   _build:clean:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -708,6 +744,7 @@ tasks:
       - echo Clean build complete.
 
   _config:trace:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -724,6 +761,7 @@ tasks:
         echo 'Or load {{.TRACE_DIR}}/trace.json in chrome://tracing'
 
   _config:trace:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -740,6 +778,7 @@ tasks:
         Write-Host 'Or load {{.TRACE_DIR}}/trace.json in chrome://tracing'"
 
   _start:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -753,6 +792,7 @@ tasks:
       - node "{{.OUTFILE}}"
 
   _start:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -769,6 +809,7 @@ tasks:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "node '{{.OUTFILE}}'"
 
   _clean:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -781,6 +822,7 @@ tasks:
       - echo Done.
 
   _clean:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -796,6 +838,7 @@ tasks:
       - echo Done.
 
   _clean:all:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -808,6 +851,7 @@ tasks:
       - echo Done.
 
   _clean:all:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"

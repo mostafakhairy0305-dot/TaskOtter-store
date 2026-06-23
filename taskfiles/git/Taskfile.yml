@@ -37,6 +37,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available git automation tasks
     summary: Display the list of available git-related tasks defined in this Taskfile.
     cmds:
@@ -56,6 +57,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove git from the current operating system
     summary: |
       Remove git for the current platform.
@@ -73,6 +75,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade git to the latest release
     summary: |
       Upgrade git to the latest available release.
@@ -85,6 +88,7 @@ tasks:
       - task: _upgrade:windows
 
   auth:setup:
+    run: once
     desc: Configure git to use the GitHub CLI as a credential helper
     summary: |
       Delegate git HTTPS authentication to gh via `gh auth setup-git`.
@@ -94,6 +98,7 @@ tasks:
       - task: gh:auth:setup-git
 
   init:
+    run: once
     desc: Initialize a new git repository in the current directory
     summary: |
       Run `git init`. Set BRANCH to specify the initial branch name.
@@ -102,6 +107,7 @@ tasks:
       - git init{{if .BRANCH}} --initial-branch={{.BRANCH}}{{end}} {{.EXTRA_ARGS}}
 
   clone:
+    run: once
     desc: Clone a GitHub repository using the GitHub CLI
     summary: |
       Clone a repository via gh. Requires REPO. Set OWNER for repos owned
@@ -117,12 +123,14 @@ tasks:
       - gh repo clone {{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}} {{if .CLONE_DIR}}{{.CLONE_DIR}}{{end}} {{.EXTRA_ARGS}}
 
   status:
+    run: once
     desc: Show the current working tree status
     summary: Print the status of staged and unstaged changes via `git status`.
     cmds:
       - git status
 
   add:
+    run: once
     desc: Stage files for the next commit
     summary: |
       Stage files via `git add`. FILES defaults to "." (all changes in the
@@ -132,12 +140,14 @@ tasks:
       - git add {{.FILES}} {{.EXTRA_ARGS}}
 
   add:all:
+    run: once
     desc: Stage all changes including untracked files
     summary: Stage all changes (modified, deleted, untracked) via `git add --all`.
     cmds:
       - git add --all
 
   commit:
+    run: once
     desc: Create a commit from staged changes
     summary: |
       Commit staged changes. Requires COMMIT_MSG.
@@ -149,6 +159,7 @@ tasks:
       - git commit -m "{{.COMMIT_MSG}}" {{.EXTRA_ARGS}}
 
   commit:amend:
+    run: once
     desc: Amend the most recent commit
     summary: |
       Amend the last commit. Set COMMIT_MSG to update the message, or omit
@@ -158,6 +169,7 @@ tasks:
       - git commit --amend {{if .COMMIT_MSG}}-m "{{.COMMIT_MSG}}"{{else}}--no-edit{{end}} {{.EXTRA_ARGS}}
 
   push:
+    run: once
     desc: Push commits to the remote repository
     summary: |
       Push to the remote. REMOTE defaults to "origin". Set BRANCH to push
@@ -167,6 +179,7 @@ tasks:
       - git push {{.REMOTE}} {{if .BRANCH}}{{.BRANCH}}{{else}}HEAD{{end}} {{.EXTRA_ARGS}}
 
   push:force:
+    run: once
     desc: Force-push the current branch using --force-with-lease
     summary: |
       Force-push using --force-with-lease for safety. REMOTE defaults to "origin".
@@ -176,6 +189,7 @@ tasks:
       - git push {{.REMOTE}} {{if .BRANCH}}{{.BRANCH}}{{else}}HEAD{{end}} --force-with-lease {{.EXTRA_ARGS}}
 
   pull:
+    run: once
     desc: Pull changes from the remote repository
     summary: |
       Fetch and merge changes from the remote. REMOTE defaults to "origin".
@@ -185,6 +199,7 @@ tasks:
       - git pull {{.REMOTE}}{{if .BRANCH}} {{.BRANCH}}{{end}} {{.EXTRA_ARGS}}
 
   fetch:
+    run: once
     desc: Fetch branches from the remote without merging
     summary: |
       Fetch all branches and prune deleted refs via `git fetch --prune`.
@@ -194,6 +209,7 @@ tasks:
       - git fetch {{.REMOTE}} --prune {{.EXTRA_ARGS}}
 
   sync:
+    run: once
     desc: Sync the current branch with its GitHub upstream via the GitHub CLI
     summary: |
       Sync the local branch with its GitHub upstream via `gh repo sync`.
@@ -206,6 +222,7 @@ tasks:
       - gh repo sync {{if .BRANCH}}--branch {{.BRANCH}}{{end}} {{.EXTRA_ARGS}}
 
   diff:
+    run: once
     desc: Show unstaged changes in the working tree
     summary: |
       Show changes between the working tree and the index via `git diff`.
@@ -215,12 +232,14 @@ tasks:
       - git diff {{.FILES}} {{.EXTRA_ARGS}}
 
   diff:staged:
+    run: once
     desc: Show changes staged for the next commit
     summary: Show staged changes ready for commit via `git diff --staged`.
     cmds:
       - git diff --staged {{.EXTRA_ARGS}}
 
   log:
+    run: once
     desc: Show the commit history with author and date
     summary: |
       Display commits with short hash, author, date, and message.
@@ -229,18 +248,21 @@ tasks:
       - git log --format="%C(yellow)%h%Creset %C(blue)%ad%Creset %s %C(green)<%an>%Creset" --date=short {{.EXTRA_ARGS}}
 
   log:graph:
+    run: once
     desc: Show commit history as an ASCII branch graph
     summary: Display a compact decorated graph of all branches and commits.
     cmds:
       - git log --oneline --graph --decorate --all {{.EXTRA_ARGS}}
 
   branch:list:
+    run: once
     desc: List all local and remote branches
     summary: Show all local and remote branches via `git branch -a`.
     cmds:
       - git branch -a {{.EXTRA_ARGS}}
 
   branch:create:
+    run: once
     desc: Create and switch to a new branch from current HEAD
     summary: |
       Create a new branch at current HEAD and switch to it. Requires BRANCH.
@@ -252,6 +274,7 @@ tasks:
       - git switch -c {{.BRANCH}} {{.EXTRA_ARGS}}
 
   branch:switch:
+    run: once
     desc: Switch to an existing branch
     summary: |
       Switch to a branch via `git switch`. Requires BRANCH.
@@ -263,6 +286,7 @@ tasks:
       - git switch {{.BRANCH}} {{.EXTRA_ARGS}}
 
   branch:delete:
+    run: once
     desc: Delete a local branch
     summary: |
       Delete a local branch. Requires BRANCH.
@@ -276,6 +300,7 @@ tasks:
       - git branch -d {{.BRANCH}} {{.EXTRA_ARGS}}
 
   branch:rename:
+    run: once
     desc: Rename the current branch to a new name
     summary: |
       Rename the current branch. Requires BRANCH (the new name).
@@ -287,12 +312,14 @@ tasks:
       - git branch -m {{.BRANCH}}
 
   tag:list:
+    run: once
     desc: List all tags sorted by version descending
     summary: List tags sorted by version via `git tag --sort=-v:refname`.
     cmds:
       - git tag --sort=-v:refname {{.EXTRA_ARGS}}
 
   tag:create:
+    run: once
     desc: Create an annotated tag at HEAD
     summary: |
       Create an annotated tag. Requires TAG. Set MESSAGE for the tag
@@ -305,6 +332,7 @@ tasks:
       - git tag -a {{.TAG}} -m "{{default .TAG .MESSAGE}}" {{.EXTRA_ARGS}}
 
   tag:push:
+    run: once
     desc: Push a tag or all tags to the remote
     summary: |
       Push TAG to the remote. Omit TAG to push all tags via --tags.
@@ -313,6 +341,7 @@ tasks:
       - git push {{.REMOTE}} {{if .TAG}}{{.TAG}}{{else}}--tags{{end}} {{.EXTRA_ARGS}}
 
   tag:delete:
+    run: once
     desc: Delete a tag locally and from the remote
     summary: |
       Delete a tag both locally and on the remote. Requires TAG.
@@ -327,6 +356,7 @@ tasks:
       - git push {{.REMOTE}} --delete {{.TAG}}
 
   stash:
+    run: once
     desc: Stash uncommitted changes in the working tree
     summary: |
       Save the working tree and index to a stash entry. Set MESSAGE for
@@ -336,6 +366,7 @@ tasks:
       - git stash push {{if .MESSAGE}}-m "{{.MESSAGE}}"{{end}} {{.EXTRA_ARGS}}
 
   stash:pop:
+    run: once
     desc: Apply and remove the latest stash entry
     summary: |
       Apply and remove a stash entry. STASH_INDEX defaults to 0 (most recent).
@@ -344,12 +375,14 @@ tasks:
       - git stash pop stash@{{{.STASH_INDEX}}} {{.EXTRA_ARGS}}
 
   stash:list:
+    run: once
     desc: List all stash entries
     summary: Display all stash entries via `git stash list`.
     cmds:
       - git stash list
 
   stash:drop:
+    run: once
     desc: Discard a stash entry without applying it
     summary: |
       Remove a stash entry. STASH_INDEX defaults to 0 (most recent).
@@ -358,6 +391,7 @@ tasks:
       - git stash drop stash@{{{.STASH_INDEX}}} {{.EXTRA_ARGS}}
 
   reset:soft:
+    run: once
     desc: Soft-reset HEAD to a commit, preserving staged changes
     summary: |
       Move HEAD back without touching the index or working tree. Requires COMMIT.
@@ -370,6 +404,7 @@ tasks:
       - git reset --soft {{.COMMIT}} {{.EXTRA_ARGS}}
 
   reset:hard:
+    run: once
     desc: Hard-reset HEAD to a commit, discarding all local changes
     summary: |
       Move HEAD and discard all staged and unstaged changes. Requires COMMIT.
@@ -383,6 +418,7 @@ tasks:
       - git reset --hard {{.COMMIT}} {{.EXTRA_ARGS}}
 
   clean:
+    run: once
     desc: Remove untracked files and directories from the working tree
     summary: |
       Delete untracked files and directories via `git clean -fd`.
@@ -392,6 +428,7 @@ tasks:
       - git clean -fd {{.EXTRA_ARGS}}
 
   config:user:
+    run: once
     desc: Set the global git user name and email address
     summary: |
       Configure the global git identity. Requires NAME and EMAIL.
@@ -405,18 +442,21 @@ tasks:
       - git config --global user.email "{{.EMAIL}}"
 
   config:list:
+    run: once
     desc: List all git configuration values
     summary: Show all git config values (system + global + local) via `git config --list`.
     cmds:
       - git config --list {{.EXTRA_ARGS}}
 
   remote:list:
+    run: once
     desc: List all configured remotes and their URLs
     summary: Show all remotes and their fetch/push URLs via `git remote -v`.
     cmds:
       - git remote -v
 
   remote:add:
+    run: once
     desc: Add a new remote to the repository
     summary: |
       Add a named remote. Requires NAME and URL.
@@ -429,6 +469,7 @@ tasks:
       - git remote add {{.NAME}} {{.URL}}
 
   remote:remove:
+    run: once
     desc: Remove a configured remote from the repository
     summary: |
       Remove a remote. Requires NAME.
@@ -440,6 +481,7 @@ tasks:
       - git remote remove {{.NAME}}
 
   remote:set-url:
+    run: once
     desc: Update the URL of a configured remote
     summary: |
       Change the URL of a remote. Requires NAME and URL.
@@ -452,6 +494,7 @@ tasks:
       - git remote set-url {{.NAME}} {{.URL}}
 
   pr:create:
+    run: once
     desc: Push the current branch and open a pull request on GitHub
     summary: |
       Push HEAD to remote, then create a pull request via the GitHub CLI.
@@ -473,6 +516,7 @@ tasks:
         {{if .BODY}}--body "{{.BODY}}"{{end}}
 
   pr:open:
+    run: once
     desc: Open the current pull request in the browser via the GitHub CLI
     summary: |
       Open the pull request for the current branch on GitHub in the browser
@@ -483,6 +527,7 @@ tasks:
       - gh pr view --web
 
   release:create:
+    run: once
     desc: Create a git tag and a GitHub release via the GitHub CLI
     summary: |
       Create an annotated tag, push it to remote, then create a GitHub release.
@@ -503,18 +548,21 @@ tasks:
         {{if .NOTES}}--notes "{{.NOTES}}"{{end}}
 
   version:
+    run: once
     desc: Show the installed git version
     summary: Print the git version string via `git --version`.
     cmds:
       - git --version
 
   help:
+    run: once
     desc: Show the git built-in help and command list
     summary: Display the git help overview and list of common commands.
     cmds:
       - git help
 
   _install:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -530,6 +578,7 @@ tasks:
       - echo 'git installed.'
 
   _install:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -541,6 +590,7 @@ tasks:
       - task: _install:linux:dnf
 
   _install:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -555,6 +605,7 @@ tasks:
       - echo 'git installed.'
 
   _install:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -569,6 +620,7 @@ tasks:
       - echo 'git installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -593,6 +645,7 @@ tasks:
       - echo git installed. Restart your terminal if git is not found.
 
   _install:undo:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -607,6 +660,7 @@ tasks:
       - echo 'git removed.'
 
   _install:undo:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -620,6 +674,7 @@ tasks:
       - task: _install:undo:linux:dnf
 
   _install:undo:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -634,6 +689,7 @@ tasks:
       - echo 'git removed.'
 
   _install:undo:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -648,6 +704,7 @@ tasks:
       - echo 'git removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -660,6 +717,7 @@ tasks:
       - echo git removed.
 
   _upgrade:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -675,6 +733,7 @@ tasks:
       - echo 'git upgraded.'
 
   _upgrade:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -686,6 +745,7 @@ tasks:
       - task: _upgrade:linux:dnf
 
   _upgrade:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -700,6 +760,7 @@ tasks:
       - echo 'git upgraded.'
 
   _upgrade:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -714,6 +775,7 @@ tasks:
       - echo 'git upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:

@@ -28,6 +28,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Ansible automation tasks
     summary: Display the list of available Ansible-related tasks defined in this Taskfile.
     cmds:
@@ -47,6 +48,7 @@ tasks:
       - task: _install:unix
 
   install:undo:
+    run: once
     desc: Remove Ansible and ansible-lint from the current operating system
     summary: |
       Uninstall ansible and ansible-lint via uv tool uninstall on macOS and Linux.
@@ -59,6 +61,7 @@ tasks:
       - task: _install:undo:unix
 
   upgrade:
+    run: once
     desc: Upgrade Ansible and ansible-lint to the latest release
     summary: |
       Upgrade ansible and ansible-lint via uv tool upgrade on macOS and Linux.
@@ -69,6 +72,7 @@ tasks:
       - task: _upgrade:unix
 
   version:
+    run: once
     desc: Show the installed Ansible and ansible-lint versions
     summary: Print ansible --version and ansible-lint --version. Auto-installs if missing.
     deps:
@@ -77,6 +81,7 @@ tasks:
       - task: _version:unix
 
   lint:
+    run: once
     desc: Lint Ansible YAML files with ansible-lint (TARGETS=path)
     summary: |
       Run ansible-lint against TARGETS (default .). ansible-lint enforces
@@ -92,6 +97,7 @@ tasks:
       - echo "✅ ansible-lint passed"
 
   lint:fix:
+    run: once
     desc: Auto-fix Ansible YAML files with ansible-lint --fix (TARGETS=path)
     summary: |
       Run ansible-lint --fix against TARGETS (default .) to automatically
@@ -107,6 +113,7 @@ tasks:
       - echo "✅ ansible-lint fixes applied"
 
   syntax:check:
+    run: once
     desc: Check Ansible playbook syntax (PLAYBOOK=path)
     summary: |
       Run ansible-playbook --syntax-check to validate the playbook structure
@@ -124,6 +131,7 @@ tasks:
       - task: _syntax:check:unix
 
   run:
+    run: once
     desc: Run an Ansible playbook (PLAYBOOK=path)
     summary: |
       Execute PLAYBOOK via ansible-playbook. Pass INVENTORY to specify the
@@ -141,6 +149,7 @@ tasks:
       - task: _run:unix
 
   ping:
+    run: once
     desc: Test Ansible host connectivity (INVENTORY=path)
     summary: |
       Run the Ansible ping module against PATTERN (default all) using the
@@ -158,6 +167,7 @@ tasks:
       - task: _ping:unix
 
   list:hosts:
+    run: once
     desc: List Ansible inventory hosts (INVENTORY=path)
     summary: |
       Print the hosts matching PATTERN (default all) from INVENTORY without
@@ -187,6 +197,7 @@ tasks:
       - task: _galaxy:install:unix
 
   vault:encrypt:
+    run: once
     desc: Encrypt a file with Ansible Vault (FILE=path)
     summary: |
       Run ansible-vault encrypt on FILE. You will be prompted for the vault
@@ -206,6 +217,7 @@ tasks:
           ARGS: 'encrypt "{{.FILE}}" {{.EXTRA_ARGS}}'
 
   vault:decrypt:
+    run: once
     desc: Decrypt a file with Ansible Vault (FILE=path)
     summary: |
       Run ansible-vault decrypt on FILE. You will be prompted for the vault
@@ -228,6 +240,7 @@ tasks:
           ARGS: 'decrypt "{{.FILE}}" {{.EXTRA_ARGS}}'
 
   _install:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -247,6 +260,7 @@ tasks:
       - echo 'Ansible and ansible-lint installed.'
 
   _install:undo:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -260,6 +274,7 @@ tasks:
       - echo 'Ansible and ansible-lint removed.'
 
   _upgrade:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -277,6 +292,7 @@ tasks:
       - echo 'Ansible and ansible-lint upgraded.'
 
   _version:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -288,6 +304,7 @@ tasks:
       - bash -lc '{{.UV_LOAD}}; ansible-lint --version'
 
   _lint:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -299,6 +316,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _lint:fix:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -310,6 +328,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _syntax:check:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -326,6 +345,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _run:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -342,6 +362,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _ping:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -357,6 +378,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _list:hosts:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -372,6 +394,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _galaxy:install:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -385,6 +408,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   _vault:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]

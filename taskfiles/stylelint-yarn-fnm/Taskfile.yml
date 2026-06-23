@@ -26,6 +26,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Stylelint tasks
     cmds:
       - task --list
@@ -47,6 +48,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
+    run: once
     desc: Remove the locally installed Stylelint devDependencies
     summary: Remove stylelint and stylelint-config-standard from local devDependencies.
     aliases:
@@ -61,6 +63,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   upgrade:
+    run: once
     desc: Upgrade Stylelint to the latest release
     summary: Reinstall stylelint and stylelint-config-standard at their latest versions.
     cmds:
@@ -70,6 +73,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   config:init:
+    run: once
     desc: Create a starter Stylelint config when none exists
     cmds:
       - |
@@ -85,6 +89,7 @@ tasks:
         fi
 
   lint:
+    run: once
     desc: Lint stylesheet targets with Stylelint
     cmds:
       - task: yarn:exec
@@ -108,6 +113,7 @@ tasks:
       - echo "✅ stylelint passed"
 
   lint:fix:
+    run: once
     desc: Lint stylesheet targets with Stylelint and apply fixes
     cmds:
       - task: yarn:exec
@@ -132,6 +138,7 @@ tasks:
       - echo "✅ stylelint fixes applied"
 
   ci:
+    run: once
     desc: Run Stylelint with zero-warning CI enforcement
     cmds:
       - task: yarn:exec
@@ -156,11 +163,13 @@ tasks:
       - echo "✅ stylelint passed"
 
   cache:clean:
+    run: once
     desc: Remove the Stylelint cache directory
     cmds:
       - if [ -d .cache/stylelint ]; then rm -rf .cache/stylelint; fi
 
   version:
+    run: once
     desc: Show the locally resolved Stylelint version
     cmds:
       - task: yarn:exec
@@ -169,6 +178,7 @@ tasks:
           ARGS: "--version"
 
   help:
+    run: once
     desc: Show Stylelint CLI help
     cmds:
       - task: yarn:exec

@@ -32,6 +32,7 @@ env:
 
 tasks:
   default:
+    run: once
     desc: Show available Vault automation tasks
     summary: Display the list of available HashiCorp Vault-related tasks defined in this Taskfile.
     cmds:
@@ -53,6 +54,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove the Vault CLI from the current operating system
     summary: |
       Remove the HashiCorp Vault CLI for the current platform.
@@ -70,6 +72,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade the Vault CLI to the latest release
     summary: |
       Upgrade the HashiCorp Vault CLI to the latest available release.
@@ -82,6 +85,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed Vault CLI version
     summary: Print the active Vault CLI version via vault version. Auto-installs if missing.
     deps:
@@ -90,6 +94,7 @@ tasks:
       - vault version
 
   verify:
+    run: once
     desc: Verify the Vault CLI installation and server connectivity
     summary: |
       Print the Vault CLI version and current server status. Useful for confirming
@@ -102,6 +107,7 @@ tasks:
       - vault status -address="{{.VAULT_ADDR_TARGET}}"
 
   status:
+    run: once
     desc: Show Vault seal and HA status
     summary: |
       Run vault status to display the current seal state, HA mode, cluster info,
@@ -114,6 +120,7 @@ tasks:
       - vault status -address="{{.VAULT_ADDR_TARGET}}" || true
 
   health:
+    run: once
     desc: Show Vault health as JSON (VAULT_ADDR=url)
     summary: |
       Fetch the raw health JSON from the Vault HTTP API at VAULT_ADDR/v1/sys/health
@@ -133,6 +140,7 @@ tasks:
         | jq .
 
   init:
+    run: once
     desc: Initialize Vault and save unseal keys (KEYS_FILE=path)
     summary: |
       Run vault operator init with SHARES key shares and THRESHOLD as the unseal
@@ -169,6 +177,7 @@ tasks:
         echo "Vault initialized. Unseal keys and root token saved to $KF"
 
   unseal:
+    run: once
     desc: Unseal Vault using saved keys (KEYS_FILE=path)
     summary: |
       Read THRESHOLD unseal keys from KEYS_FILE and submit each one via
@@ -192,6 +201,7 @@ tasks:
         done
 
   seal:
+    run: once
     desc: Seal the Vault server
     summary: |
       Run vault operator seal to re-seal the active Vault server. After sealing,
@@ -204,6 +214,7 @@ tasks:
       - vault operator seal -address="{{.VAULT_ADDR_TARGET}}"
 
   login:
+    run: once
     desc: Log in to Vault using the saved root token (KEYS_FILE=path)
     summary: |
       Extract the root token from KEYS_FILE and authenticate with vault login.
@@ -225,6 +236,7 @@ tasks:
           | vault login -address="{{.VAULT_ADDR_TARGET}}" -method=token -no-print -
 
   login:root-token:
+    run: once
     desc: Log in to Vault using a token directly (ROOT_TOKEN=<token>)
     summary: |
       Authenticate with Vault using a root or service token passed directly
@@ -246,6 +258,7 @@ tasks:
           | vault login -address="{{.VAULT_ADDR_TARGET}}" -method=token -no-print -
 
   login:approle:
+    run: once
     desc: Log in to Vault via AppRole (ROLE_ID=<id> SECRET_ID=<id>)
     summary: |
       Authenticate with Vault using the AppRole auth method. Requires a role_id
@@ -283,6 +296,7 @@ tasks:
             -
 
   token:issue:approle:
+    run: once
     desc: Issue a Vault token via AppRole and print it to stdout (ROLE_ID=<id> SECRET_ID=<id>)
     summary: |
       Authenticate with Vault using the AppRole auth method and print the resulting
@@ -314,6 +328,7 @@ tasks:
             secret_id=-
 
   kv:get:
+    run: once
     desc: Read a KV v2 secret and print JSON to stdout (KV_MOUNT=<mount> SECRET_PATH=<path> [SECRET_VERSION=<n>])
     summary: |
       Read a KV v2 secret at SECRET_PATH under KV_MOUNT using the Vault CLI
@@ -361,6 +376,7 @@ tasks:
         fi
 
   token:revoke-self:
+    run: once
     desc: Revoke the current Vault token (VAULT_TOKEN must be set in environment)
     summary: |
       Run vault token revoke -self to revoke the token currently set in the
@@ -374,6 +390,7 @@ tasks:
       - vault token revoke -address="{{.VAULT_ADDR_TARGET}}" -self
 
   root-token:
+    run: once
     desc: Print the saved Vault root token (KEYS_FILE=path)
     summary: |
       Read the root_token field from KEYS_FILE and print it to stdout. Useful for
@@ -390,6 +407,7 @@ tasks:
       - jq -r '.root_token' "{{if .KEYS_FILE_OVERRIDE}}{{.KEYS_FILE_OVERRIDE}}{{else}}{{.KEYS_FILE}}{{end}}"
 
   peers:
+    run: once
     desc: List Vault Raft cluster peers
     summary: |
       Run vault operator raft list-peers to display all nodes in the Raft cluster
@@ -402,6 +420,7 @@ tasks:
       - vault operator raft list-peers -address="{{.VAULT_ADDR_TARGET}}"
 
   snapshot:
+    run: once
     desc: Save a Vault Raft snapshot (FILE=path; root VAULT_FILE=path)
     summary: |
       Run vault operator raft snapshot save to write a point-in-time backup of
@@ -421,6 +440,7 @@ tasks:
       - vault operator raft snapshot save -address="{{.VAULT_ADDR_TARGET}}" "{{.FILE_TARGET}}"
 
   restore:
+    run: once
     desc: Restore a Vault Raft snapshot (FILE=path; root VAULT_FILE=path)
     summary: |
       Run vault operator raft snapshot restore -force to restore Vault state from
@@ -447,6 +467,7 @@ tasks:
       - vault operator raft snapshot restore -address="{{.VAULT_ADDR_TARGET}}" -force "{{.FILE_TARGET}}"
 
   _install:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -463,6 +484,7 @@ tasks:
       - echo 'Vault CLI installed.'
 
   _install:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -477,6 +499,7 @@ tasks:
       - task: _install:linux:dnf
 
   _install:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -520,6 +543,7 @@ tasks:
       - echo 'Vault CLI installed.'
 
   _install:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -549,6 +573,7 @@ tasks:
       - echo 'Vault CLI installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -573,6 +598,7 @@ tasks:
       - echo Vault CLI installed. Restart your terminal to use vault.
 
   _install:undo:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -587,6 +613,7 @@ tasks:
       - echo 'Vault CLI removed.'
 
   _install:undo:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -598,6 +625,7 @@ tasks:
       - task: _install:undo:linux:dnf
 
   _install:undo:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -615,6 +643,7 @@ tasks:
       - echo 'Vault CLI removed.'
 
   _install:undo:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -632,6 +661,7 @@ tasks:
       - echo 'Vault CLI removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -644,6 +674,7 @@ tasks:
       - echo Vault CLI removed. Restart your terminal.
 
   _upgrade:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -660,6 +691,7 @@ tasks:
       - echo 'Vault CLI upgraded.'
 
   _upgrade:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -673,6 +705,7 @@ tasks:
       - task: _upgrade:linux:dnf
 
   _upgrade:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -692,6 +725,7 @@ tasks:
       - echo 'Vault CLI upgraded.'
 
   _upgrade:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -711,6 +745,7 @@ tasks:
       - echo 'Vault CLI upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:

@@ -16,12 +16,14 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available actionlint automation tasks
     summary: Display the list of available actionlint-related tasks defined in this Taskfile.
     cmds:
       - task --list
 
   lint:
+    run: once
     desc: Lint GitHub Actions workflow files with actionlint
     summary: |
       Run actionlint against workflow files. When TARGETS is empty actionlint
@@ -54,6 +56,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove actionlint from the current operating system
     summary: |
       Remove actionlint for the current platform.
@@ -71,6 +74,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade actionlint to the latest release
     summary: |
       Upgrade actionlint to the latest available release.
@@ -83,6 +87,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed actionlint version
     summary: Print the active actionlint version via actionlint --version. Auto-installs actionlint if missing.
     deps:
@@ -91,6 +96,7 @@ tasks:
       - actionlint --version
 
   _install:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -105,6 +111,7 @@ tasks:
       - echo 'actionlint installed.'
 
   _install:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -151,6 +158,7 @@ tasks:
       - echo 'actionlint installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -168,6 +176,7 @@ tasks:
       - echo actionlint installed. Restart your terminal if actionlint is not found.
 
   _install:undo:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -182,6 +191,7 @@ tasks:
       - echo 'actionlint removed.'
 
   _install:undo:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -196,6 +206,7 @@ tasks:
       - echo 'actionlint removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -208,6 +219,7 @@ tasks:
       - echo actionlint removed.
 
   _upgrade:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -223,6 +235,7 @@ tasks:
       - echo 'actionlint upgraded.'
 
   _upgrade:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -267,6 +280,7 @@ tasks:
       - echo 'actionlint upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:

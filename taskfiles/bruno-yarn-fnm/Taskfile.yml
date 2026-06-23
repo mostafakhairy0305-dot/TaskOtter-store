@@ -21,6 +21,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Bruno tasks
     cmds:
       - task --list
@@ -43,6 +44,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
+    run: once
     desc: Remove the locally installed Bruno CLI devDependency
     summary: Remove @usebruno/cli from local devDependencies via the active package manager.
     aliases:
@@ -57,6 +59,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   upgrade:
+    run: once
     desc: Upgrade the Bruno CLI to the latest release
     summary: Reinstall @usebruno/cli at the latest version as a local devDependency.
     cmds:
@@ -66,6 +69,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   run:
+    run: once
     desc: Run a Bruno collection (COLLECTION=path)
     summary: |
       Run all requests in the Bruno collection at COLLECTION (default: current
@@ -87,6 +91,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   ci:
+    run: once
     desc: Run Bruno collection in CI mode with --bail (COLLECTION=path)
     summary: |
       Run all requests in the Bruno collection and stop immediately on the first
@@ -108,6 +113,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   version:
+    run: once
     desc: Show the locally resolved Bruno CLI version
     cmds:
       - task: yarn:exec
@@ -116,6 +122,7 @@ tasks:
           ARGS: "--version"
 
   help:
+    run: once
     desc: Show Bruno CLI help
     cmds:
       - task: yarn:exec

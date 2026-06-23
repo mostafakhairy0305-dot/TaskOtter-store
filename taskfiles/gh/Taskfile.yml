@@ -27,6 +27,7 @@ env:
 
 tasks:
   default:
+    run: once
     desc: Show available GitHub CLI automation tasks
     summary: Display the list of available gh-related tasks defined in this Taskfile.
     cmds:
@@ -48,6 +49,7 @@ tasks:
       - task: _install:auto:windows
 
   install:undo:
+    run: once
     desc: Remove the GitHub CLI from the current operating system
     summary: |
       Detect the current OS and available package managers, then remove gh
@@ -64,6 +66,7 @@ tasks:
       - task: _uninstall:auto:windows
 
   upgrade:
+    run: once
     desc: Upgrade the GitHub CLI to the latest version on the current OS
     summary: |
       Auto-detect the OS and package manager used to install gh, then upgrade
@@ -76,6 +79,7 @@ tasks:
       - task: _upgrade:auto:windows
 
   version:
+    run: once
     desc: Show the installed GitHub CLI version
     summary: Print the installed gh version string via `gh --version`.
     deps:
@@ -85,6 +89,7 @@ tasks:
       - task: _version:windows
 
   doctor:
+    run: once
     desc: Run the GitHub CLI self-diagnostic check
     summary: |
       Run `gh doctor` to check your gh configuration, authentication,
@@ -96,6 +101,7 @@ tasks:
       - task: _doctor:windows
 
   which:
+    run: once
     desc: Show the path to the GitHub CLI binary
     summary: Print the filesystem path of the gh binary resolved from PATH.
     deps:
@@ -105,6 +111,7 @@ tasks:
       - task: _which:windows
 
   verify:
+    run: once
     desc: Verify the GitHub CLI installation and authentication status
     summary: |
       Check that gh is installed, confirm `gh --version` runs cleanly,
@@ -117,6 +124,7 @@ tasks:
       - task: _verify:windows
 
   help:
+    run: once
     desc: Show the GitHub CLI built-in help
     summary: Display the built-in gh help output via `gh help`.
     deps:
@@ -125,6 +133,7 @@ tasks:
       - gh help
 
   auth:login:
+    run: once
     desc: Authenticate with GitHub interactively
     summary: |
       Start an interactive GitHub authentication flow via `gh auth login`.
@@ -136,6 +145,7 @@ tasks:
       - gh auth login
 
   auth:login:web:
+    run: once
     desc: Authenticate with GitHub using the web browser
     summary: |
       Authenticate with GitHub by opening a browser window for OAuth.
@@ -146,6 +156,7 @@ tasks:
       - gh auth login --web
 
   auth:login:ssh:
+    run: once
     desc: Authenticate with GitHub using SSH protocol
     summary: |
       Authenticate with GitHub using the SSH git protocol.
@@ -156,6 +167,7 @@ tasks:
       - gh auth login --git-protocol ssh
 
   auth:status:
+    run: once
     desc: Show the current GitHub authentication status
     summary: |
       Display the current GitHub authentication status for all configured
@@ -166,6 +178,7 @@ tasks:
       - gh auth status
 
   auth:refresh:
+    run: once
     desc: Refresh the GitHub CLI authentication token
     summary: |
       Refresh the stored GitHub CLI credentials to extend their validity
@@ -176,6 +189,7 @@ tasks:
       - gh auth refresh
 
   auth:logout:
+    run: once
     desc: Log out from GitHub and remove stored credentials
     summary: |
       Remove locally stored GitHub credentials via `gh auth logout`.
@@ -186,6 +200,7 @@ tasks:
       - gh auth logout
 
   auth:setup-git:
+    run: once
     desc: Configure git to use the GitHub CLI as a credential helper
     summary: |
       Configure git to delegate GitHub authentication to gh via
@@ -196,6 +211,7 @@ tasks:
       - gh auth setup-git
 
   repo:view:
+    run: once
     desc: View a GitHub repository in the terminal or browser
     summary: |
       View repository details in the terminal. If REPO is set, views that
@@ -208,6 +224,7 @@ tasks:
       - gh repo view {{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}}
 
   repo:create:
+    run: once
     desc: Create a new GitHub repository
     summary: |
       Create a new GitHub repository. Requires REPO to be set.
@@ -226,6 +243,7 @@ tasks:
         {{if .DESCRIPTION}}--description "{{.DESCRIPTION}}"{{end}}
 
   repo:clone:
+    run: once
     desc: Clone a GitHub repository to the local machine
     summary: |
       Clone a GitHub repository. Requires REPO to be set.
@@ -246,6 +264,7 @@ tasks:
       - task: _repo:clone:windows
 
   repo:fork:
+    run: once
     desc: Fork a GitHub repository to your account
     summary: |
       Fork a GitHub repository. If REPO is set, forks that specific repo;
@@ -259,6 +278,7 @@ tasks:
       - gh repo fork {{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}} --clone
 
   repo:list:
+    run: once
     desc: List GitHub repositories for the authenticated user or an owner
     summary: |
       List repositories for the authenticated user. Set OWNER to list
@@ -270,6 +290,7 @@ tasks:
       - gh repo list {{.OWNER}}
 
   repo:sync:
+    run: once
     desc: Sync the current repository branch with the upstream source
     summary: |
       Sync the current branch with its upstream source via `gh repo sync`.
@@ -281,6 +302,7 @@ tasks:
       - gh repo sync {{if .BRANCH}}--branch {{.BRANCH}}{{end}}
 
   repo:archive:
+    run: once
     desc: Archive a GitHub repository
     summary: |
       Archive a GitHub repository, making it read-only. Requires REPO.
@@ -295,6 +317,7 @@ tasks:
       - gh repo archive {{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}} --yes
 
   repo:delete:danger:
+    run: once
     desc: Permanently delete a GitHub repository
     summary: |
       Permanently delete a GitHub repository. Requires REPO.
@@ -314,6 +337,7 @@ tasks:
       - gh repo delete {{if .OWNER}}{{.OWNER}}/{{end}}{{.REPO}} --yes
 
   pr:list:
+    run: once
     desc: List open pull requests in the current repository
     summary: List open pull requests for the current repository via `gh pr list`.
     deps:
@@ -322,6 +346,7 @@ tasks:
       - gh pr list
 
   pr:status:
+    run: once
     desc: Show pull request status for the current branch
     summary: Display the status of pull requests related to the current branch via `gh pr status`.
     deps:
@@ -330,6 +355,7 @@ tasks:
       - gh pr status
 
   pr:view:
+    run: once
     desc: View a pull request in the terminal or browser
     summary: |
       View the pull request for the current branch, or the PR specified by
@@ -340,6 +366,7 @@ tasks:
       - gh pr view {{.PR_NUMBER}}
 
   pr:create:
+    run: once
     desc: Create a new pull request for the current branch
     summary: |
       Create a pull request interactively. Optionally set PR_TITLE, PR_BODY,
@@ -356,6 +383,7 @@ tasks:
         {{if .HEAD}}--head {{.HEAD}}{{end}}
 
   pr:checkout:
+    run: once
     desc: Check out a pull request branch locally
     summary: |
       Check out the branch for the pull request specified by PR_NUMBER.
@@ -369,6 +397,7 @@ tasks:
       - gh pr checkout {{.PR_NUMBER}}
 
   pr:diff:
+    run: once
     desc: Show the diff for a pull request
     summary: |
       Show the diff for the current branch's PR, or for PR_NUMBER.
@@ -379,6 +408,7 @@ tasks:
       - gh pr diff {{.PR_NUMBER}}
 
   pr:review:
+    run: once
     desc: Add a review to a pull request
     summary: |
       Open an interactive review for the current branch's PR, or for PR_NUMBER.
@@ -389,6 +419,7 @@ tasks:
       - gh pr review {{.PR_NUMBER}}
 
   pr:merge:
+    run: once
     desc: Merge a pull request
     summary: |
       Merge the pull request specified by PR_NUMBER. MERGE_METHOD controls
@@ -403,6 +434,7 @@ tasks:
       - gh pr merge {{.PR_NUMBER}} --{{default "merge" .MERGE_METHOD}}
 
   pr:close:
+    run: once
     desc: Close a pull request without merging
     summary: |
       Close the pull request specified by PR_NUMBER without merging.
@@ -416,6 +448,7 @@ tasks:
       - gh pr close {{.PR_NUMBER}}
 
   pr:ready:
+    run: once
     desc: Mark a draft pull request as ready for review
     summary: |
       Convert a draft PR to ready-for-review state.
@@ -427,6 +460,7 @@ tasks:
       - gh pr ready {{.PR_NUMBER}}
 
   pr:comment:
+    run: once
     desc: Add a comment to a pull request
     summary: |
       Post a comment on the pull request specified by PR_NUMBER.
@@ -441,6 +475,7 @@ tasks:
       - gh pr comment {{.PR_NUMBER}} --body "{{.PR_BODY}}"
 
   issue:list:
+    run: once
     desc: List open issues in the current repository
     summary: List open issues for the current repository via `gh issue list`.
     deps:
@@ -449,6 +484,7 @@ tasks:
       - gh issue list
 
   issue:view:
+    run: once
     desc: View an issue in the terminal or browser
     summary: |
       View the issue specified by ISSUE_NUMBER.
@@ -462,6 +498,7 @@ tasks:
       - gh issue view {{.ISSUE_NUMBER}}
 
   issue:create:
+    run: once
     desc: Create a new issue in the current repository
     summary: |
       Create an issue interactively. Optionally set ISSUE_TITLE and ISSUE_BODY
@@ -475,6 +512,7 @@ tasks:
         {{if .ISSUE_BODY}}--body "{{.ISSUE_BODY}}"{{end}}
 
   issue:comment:
+    run: once
     desc: Add a comment to an issue
     summary: |
       Post a comment on the issue specified by ISSUE_NUMBER.
@@ -490,6 +528,7 @@ tasks:
       - gh issue comment {{.ISSUE_NUMBER}} --body "{{.ISSUE_BODY}}"
 
   issue:close:
+    run: once
     desc: Close an issue
     summary: |
       Close the issue specified by ISSUE_NUMBER.
@@ -503,6 +542,7 @@ tasks:
       - gh issue close {{.ISSUE_NUMBER}}
 
   issue:reopen:
+    run: once
     desc: Reopen a previously closed issue
     summary: |
       Reopen the issue specified by ISSUE_NUMBER.
@@ -516,6 +556,7 @@ tasks:
       - gh issue reopen {{.ISSUE_NUMBER}}
 
   issue:assign:
+    run: once
     desc: Assign a GitHub user to an issue
     summary: |
       Assign ASSIGNEE to the issue specified by ISSUE_NUMBER.
@@ -531,6 +572,7 @@ tasks:
       - gh issue edit {{.ISSUE_NUMBER}} --add-assignee {{.ASSIGNEE}}
 
   issue:label:
+    run: once
     desc: Add a label to an issue
     summary: |
       Add LABEL to the issue specified by ISSUE_NUMBER.
@@ -546,6 +588,7 @@ tasks:
       - gh issue edit {{.ISSUE_NUMBER}} --add-label {{.LABEL}}
 
   workflow:list:
+    run: once
     desc: List GitHub Actions workflows in the current repository
     summary: List all available workflows via `gh workflow list`.
     deps:
@@ -554,6 +597,7 @@ tasks:
       - gh workflow list
 
   workflow:view:
+    run: once
     desc: View a GitHub Actions workflow
     summary: |
       View the workflow specified by WORKFLOW (name or file).
@@ -567,6 +611,7 @@ tasks:
       - gh workflow view {{.WORKFLOW}}
 
   workflow:run:
+    run: once
     desc: Trigger a GitHub Actions workflow dispatch event
     summary: |
       Manually trigger the workflow specified by WORKFLOW. Optionally set
@@ -581,6 +626,7 @@ tasks:
       - gh workflow run {{.WORKFLOW}} {{if .BRANCH}}--ref {{.BRANCH}}{{end}}
 
   workflow:watch:
+    run: once
     desc: Watch a GitHub Actions workflow run in real time
     summary: |
       Watch the most recent run of WORKFLOW until it completes.
@@ -596,6 +642,7 @@ tasks:
       - task: _workflow:watch:windows
 
   run:list:
+    run: once
     desc: List recent GitHub Actions runs in the current repository
     summary: List recent workflow runs via `gh run list`.
     deps:
@@ -604,6 +651,7 @@ tasks:
       - gh run list
 
   run:view:
+    run: once
     desc: View a specific GitHub Actions workflow run
     summary: |
       View the run specified by RUN_ID.
@@ -617,6 +665,7 @@ tasks:
       - gh run view {{.RUN_ID}}
 
   run:logs:
+    run: once
     desc: View logs for a GitHub Actions workflow run
     summary: |
       Print the logs for the run specified by RUN_ID.
@@ -630,6 +679,7 @@ tasks:
       - gh run view {{.RUN_ID}} --log
 
   run:rerun:
+    run: once
     desc: Re-run a GitHub Actions workflow run
     summary: |
       Re-run the workflow run specified by RUN_ID.
@@ -643,6 +693,7 @@ tasks:
       - gh run rerun {{.RUN_ID}}
 
   run:cancel:
+    run: once
     desc: Cancel a running GitHub Actions workflow run
     summary: |
       Cancel the workflow run specified by RUN_ID.
@@ -656,6 +707,7 @@ tasks:
       - gh run cancel {{.RUN_ID}}
 
   release:list:
+    run: once
     desc: List releases in the current repository
     summary: |
       List all releases. Set OWNER and REPO to target a repo not owned by you
@@ -667,6 +719,7 @@ tasks:
       - gh release list {{if .OWNER}}--repo {{.OWNER}}/{{.REPO}}{{end}}
 
   release:view:
+    run: once
     desc: View a GitHub release
     summary: |
       View the release specified by TAG. If TAG is unset, views the latest
@@ -678,6 +731,7 @@ tasks:
       - gh release view {{.TAG}} {{if .OWNER}}--repo {{.OWNER}}/{{.REPO}}{{end}}
 
   release:create:
+    run: once
     desc: Create a new GitHub release
     summary: |
       Create a release for the tag specified by TAG.
@@ -698,6 +752,7 @@ tasks:
         {{if .NOTES}}--notes "{{.NOTES}}"{{end}}
 
   release:upload:
+    run: once
     desc: Upload an asset to an existing GitHub release
     summary: |
       Upload ASSET to the release identified by TAG.
@@ -714,6 +769,7 @@ tasks:
       - gh release upload {{.TAG}} {{.ASSET}} {{if .OWNER}}--repo {{.OWNER}}/{{.REPO}}{{end}}
 
   release:download:
+    run: once
     desc: Download assets from a GitHub release
     summary: |
       Download release assets for the tag specified by TAG into DOWNLOAD_DIR.
@@ -730,6 +786,7 @@ tasks:
         {{if ne .DOWNLOAD_DIR "."}}--dir {{.DOWNLOAD_DIR}}{{end}}
 
   release:download:all:
+    run: once
     desc: Download assets from all releases in a repository
     summary: |
       Iterates every release tag and downloads its assets into DOWNLOAD_DIR/<tag>/.
@@ -744,6 +801,7 @@ tasks:
       - task: _release:download:all:windows
 
   _release:download:all:unix:
+    run: once
     internal: true
     desc: Download all release assets on macOS/Linux
     platforms: [linux, darwin]
@@ -759,6 +817,7 @@ tasks:
         done
 
   _release:download:all:windows:
+    run: once
     internal: true
     desc: Download all release assets on Windows
     platforms: [windows]
@@ -775,6 +834,7 @@ tasks:
         }"
 
   release:delete:danger:
+    run: once
     desc: Permanently delete a GitHub release
     summary: |
       Delete the release identified by TAG. The git tag is preserved;
@@ -795,6 +855,7 @@ tasks:
       - gh release delete {{.TAG}} --yes {{if .OWNER}}--repo {{.OWNER}}/{{.REPO}}{{end}}
 
   secret:list:
+    run: once
     desc: List GitHub Actions secrets for the current repository
     summary: |
       List the names of GitHub Actions secrets. Values are never shown.
@@ -806,6 +867,7 @@ tasks:
       - gh secret list {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
 
   secret:set:
+    run: once
     desc: Create or update a GitHub Actions secret
     summary: |
       Set a secret named SECRET_NAME to SECRET_VALUE. The value is piped
@@ -824,6 +886,7 @@ tasks:
       - task: _secret:set:windows
 
   secret:delete:danger:
+    run: once
     desc: Permanently delete a GitHub Actions secret
     summary: |
       Delete the secret named SECRET_NAME. This action is irreversible.
@@ -842,6 +905,7 @@ tasks:
       - gh secret delete {{.SECRET_NAME}} {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
 
   variable:list:
+    run: once
     desc: List GitHub Actions variables for the current repository
     summary: |
       List GitHub Actions variables (non-secret configuration values).
@@ -853,6 +917,7 @@ tasks:
       - gh variable list {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
 
   variable:set:
+    run: once
     desc: Create or update a GitHub Actions variable
     summary: |
       Set a variable named VARIABLE_NAME to VARIABLE_VALUE.
@@ -872,6 +937,7 @@ tasks:
         {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
 
   variable:delete:danger:
+    run: once
     desc: Permanently delete a GitHub Actions variable
     summary: |
       Delete the variable named VARIABLE_NAME. This action is irreversible.
@@ -889,6 +955,7 @@ tasks:
       - gh variable delete {{.VARIABLE_NAME}} {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
 
   gist:list:
+    run: once
     desc: List gists for the authenticated GitHub user
     summary: List all gists belonging to the authenticated user via `gh gist list`.
     deps:
@@ -897,6 +964,7 @@ tasks:
       - gh gist list
 
   gist:view:
+    run: once
     desc: View a GitHub gist
     summary: |
       View the gist specified by GIST_ID.
@@ -910,6 +978,7 @@ tasks:
       - gh gist view {{.GIST_ID}}
 
   gist:create:
+    run: once
     desc: Create a new GitHub gist from a file
     summary: |
       Create a new gist from the file specified by FILE.
@@ -924,6 +993,7 @@ tasks:
       - gh gist create {{.FILE}} {{if .DESCRIPTION}}--desc "{{.DESCRIPTION}}"{{end}}
 
   gist:delete:danger:
+    run: once
     desc: Permanently delete a GitHub gist
     summary: |
       Delete the gist specified by GIST_ID. This action is irreversible.
@@ -940,6 +1010,7 @@ tasks:
       - gh gist delete {{.GIST_ID}}
 
   api:get:
+    run: once
     desc: Make an authenticated GET request to the GitHub API
     summary: |
       Make a GET request to the GitHub REST API ENDPOINT via `gh api`.
@@ -953,6 +1024,7 @@ tasks:
       - gh api {{.ENDPOINT}}
 
   api:post:
+    run: once
     desc: Make an authenticated POST request to the GitHub API
     summary: |
       Make a POST request to the GitHub REST API ENDPOINT with DATA as the
@@ -968,6 +1040,7 @@ tasks:
       - task: _api:post:windows
 
   api:patch:
+    run: once
     desc: Make an authenticated PATCH request to the GitHub API
     summary: |
       Make a PATCH request to the GitHub REST API ENDPOINT with DATA as the
@@ -983,6 +1056,7 @@ tasks:
       - task: _api:patch:windows
 
   api:delete:danger:
+    run: once
     desc: Make an authenticated DELETE request to the GitHub API
     summary: |
       Make a DELETE request to the GitHub REST API ENDPOINT. This is a
@@ -1000,6 +1074,7 @@ tasks:
       - gh api --method DELETE {{.ENDPOINT}}
 
   extension:list:
+    run: once
     desc: List installed GitHub CLI extensions
     summary: List all locally installed gh extensions via `gh extension list`.
     deps:
@@ -1022,6 +1097,7 @@ tasks:
       - gh extension install {{.EXTENSION}}
 
   extension:upgrade:
+    run: once
     desc: Upgrade a GitHub CLI extension to the latest version
     summary: |
       Upgrade the gh extension specified by EXTENSION. Use EXTENSION=--all
@@ -1036,6 +1112,7 @@ tasks:
       - gh extension upgrade {{.EXTENSION}}
 
   extension:remove:
+    run: once
     desc: Remove an installed GitHub CLI extension
     summary: |
       Remove the gh extension specified by EXTENSION.
@@ -1049,6 +1126,7 @@ tasks:
       - gh extension remove {{.EXTENSION}}
 
   config:list:
+    run: once
     desc: List all GitHub CLI configuration values
     summary: Display all current gh configuration settings via `gh config list`.
     deps:
@@ -1057,6 +1135,7 @@ tasks:
       - gh config list
 
   config:get:
+    run: once
     desc: Get a GitHub CLI configuration value
     summary: |
       Get the value of the configuration key specified by CONFIG_KEY.
@@ -1070,6 +1149,7 @@ tasks:
       - gh config get {{.CONFIG_KEY}}
 
   config:set:
+    run: once
     desc: Set a GitHub CLI configuration value
     summary: |
       Set the configuration key CONFIG_KEY to CONFIG_VALUE.
@@ -1085,6 +1165,7 @@ tasks:
       - gh config set {{.CONFIG_KEY}} {{.CONFIG_VALUE}}
 
   ssh-key:list:
+    run: once
     desc: List SSH keys associated with the GitHub account
     summary: List all SSH keys for the authenticated GitHub user via `gh ssh-key list`.
     deps:
@@ -1093,6 +1174,7 @@ tasks:
       - gh ssh-key list
 
   ssh-key:add:
+    run: once
     desc: Add an SSH public key to the GitHub account
     summary: |
       Add the SSH public key at SSH_KEY_FILE to the authenticated GitHub account.
@@ -1107,6 +1189,7 @@ tasks:
       - gh ssh-key add {{.SSH_KEY_FILE}} {{if .SSH_KEY_TITLE}}--title "{{.SSH_KEY_TITLE}}"{{end}}
 
   ssh-key:delete:danger:
+    run: once
     desc: Permanently delete an SSH key from the GitHub account
     summary: |
       Delete the SSH key identified by SSH_KEY_ID from the authenticated
@@ -1124,6 +1207,7 @@ tasks:
       - gh ssh-key delete {{.SSH_KEY_ID}} --yes
 
   alias:list:
+    run: once
     desc: List all GitHub CLI command aliases
     summary: List all configured gh command aliases via `gh alias list`.
     deps:
@@ -1132,6 +1216,7 @@ tasks:
       - gh alias list
 
   alias:set:
+    run: once
     desc: Create or update a GitHub CLI command alias
     summary: |
       Create a gh command alias named ALIAS_NAME that expands to ALIAS_COMMAND.
@@ -1148,6 +1233,7 @@ tasks:
       - task: _alias:set:windows
 
   alias:delete:
+    run: once
     desc: Delete a GitHub CLI command alias
     summary: |
       Remove the gh command alias named ALIAS_NAME.
@@ -1161,6 +1247,7 @@ tasks:
       - gh alias delete {{.ALIAS_NAME}}
 
   project:list:
+    run: once
     desc: List GitHub Projects for a user or organisation
     summary: |
       List GitHub Projects for the authenticated user. Set OWNER to list
@@ -1172,6 +1259,7 @@ tasks:
       - gh project list {{if .OWNER}}--owner {{.OWNER}}{{end}}
 
   project:view:
+    run: once
     desc: View a GitHub Project
     summary: |
       View the project specified by PROJECT_NUMBER. Set OWNER to target
@@ -1186,6 +1274,7 @@ tasks:
       - gh project view {{.PROJECT_NUMBER}} {{if .OWNER}}--owner {{.OWNER}}{{end}}
 
   project:create:
+    run: once
     desc: Create a new GitHub Project
     summary: |
       Create a new GitHub Project titled PROJECT_TITLE. Set OWNER to create
@@ -1200,6 +1289,7 @@ tasks:
       - gh project create --title "{{.PROJECT_TITLE}}" {{if .OWNER}}--owner {{.OWNER}}{{end}}
 
   open:
+    run: once
     desc: Open the current repository in the browser
     summary: Open the current repository's GitHub page in the default web browser.
     deps:
@@ -1208,6 +1298,7 @@ tasks:
       - gh repo view --web
 
   browse:
+    run: once
     desc: Browse the current repository on GitHub in the browser
     summary: |
       Open the current branch of the repository in the default web browser
@@ -1218,6 +1309,7 @@ tasks:
       - gh browse
 
   search:repos:
+    run: once
     desc: Search for GitHub repositories
     summary: |
       Search GitHub repositories using the query in QUERY.
@@ -1231,6 +1323,7 @@ tasks:
       - gh search repos "{{.QUERY}}"
 
   search:issues:
+    run: once
     desc: Search for GitHub issues
     summary: |
       Search GitHub issues using the query in QUERY.
@@ -1244,6 +1337,7 @@ tasks:
       - gh search issues "{{.QUERY}}"
 
   search:prs:
+    run: once
     desc: Search for GitHub pull requests
     summary: |
       Search GitHub pull requests using the query in QUERY.
@@ -1257,6 +1351,7 @@ tasks:
       - gh search prs "{{.QUERY}}"
 
   _repo:clone:unix:
+    run: once
     internal: true
     desc: Clone a repository on macOS or Linux
     summary: |
@@ -1278,6 +1373,7 @@ tasks:
         fi
 
   _repo:clone:windows:
+    run: once
     internal: true
     desc: Clone a repository on Windows
     summary: |
@@ -1297,6 +1393,7 @@ tasks:
         else { gh repo clone $target @args }"
 
   _api:post:unix:
+    run: once
     internal: true
     desc: POST to the GitHub API on macOS or Linux by piping DATA via stdin
     summary: Pipe DATA to gh api --method POST via printf on macOS or Linux.
@@ -1308,6 +1405,7 @@ tasks:
       - printf '%s' "$GH_DATA" | gh api --method POST {{.ENDPOINT}} --input -
 
   _api:post:windows:
+    run: once
     internal: true
     desc: POST to the GitHub API on Windows by piping DATA via stdin
     summary: Pipe DATA to gh api --method POST via PowerShell on Windows.
@@ -1320,6 +1418,7 @@ tasks:
         "$env:GH_DATA | gh api --method POST {{.ENDPOINT}} --input -"
 
   _api:patch:unix:
+    run: once
     internal: true
     desc: PATCH the GitHub API on macOS or Linux by piping DATA via stdin
     summary: Pipe DATA to gh api --method PATCH via printf on macOS or Linux.
@@ -1331,6 +1430,7 @@ tasks:
       - printf '%s' "$GH_DATA" | gh api --method PATCH {{.ENDPOINT}} --input -
 
   _api:patch:windows:
+    run: once
     internal: true
     desc: PATCH the GitHub API on Windows by piping DATA via stdin
     summary: Pipe DATA to gh api --method PATCH via PowerShell on Windows.
@@ -1343,6 +1443,7 @@ tasks:
         "$env:GH_DATA | gh api --method PATCH {{.ENDPOINT}} --input -"
 
   _alias:set:unix:
+    run: once
     internal: true
     desc: Set a gh alias on macOS or Linux using single-quoted expansion
     summary: Run gh alias set with single-quote wrapping on macOS or Linux.
@@ -1352,6 +1453,7 @@ tasks:
       - gh alias set {{.ALIAS_NAME}} '{{.ALIAS_COMMAND}}'
 
   _alias:set:windows:
+    run: once
     internal: true
     desc: Set a gh alias on Windows using double-quoted expansion
     summary: Run gh alias set with double-quote wrapping on Windows.
@@ -1360,6 +1462,7 @@ tasks:
       - gh alias set {{.ALIAS_NAME}} "{{.ALIAS_COMMAND}}"
 
   _workflow:watch:unix:
+    run: once
     internal: true
     desc: Watch the latest run of a workflow on macOS or Linux
     summary: Resolve the most recent run ID via command substitution, then watch it.
@@ -1369,6 +1472,7 @@ tasks:
       - gh run watch $(gh run list --workflow {{.WORKFLOW}} --limit 1 --json databaseId --jq '.[0].databaseId')
 
   _workflow:watch:windows:
+    run: once
     internal: true
     desc: Watch the latest run of a workflow on Windows
     summary: Resolve the most recent run ID via PowerShell, then watch it.
@@ -1381,6 +1485,7 @@ tasks:
         gh run watch $runId"
 
   _install:auto:unix:
+    run: once
     internal: true
     desc: Auto-detect package manager and install gh on macOS or Linux
     summary: |
@@ -1455,6 +1560,7 @@ tasks:
         fi
 
   _install:auto:windows:
+    run: once
     internal: true
     desc: Auto-detect package manager and install gh on Windows
     summary: |
@@ -1485,6 +1591,7 @@ tasks:
         ' See https://cli.github.com/manual/installation'; Write-Error $err; exit 1 }"
 
   _install:macos:brew:
+    run: once
     internal: true
     desc: Install gh on macOS using Homebrew
     summary: Run `brew install gh` on macOS. Skipped if gh is already installed.
@@ -1501,6 +1608,7 @@ tasks:
       - echo 'gh installed successfully.'
 
   _install:windows:winget:
+    run: once
     internal: true
     desc: Install gh on Windows using winget
     summary: Run `winget install --id GitHub.cli` on Windows. Skipped if gh is already installed.
@@ -1520,6 +1628,7 @@ tasks:
       - echo gh installed successfully. Restart your terminal if gh is not in PATH.
 
   _install:windows:choco:
+    run: once
     internal: true
     desc: Install gh on Windows using Chocolatey
     summary: Run `choco install gh` on Windows. Skipped if gh is already installed.
@@ -1539,6 +1648,7 @@ tasks:
       - echo gh installed successfully.
 
   _install:windows:scoop:
+    run: once
     internal: true
     desc: Install gh on Windows using Scoop
     summary: Run `scoop install gh` on Windows. Skipped if gh is already installed.
@@ -1558,6 +1668,7 @@ tasks:
       - echo gh installed successfully.
 
   _install:linux:apt:
+    run: once
     internal: true
     desc: Install gh on Debian or Ubuntu using apt
     summary: |
@@ -1588,6 +1699,7 @@ tasks:
       - echo 'gh installed successfully.'
 
   _install:linux:dnf:
+    run: once
     internal: true
     desc: Install gh on Fedora or RHEL using dnf
     summary: |
@@ -1608,6 +1720,7 @@ tasks:
       - echo 'gh installed successfully.'
 
   _install:linux:yum:
+    run: once
     internal: true
     desc: Install gh on CentOS or RHEL using yum
     summary: |
@@ -1627,6 +1740,7 @@ tasks:
       - echo 'gh installed successfully.'
 
   _install:linux:pacman:
+    run: once
     internal: true
     desc: Install gh on Arch Linux using pacman
     summary: |
@@ -1645,6 +1759,7 @@ tasks:
       - echo 'gh installed successfully.'
 
   _install:linux:zypper:
+    run: once
     internal: true
     desc: Install gh on openSUSE using zypper
     summary: |
@@ -1665,6 +1780,7 @@ tasks:
       - echo 'gh installed successfully.'
 
   _install:linux:snap:
+    run: once
     internal: true
     desc: Install gh on Linux using snap
     summary: |
@@ -1683,6 +1799,7 @@ tasks:
       - echo 'gh installed successfully.'
 
   _install:linux:brew:
+    run: once
     internal: true
     desc: Install gh on Linux using Homebrew
     summary: |
@@ -1701,6 +1818,7 @@ tasks:
       - echo 'gh installed successfully.'
 
   _upgrade:auto:unix:
+    run: once
     internal: true
     desc: Auto-detect package manager and upgrade gh on macOS or Linux
     summary: |
@@ -1731,6 +1849,7 @@ tasks:
         fi
 
   _upgrade:auto:windows:
+    run: once
     internal: true
     desc: Auto-detect package manager and upgrade gh on Windows
     summary: |
@@ -1747,6 +1866,7 @@ tasks:
         else { Write-Error 'ERROR: No supported package manager detected for upgrade.'; exit 1 }"
 
   _upgrade:macos:brew:
+    run: once
     internal: true
     desc: Upgrade gh on macOS using Homebrew
     summary: Run `brew upgrade gh` on macOS.
@@ -1760,6 +1880,7 @@ tasks:
       - brew upgrade gh
 
   _upgrade:windows:winget:
+    run: once
     internal: true
     desc: Upgrade gh on Windows using winget
     summary: Run `winget upgrade --id GitHub.cli` on Windows.
@@ -1774,6 +1895,7 @@ tasks:
       - winget upgrade --id GitHub.cli --accept-source-agreements --accept-package-agreements
 
   _upgrade:windows:choco:
+    run: once
     internal: true
     desc: Upgrade gh on Windows using Chocolatey
     summary: Run `choco upgrade gh` on Windows.
@@ -1788,6 +1910,7 @@ tasks:
       - choco upgrade gh -y
 
   _upgrade:windows:scoop:
+    run: once
     internal: true
     desc: Upgrade gh on Windows using Scoop
     summary: Run `scoop update gh` on Windows.
@@ -1802,6 +1925,7 @@ tasks:
       - scoop update gh
 
   _upgrade:linux:apt:
+    run: once
     internal: true
     desc: Upgrade gh on Debian or Ubuntu using apt
     summary: Run `sudo apt-get install --only-upgrade gh` to upgrade gh on Debian/Ubuntu.
@@ -1815,6 +1939,7 @@ tasks:
       - sudo apt-get install --only-upgrade -y gh
 
   _upgrade:linux:dnf:
+    run: once
     internal: true
     desc: Upgrade gh on Fedora or RHEL using dnf
     summary: Run `sudo dnf upgrade gh` to upgrade gh on Fedora/RHEL.
@@ -1828,6 +1953,7 @@ tasks:
       - sudo dnf upgrade -y gh
 
   _upgrade:linux:snap:
+    run: once
     internal: true
     desc: Upgrade gh on Linux using snap
     summary: Run `sudo snap refresh gh` to upgrade gh via snap.
@@ -1841,6 +1967,7 @@ tasks:
       - sudo snap refresh gh
 
   _uninstall:auto:unix:
+    run: once
     internal: true
     desc: Auto-detect package manager and uninstall gh on macOS or Linux
     summary: |
@@ -1895,6 +2022,7 @@ tasks:
         echo 'gh removed.'
 
   _uninstall:auto:windows:
+    run: once
     internal: true
     desc: Auto-detect package manager and uninstall gh on Windows
     summary: |
@@ -1918,6 +2046,7 @@ tasks:
         else { Write-Error 'ERROR: No supported package manager detected (winget, choco, scoop).'; exit 1 }"
 
   _uninstall:macos:brew:
+    run: once
     internal: true
     desc: Uninstall gh on macOS using Homebrew
     summary: Run `brew uninstall gh` on macOS.
@@ -1932,6 +2061,7 @@ tasks:
       - echo 'gh uninstalled.'
 
   _uninstall:windows:winget:
+    run: once
     internal: true
     desc: Uninstall gh on Windows using winget
     summary: Run `winget uninstall --id GitHub.cli` on Windows.
@@ -1947,6 +2077,7 @@ tasks:
       - echo gh uninstalled.
 
   _uninstall:windows:choco:
+    run: once
     internal: true
     desc: Uninstall gh on Windows using Chocolatey
     summary: Run `choco uninstall gh` on Windows.
@@ -1962,6 +2093,7 @@ tasks:
       - echo gh uninstalled.
 
   _uninstall:windows:scoop:
+    run: once
     internal: true
     desc: Uninstall gh on Windows using Scoop
     summary: Run `scoop uninstall gh` on Windows.
@@ -1977,6 +2109,7 @@ tasks:
       - echo gh uninstalled.
 
   _version:unix:
+    run: once
     internal: true
     desc: Show the gh version on macOS or Linux
     summary: Print the installed gh version string on macOS or Linux.
@@ -1986,6 +2119,7 @@ tasks:
       - gh --version
 
   _version:windows:
+    run: once
     internal: true
     desc: Show the gh version on Windows
     summary: Print the installed gh version string on Windows.
@@ -1994,6 +2128,7 @@ tasks:
       - gh --version
 
   _doctor:unix:
+    run: once
     internal: true
     desc: Run gh doctor on macOS or Linux
     summary: Run `gh doctor` to check configuration, auth, and connectivity on macOS or Linux.
@@ -2003,6 +2138,7 @@ tasks:
       - gh doctor
 
   _doctor:windows:
+    run: once
     internal: true
     desc: Run gh doctor on Windows
     summary: Run `gh doctor` to check configuration, auth, and connectivity on Windows.
@@ -2011,6 +2147,7 @@ tasks:
       - gh doctor
 
   _which:unix:
+    run: once
     internal: true
     desc: Show the path to the gh binary on macOS or Linux
     summary: Print the filesystem path of the gh binary on macOS or Linux.
@@ -2020,6 +2157,7 @@ tasks:
       - command -v gh
 
   _which:windows:
+    run: once
     internal: true
     desc: Show the path to the gh binary on Windows
     summary: Print the filesystem path of the gh binary on Windows.
@@ -2028,6 +2166,7 @@ tasks:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Command gh).Source"
 
   _verify:unix:
+    run: once
     internal: true
     desc: Verify gh installation and auth status on macOS or Linux
     summary: |
@@ -2047,6 +2186,7 @@ tasks:
         gh auth status || echo 'Not authenticated. Run: task auth:login'
 
   _verify:windows:
+    run: once
     internal: true
     desc: Verify gh installation and auth status on Windows
     summary: |
@@ -2063,6 +2203,7 @@ tasks:
         catch { Write-Host 'Not authenticated. Run: task auth:login' }"
 
   _secret:set:unix:
+    run: once
     internal: true
     desc: Set a GitHub Actions secret on macOS or Linux via stdin
     summary: |
@@ -2079,6 +2220,7 @@ tasks:
         {{if .ENVIRONMENT}}--env {{.ENVIRONMENT}}{{end}}
 
   _secret:set:windows:
+    run: once
     internal: true
     desc: Set a GitHub Actions secret on Windows via stdin
     summary: |

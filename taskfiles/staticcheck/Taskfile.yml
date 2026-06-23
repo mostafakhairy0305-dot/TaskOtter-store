@@ -26,6 +26,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Staticcheck automation tasks
     summary: Display the list of available Staticcheck-related tasks defined in this Taskfile.
     cmds:
@@ -44,6 +45,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove Staticcheck from the global Go bin
     summary: |
       Remove the Staticcheck binary installed under GOBIN, falling back to
@@ -58,6 +60,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade Staticcheck to the pinned STATICCHECK_VERSION
     summary: |
       Re-download and install the STATICCHECK_VERSION binary, replacing any
@@ -100,8 +103,8 @@ tasks:
       - task: _version:windows
 
   _install:darwin:
-    internal: true
     run: once
+    internal: true
     desc: Install Staticcheck on macOS
     summary: Download and install the pinned Staticcheck macOS archive for the current CPU architecture.
     platforms: [darwin]
@@ -157,8 +160,8 @@ tasks:
           - archive
 
   _install:linux:
-    internal: true
     run: once
+    internal: true
     desc: Install Staticcheck on Linux
     summary: Download and install the pinned Staticcheck Linux archive for the current CPU architecture.
     platforms: [linux]
@@ -220,8 +223,8 @@ tasks:
           - archive
 
   _install:windows:
-    internal: true
     run: once
+    internal: true
     desc: Install Staticcheck on Windows
     summary: Download and install the pinned Staticcheck Windows archive for the current CPU architecture.
     platforms: [windows]
@@ -291,6 +294,7 @@ tasks:
         (Join-Path $env:TEMP 'taskotter-staticcheck.tar.gz') -Recurse -Force -ErrorAction SilentlyContinue"
 
   _install:undo:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -302,6 +306,7 @@ tasks:
       - echo 'Staticcheck removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -316,8 +321,8 @@ tasks:
       - echo Staticcheck removed.
 
   _lint:unix:
-    internal: true
     run: once
+    internal: true
     desc: Run Staticcheck on macOS or Linux
     summary: Run the pinned Staticcheck binary on macOS or Linux.
     platforms: [linux, darwin]
@@ -328,8 +333,8 @@ tasks:
       - '"{{.GLOBAL_GO_BIN}}/staticcheck" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
 
   _lint:windows:
-    internal: true
     run: once
+    internal: true
     desc: Run Staticcheck on Windows
     summary: Run the pinned Staticcheck binary on Windows.
     platforms: [windows]
@@ -340,8 +345,8 @@ tasks:
       - '"{{.GLOBAL_GO_BIN}}/staticcheck.exe" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.TARGETS}} {{.EXTRA_ARGS}}{{end}}'
 
   _version:unix:
-    internal: true
     run: once
+    internal: true
     desc: Print Staticcheck version on macOS or Linux
     summary: Print the pinned Staticcheck binary version on macOS or Linux.
     platforms: [linux, darwin]
@@ -349,8 +354,8 @@ tasks:
       - '"{{.GLOBAL_GO_BIN}}/staticcheck" -version'
 
   _version:windows:
-    internal: true
     run: once
+    internal: true
     desc: Print Staticcheck version on Windows
     summary: Print the pinned Staticcheck binary version on Windows.
     platforms: [windows]

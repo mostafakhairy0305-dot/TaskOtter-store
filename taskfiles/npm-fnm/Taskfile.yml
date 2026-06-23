@@ -32,12 +32,14 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available npm automation tasks
     summary: Display the list of available npm-related tasks defined in this Taskfile.
     cmds:
       - task --list
 
   node:setup:
+    run: once
     desc: Install Node.js and npm using the selected node manager
     summary: |
       Install Node.js (and npm) via the node manager selected by fnm.
@@ -49,12 +51,14 @@ tasks:
       - task: _node:setup:windows
 
   manager:setup:
+    run: once
     desc: Enable Corepack for npm project commands
     summary: Ensure Corepack is installed and enable package manager shims before Corepack-managed npm commands.
     cmds:
       - task: corepack:setup
 
   manager:pin:
+    run: once
     desc: Pin npm in package.json with Corepack
     summary: |
       Run Corepack to write npm@PACKAGE_MANAGER_VERSION to the current
@@ -69,6 +73,7 @@ tasks:
           VERSION: "{{.PACKAGE_MANAGER_VERSION}}"
 
   version:
+    run: once
     desc: Show the active Node.js and npm versions
     summary: |
       Print the currently active Node.js and npm versions by loading the runtime
@@ -96,6 +101,7 @@ tasks:
           ARGS: install
 
   ci:
+    run: once
     desc: Install project dependencies with npm ci
     summary: |
       Run npm ci for a clean, reproducible install driven by package-lock.json.
@@ -107,6 +113,7 @@ tasks:
       - task: _ci:windows
 
   add:
+    run: once
     desc: Install packages globally with npm (PACKAGES=<pkgs>)
     requires:
       vars: [PACKAGES]
@@ -119,6 +126,7 @@ tasks:
           ARGS: "install -g {{.PACKAGES}} {{.EXTRA_ARGS}}"
 
   remove:
+    run: once
     desc: Remove globally-installed packages with npm (PACKAGES=<pkgs>)
     requires:
       vars: [PACKAGES]
@@ -131,6 +139,7 @@ tasks:
           ARGS: "uninstall -g {{.PACKAGES}} {{.EXTRA_ARGS}}"
 
   install:undo:
+    run: once
     desc: Explain how to remove npm, which ships bundled with Node.js
     summary: |
       npm ships bundled with Node.js and cannot be removed independently of
@@ -143,6 +152,7 @@ tasks:
       - "echo 'Remove Node.js instead: task fnm:install:undo.'"
 
   upgrade:
+    run: once
     desc: Upgrade npm to the latest release
     summary: |
       Run npm install -g npm@latest to upgrade the npm binary bundled with
@@ -156,6 +166,7 @@ tasks:
           ARGS: "install -g npm@latest"
 
   exec:
+    run: once
     desc: Execute a local project binary via npm exec (BINARY=<name>)
     requires:
       vars: [BINARY]
@@ -168,6 +179,7 @@ tasks:
           ARGS: "exec -- {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
 
   run:
+    run: once
     desc: Run a package.json script (SCRIPT=<name>)
     summary: |
       Execute the npm script named by SCRIPT using npm run. Pass extra CLI
@@ -190,6 +202,7 @@ tasks:
           CLI_ARGS: "{{.CLI_ARGS}}"
 
   dev:
+    run: once
     desc: Start the development server with npm run dev
     summary: |
       Execute the dev script defined under scripts.dev in package.json via npm run dev.
@@ -203,6 +216,7 @@ tasks:
           ARGS: run dev
 
   test:
+    run: once
     desc: Run the project test suite with npm test
     summary: |
       Execute the test script defined in package.json using npm test.
@@ -217,6 +231,7 @@ tasks:
           ARGS: test
 
   build:
+    run: once
     desc: Build the project with npm run build
     summary: |
       Execute the build script defined under scripts.build in package.json via npm run build.
@@ -230,6 +245,7 @@ tasks:
           ARGS: run build
 
   lint:
+    run: once
     desc: Lint the project with npm run lint
     summary: |
       Execute the lint script defined under scripts.lint in package.json via npm run lint.
@@ -243,6 +259,7 @@ tasks:
           ARGS: run lint
 
   format:
+    run: once
     desc: Format source files with npm run format
     summary: |
       Execute the format script defined under scripts.format in package.json via npm run format.
@@ -256,6 +273,7 @@ tasks:
           ARGS: run format
 
   typecheck:
+    run: once
     desc: Run type checking with npm run typecheck
     summary: |
       Execute the typecheck script defined under scripts.typecheck in package.json
@@ -269,6 +287,7 @@ tasks:
           ARGS: run typecheck
 
   outdated:
+    run: once
     desc: List outdated npm packages (non-strict, for local review)
     summary: |
       Run npm outdated to show packages with newer versions available.
@@ -286,6 +305,7 @@ tasks:
         ignore_error: true
 
   outdated:strict:
+    run: once
     desc: List outdated packages and fail if any exist (CI enforcement)
     summary: |
       Run npm outdated and fail the task when any packages are out of date.
@@ -301,6 +321,7 @@ tasks:
           ARGS: outdated
 
   audit:
+    run: once
     desc: Run a security vulnerability audit (strict, CI enforcement)
     summary: |
       Run npm audit and fail when vulnerabilities are found. npm audit exits
@@ -316,6 +337,7 @@ tasks:
           ARGS: audit
 
   audit:report:
+    run: once
     desc: Report npm vulnerabilities without failing (local review)
     summary: |
       Run npm audit and display the vulnerability report. Unlike audit, this
@@ -332,6 +354,7 @@ tasks:
         ignore_error: true
 
   audit:fix:
+    run: once
     desc: Fix security vulnerabilities with npm audit fix
     summary: |
       Run npm audit fix to automatically resolve known vulnerabilities in the
@@ -346,6 +369,7 @@ tasks:
           ARGS: audit fix
 
   audit:json:
+    run: once
     desc: Output npm audit results as JSON for tooling or dashboards
     summary: |
       Run npm audit --json and emit the full vulnerability report as structured JSON.
@@ -361,6 +385,7 @@ tasks:
           ARGS: audit --json
 
   update:
+    run: once
     desc: Update all packages within declared version ranges
     summary: |
       Run npm update to bring all installed packages to the latest versions
@@ -375,6 +400,7 @@ tasks:
           ARGS: update
 
   doctor:
+    run: once
     desc: Check npm environment health with npm doctor
     summary: |
       Run npm doctor to verify the npm environment is configured correctly.
@@ -390,6 +416,7 @@ tasks:
           ARGS: doctor
 
   cache:clean:
+    run: once
     desc: Clear the npm cache with npm cache clean
     summary: |
       Run npm cache clean --force to remove all cached data from the npm cache.
@@ -405,6 +432,7 @@ tasks:
           ARGS: cache clean --force
 
   clean:
+    run: once
     desc: Remove the node_modules directory
     summary: |
       Delete the node_modules directory. Does nothing if node_modules does not
@@ -417,6 +445,7 @@ tasks:
       - task: _clean:windows
 
   clean:all:
+    run: once
     desc: Remove node_modules and package-lock.json (destructive — regenerates lockfile)
     summary: |
       Delete both node_modules and package-lock.json for a fully clean slate.
@@ -436,6 +465,7 @@ tasks:
       - task: _clean:all:windows
 
   _node:setup:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -455,6 +485,7 @@ tasks:
         fi
 
   _node:setup:windows:
+    run: once
     internal: true
     platforms: [windows]
     env:
@@ -474,6 +505,7 @@ tasks:
         else { task fnm:node:install }""
 
   _npm:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -498,6 +530,7 @@ tasks:
         corepack npm {{.ARGS}}'
 
   _npm:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -527,6 +560,7 @@ tasks:
         corepack npm {{.ARGS}}"
 
   _ci:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -539,6 +573,7 @@ tasks:
           ARGS: ci
 
   _ci:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:
@@ -552,6 +587,7 @@ tasks:
           ARGS: ci
 
   _run:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -571,6 +607,7 @@ tasks:
           ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _run:windows:
+    run: once
     internal: true
     platforms: [windows]
     requires:
@@ -591,6 +628,7 @@ tasks:
           ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _version:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -604,6 +642,7 @@ tasks:
         bash -c '{{.FNM_LOAD}}; {{.FNM_USE}}; node --version; npm --version'
 
   _version:windows:
+    run: once
     internal: true
     platforms: [windows]
     env:
@@ -622,6 +661,7 @@ tasks:
         node --version; npm --version"
 
   _clean:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -634,6 +674,7 @@ tasks:
       - echo node_modules removed.
 
   _clean:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -647,6 +688,7 @@ tasks:
       - echo node_modules removed.
 
   _clean:all:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -658,6 +700,7 @@ tasks:
       - echo Done.
 
   _clean:all:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"

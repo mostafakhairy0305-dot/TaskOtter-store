@@ -20,6 +20,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Knip tasks
     cmds:
       - task --list
@@ -41,6 +42,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
+    run: once
     desc: Remove the locally installed Knip devDependency
     summary: Remove knip from local devDependencies via the active package manager.
     aliases:
@@ -55,6 +57,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   upgrade:
+    run: once
     desc: Upgrade Knip to the latest release
     summary: Reinstall knip at the latest version as a local devDependency.
     cmds:
@@ -64,6 +67,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   init:
+    run: once
     desc: Initialize a Knip configuration
     cmds:
       - task: yarn:exec
@@ -75,11 +79,13 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   config:init:
+    run: once
     desc: Alias for knip:init
     cmds:
       - task: init
 
   lint:
+    run: once
     desc: Run Knip for unused files, exports, and dependencies
     summary: Knip may report framework-specific false positives; review results before deleting files or dependencies.
     cmds:
@@ -95,6 +101,7 @@ tasks:
       - echo "✅ knip passed"
 
   production:
+    run: once
     desc: Run Knip against production dependency usage
     summary: Knip may report framework-specific false positives; review results before deleting files or dependencies.
     cmds:
@@ -110,6 +117,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   dependencies:
+    run: once
     desc: Report unused production dependencies with Knip
     summary: Review Knip dependency results before removing packages.
     cmds:
@@ -125,6 +133,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   dev-dependencies:
+    run: once
     desc: Report unused development dependencies with Knip
     summary: Review Knip dependency results before removing packages.
     cmds:
@@ -140,6 +149,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   files:
+    run: once
     desc: Report unused files with Knip
     summary: Review Knip file results before deleting files.
     cmds:
@@ -155,6 +165,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   exports:
+    run: once
     desc: Report unused exports with Knip
     summary: Review Knip export results before deleting code.
     cmds:
@@ -170,6 +181,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   lint:fix:
+    run: once
     desc: Run Knip fix mode when supported by the installed version
     summary: Knip fixes can update project files; dependency removals should still be reviewed manually.
     cmds:
@@ -185,6 +197,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   ci:
+    run: once
     desc: Run Knip production checks for CI
     summary: Knip may report framework-specific false positives; tune configuration before enforcing broadly.
     cmds:
@@ -201,6 +214,7 @@ tasks:
       - echo "✅ knip passed"
 
   version:
+    run: once
     desc: Show the locally resolved Knip version
     cmds:
       - task: yarn:exec
@@ -212,6 +226,7 @@ tasks:
           }
 
   help:
+    run: once
     desc: Show Knip CLI help
     cmds:
       - task: yarn:exec

@@ -24,6 +24,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available ESLint tasks
     cmds:
       - task --list
@@ -45,6 +46,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
+    run: once
     desc: Remove the locally installed ESLint devDependency
     summary: Remove eslint from local devDependencies via the active package manager.
     aliases:
@@ -59,6 +61,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   upgrade:
+    run: once
     desc: Upgrade ESLint to the latest release
     summary: Reinstall eslint at the latest version as a local devDependency.
     cmds:
@@ -68,11 +71,13 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   init:
+    run: once
     desc: Alias for eslint:config:init
     cmds:
       - task: config:init
 
   config:init:
+    run: once
     desc: Run the ESLint config initialization wizard
     summary: |
       Run eslint --init to scaffold an ESLint config file interactively.
@@ -98,6 +103,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   lint:
+    run: once
     desc: Lint targets with ESLint
     cmds:
       - task: pnpm:exec
@@ -118,6 +124,7 @@ tasks:
       - echo "✅ eslint passed"
 
   lint:fix:
+    run: once
     desc: Lint targets with ESLint and apply fixes
     cmds:
       - task: pnpm:exec
@@ -139,6 +146,7 @@ tasks:
       - echo "✅ eslint fixes applied"
 
   ci:
+    run: once
     desc: Run ESLint with zero-warning CI enforcement
     cmds:
       - task: pnpm:exec
@@ -160,11 +168,13 @@ tasks:
       - echo "✅ eslint passed"
 
   cache:clean:
+    run: once
     desc: Remove the ESLint cache directory
     cmds:
       - if [ -d .cache/eslint ]; then rm -rf .cache/eslint; fi
 
   version:
+    run: once
     desc: Show the locally resolved ESLint version
     cmds:
       - task: pnpm:exec
@@ -173,6 +183,7 @@ tasks:
           ARGS: "--version"
 
   help:
+    run: once
     desc: Show ESLint CLI help
     cmds:
       - task: pnpm:exec

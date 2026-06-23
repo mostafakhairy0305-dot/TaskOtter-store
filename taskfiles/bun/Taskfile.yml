@@ -17,6 +17,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Bun automation tasks
     summary: Display the list of available Bun-related tasks defined in this Taskfile.
     cmds:
@@ -41,6 +42,7 @@ tasks:
           VERSION: "{{.VERSION}}"
 
   install:undo:
+    run: once
     desc: Remove Bun from the current operating system
     summary: |
       Undo the Bun installation for the current platform.
@@ -58,6 +60,7 @@ tasks:
       - task: _install:undo:windows
 
   version:
+    run: once
     desc: Show the installed Bun version and revision
     summary: Print the currently installed Bun version and exact commit revision. Auto-installs Bun if missing.
     deps:
@@ -67,6 +70,7 @@ tasks:
       - task: _version:windows
 
   upgrade:
+    run: once
     desc: Upgrade Bun to the latest stable release
     summary: |
       Upgrade the installed Bun binary to the latest stable release using bun upgrade.
@@ -80,6 +84,7 @@ tasks:
       - task: _upgrade:windows
 
   upgrade:canary:
+    run: once
     desc: Upgrade Bun to the latest canary (pre-release) build
     summary: |
       Switch the installed Bun binary to the latest canary build using bun upgrade --canary.
@@ -92,6 +97,7 @@ tasks:
       - task: _upgrade:canary:windows
 
   upgrade:stable:
+    run: once
     desc: Switch Bun back to the latest stable release from canary
     summary: |
       Downgrade or switch from a canary build back to the latest stable Bun release
@@ -104,6 +110,7 @@ tasks:
       - task: _upgrade:stable:windows
 
   add:
+    run: once
     desc: Install packages globally with Bun (PACKAGES=<pkgs>)
     requires:
       vars: [PACKAGES]
@@ -118,6 +125,7 @@ tasks:
           ARGS: "add -g {{.PACKAGES}} {{.EXTRA_ARGS}}"
 
   remove:
+    run: once
     desc: Remove globally-installed packages with Bun (PACKAGES=<pkgs>)
     requires:
       vars: [PACKAGES]
@@ -132,6 +140,7 @@ tasks:
           ARGS: "remove -g {{.PACKAGES}} {{.EXTRA_ARGS}}"
 
   exec:
+    run: once
     desc: Execute a local project binary via bunx (BINARY=<name>)
     requires:
       vars: [BINARY]
@@ -146,6 +155,7 @@ tasks:
           ARGS: "x {{.BINARY}} {{.ARGS}} {{.EXTRA_ARGS}}"
 
   _bun:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -159,6 +169,7 @@ tasks:
       - bash -lc '{{.BUN_LOAD}}; bun {{.ARGS}}'
 
   _bun:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -177,6 +188,7 @@ tasks:
         else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun {{.ARGS}}"
 
   _install:unix:
+    run: once
     internal: true
     desc: Install Bun on macOS or Linux via the official install script
     summary: |
@@ -213,6 +225,7 @@ tasks:
       - echo 'Bun installed. Restart your shell or add ~/.bun/bin to PATH to use bun.'
 
   _install:windows:
+    run: once
     internal: true
     desc: Install Bun on Windows via the official PowerShell script
     summary: |
@@ -246,6 +259,7 @@ tasks:
       - echo 'Bun installed. Restart your terminal to use bun.'
 
   _install:undo:unix:
+    run: once
     internal: true
     desc: Remove Bun from macOS or Linux
     summary: Remove the ~/.bun directory and its contents from macOS or Linux. Skipped if Bun is not present.
@@ -266,6 +280,7 @@ tasks:
         echo "No Bun references found in shell profile files."'
 
   _install:undo:windows:
+    run: once
     internal: true
     desc: Remove Bun from Windows
     summary: |
@@ -292,6 +307,7 @@ tasks:
       - echo 'Bun removed. Restart your terminal.'
 
   _version:unix:
+    run: once
     internal: true
     desc: Show Bun version and revision on macOS or Linux
     summary: Print the installed Bun version and exact commit revision on macOS or Linux.
@@ -304,6 +320,7 @@ tasks:
       - bash -lc '{{.BUN_LOAD}}; bun --version; bun --revision'
 
   _version:windows:
+    run: once
     internal: true
     desc: Show Bun version and revision on Windows
     summary: |
@@ -324,6 +341,7 @@ tasks:
         & $bun --version; & $bun --revision"
 
   _upgrade:unix:
+    run: once
     internal: true
     desc: Upgrade Bun to the latest stable release on macOS or Linux
     summary: Run bun upgrade on macOS or Linux to update the Bun binary to the latest stable release.
@@ -337,6 +355,7 @@ tasks:
       - bash -lc '{{.BUN_LOAD}}; bun upgrade'
 
   _upgrade:windows:
+    run: once
     internal: true
     desc: Upgrade Bun to the latest stable release on Windows
     summary: |
@@ -357,6 +376,7 @@ tasks:
         else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade"
 
   _upgrade:canary:unix:
+    run: once
     internal: true
     desc: Upgrade Bun to the latest canary build on macOS or Linux
     summary: Run bun upgrade --canary on macOS or Linux to switch to the latest untested canary build.
@@ -370,6 +390,7 @@ tasks:
       - bash -lc '{{.BUN_LOAD}}; bun upgrade --canary'
 
   _upgrade:canary:windows:
+    run: once
     internal: true
     desc: Upgrade Bun to the latest canary build on Windows
     summary: |
@@ -390,6 +411,7 @@ tasks:
         else { \"$env:USERPROFILE\.bun\bin\bun.exe\" }; & $bun upgrade --canary"
 
   _upgrade:stable:unix:
+    run: once
     internal: true
     desc: Switch Bun back to stable from canary on macOS or Linux
     summary: Run bun upgrade --stable on macOS or Linux to switch from a canary build back to the latest stable release.
@@ -403,6 +425,7 @@ tasks:
       - bash -lc '{{.BUN_LOAD}}; bun upgrade --stable'
 
   _upgrade:stable:windows:
+    run: once
     internal: true
     desc: Switch Bun back to stable from canary on Windows
     summary: |

@@ -18,6 +18,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Docker automation tasks
     summary: Display the list of available Docker-related tasks defined in this Taskfile.
     cmds:
@@ -43,6 +44,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove Docker from the current operating system
     summary: |
       Remove Docker for the current platform.
@@ -60,6 +62,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade Docker to the latest release
     summary: |
       Upgrade Docker to the latest available release.
@@ -72,6 +75,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed Docker client and server versions
     summary: Print the active Docker client and server version via docker version. Auto-installs Docker if missing.
     deps:
@@ -80,6 +84,7 @@ tasks:
       - docker version
 
   verify:
+    run: once
     desc: Verify Docker installation and daemon connectivity
     summary: |
       Confirm Docker is installed and the daemon is reachable by printing
@@ -92,6 +97,7 @@ tasks:
       - docker info
 
   ps:
+    run: once
     desc: List running Docker containers
     summary: Show all currently running containers with their IDs, names, and status.
     deps:
@@ -100,6 +106,7 @@ tasks:
       - docker ps
 
   ps:all:
+    run: once
     desc: List all Docker containers including stopped ones
     summary: Show every container — running and stopped — with IDs, names, and status.
     deps:
@@ -108,6 +115,7 @@ tasks:
       - docker ps -a
 
   stop:all:
+    run: once
     desc: Stop all running Docker containers
     summary: |
       Gracefully stop every running container. Skipped automatically when no
@@ -119,6 +127,7 @@ tasks:
       - task: _stop:all:windows
 
   prune:
+    run: once
     desc: Remove stopped containers, dangling images, and unused networks
     summary: |
       Run docker system prune -f to remove stopped containers, dangling
@@ -130,6 +139,7 @@ tasks:
       - docker system prune -f
 
   prune:all:
+    run: once
     desc: Full Docker system prune including volumes and all unused images
     summary: |
       Run docker system prune -af --volumes to remove all stopped containers,
@@ -144,6 +154,7 @@ tasks:
       - docker system prune -af --volumes
 
   images:
+    run: once
     desc: List local Docker images
     summary: Show all locally available Docker images with their tags, IDs, and sizes.
     deps:
@@ -152,6 +163,7 @@ tasks:
       - docker images
 
   build:
+    run: once
     desc: Build a Docker image from a Dockerfile (IMAGE=name:tag)
     summary: |
       Build a Docker image tagged IMAGE using the Dockerfile at FILE and
@@ -175,6 +187,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   pull:
+    run: once
     desc: Pull a Docker image from a registry (IMAGE=name:tag)
     summary: |
       Pull the specified IMAGE from its registry. Pass EXTRA_ARGS to forward
@@ -194,6 +207,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
 
   _install:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -209,6 +223,7 @@ tasks:
       - echo 'Docker Desktop installed. Open the Docker app to complete initial setup.'
 
   _install:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -236,6 +251,7 @@ tasks:
       - echo 'Docker Engine installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -260,6 +276,7 @@ tasks:
       - echo Docker Desktop installed. Restart your terminal to use docker.
 
   _install:undo:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -274,6 +291,7 @@ tasks:
       - echo 'Docker Desktop removed.'
 
   _install:undo:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -287,6 +305,7 @@ tasks:
       - task: _install:undo:linux:dnf
 
   _install:undo:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -305,6 +324,7 @@ tasks:
       - echo 'Docker Engine packages removed.'
 
   _install:undo:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -319,6 +339,7 @@ tasks:
       - echo 'Docker Engine packages removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -331,6 +352,7 @@ tasks:
       - echo Docker Desktop removed. Restart your terminal.
 
   _upgrade:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -347,6 +369,7 @@ tasks:
       - echo 'Docker Desktop upgraded.'
 
   _upgrade:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -360,6 +383,7 @@ tasks:
       - task: _upgrade:linux:dnf
 
   _upgrade:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -380,6 +404,7 @@ tasks:
       - echo 'Docker Engine upgraded.'
 
   _upgrade:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -394,6 +419,7 @@ tasks:
       - echo 'Docker Engine upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:
@@ -404,6 +430,7 @@ tasks:
       - echo Docker Desktop upgraded. Restart your terminal if prompted.
 
   _stop:all:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -419,6 +446,7 @@ tasks:
         fi
 
   _stop:all:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:

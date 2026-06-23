@@ -34,12 +34,14 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Corepack automation tasks
     summary: Display the list of available Corepack-related tasks defined in this Taskfile.
     cmds:
       - task --list
 
   node:setup:
+    run: once
     desc: Install Node.js for Corepack workflows
     summary: Install Node.js through nvm.
     cmds:
@@ -57,6 +59,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove Corepack installed through npm
     summary: Run npm uninstall --global corepack to remove the Corepack package installed by the install task.
     aliases:
@@ -69,6 +72,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade Corepack to the pinned COREPACK_VERSION
     summary: |
       Reinstall corepack at COREPACK_VERSION through npm, replacing any
@@ -79,6 +83,7 @@ tasks:
       - task: _upgrade:windows
 
   setup:
+    run: once
     desc: Install and enable Corepack shims
     summary: >-
       Ensure Corepack is available, then enable supported package manager shims
@@ -88,6 +93,7 @@ tasks:
       - task: enable
 
   version:
+    run: once
     desc: Show the active Corepack version
     summary: Print the Corepack version available through the nvm-managed Node.js runtime.
     cmds:
@@ -97,6 +103,7 @@ tasks:
         vars: { ARGS: --version }
 
   enable:
+    run: once
     desc: Enable Corepack package manager shims
     summary: Run corepack enable so supported package manager shims resolve through Corepack.
     cmds:
@@ -106,6 +113,7 @@ tasks:
         vars: { ARGS: enable }
 
   disable:
+    run: once
     desc: Disable Corepack package manager shims
     summary: Run corepack disable to remove Corepack package manager shims from the active runtime.
     cmds:
@@ -115,6 +123,7 @@ tasks:
         vars: { ARGS: disable }
 
   use:
+    run: once
     desc: Pin a package manager version in package.json
     summary: Run corepack use for PACKAGE_MANAGER@VERSION in the current project root.
     requires:
@@ -130,6 +139,7 @@ tasks:
           VERSION: "{{.VERSION}}"
 
   cache:clean:
+    run: once
     desc: Clear the Corepack cache
     summary: Run corepack cache clean to remove package manager archives cached by Corepack.
     cmds:
@@ -139,6 +149,7 @@ tasks:
         vars: { ARGS: cache clean }
 
   _node:setup:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -149,6 +160,7 @@ tasks:
         if [ -n "$NODE_VERSION" ]; then task nvm:node:install VERSION="$NODE_VERSION"; else task nvm:node:install; fi
 
   _node:setup:windows:
+    run: once
     internal: true
     platforms: [windows]
     env:
@@ -160,6 +172,7 @@ tasks:
         else { task nvm:node:install }"
 
   _install:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     status:
@@ -172,6 +185,7 @@ tasks:
       - bash -c '{{.NVM_LOAD}}; {{.NVM_USE}}; npm install --global "corepack@{{.COREPACK_VERSION}}"'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     env:
@@ -198,6 +212,7 @@ tasks:
         npm install --global 'corepack@{{.COREPACK_VERSION}}'"
 
   _install:undo:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     status:
@@ -210,6 +225,7 @@ tasks:
       - bash -c '{{.NVM_LOAD}}; {{.NVM_USE}}; npm uninstall --global corepack'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     env:
@@ -236,6 +252,7 @@ tasks:
         npm uninstall --global corepack"
 
   _upgrade:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     preconditions:
@@ -245,6 +262,7 @@ tasks:
       - bash -c '{{.NVM_LOAD}}; {{.NVM_USE}}; npm install --global "corepack@{{.COREPACK_VERSION}}"'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     env:
@@ -263,6 +281,7 @@ tasks:
         npm install --global 'corepack@{{.COREPACK_VERSION}}'"
 
   _corepack:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -279,6 +298,7 @@ tasks:
         corepack {{.ARGS}}'
 
   _corepack:windows:
+    run: once
     internal: true
     platforms: [windows]
     requires:
@@ -301,6 +321,7 @@ tasks:
         corepack {{.ARGS}}"
 
   _use:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -320,6 +341,7 @@ tasks:
           ARGS: "use {{.PACKAGE_MANAGER}}@{{.VERSION}}"
 
   _use:windows:
+    run: once
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"

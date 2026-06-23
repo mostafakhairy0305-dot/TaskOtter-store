@@ -18,12 +18,14 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Buf automation tasks
     summary: Display the list of available Buf-related tasks defined in this Taskfile.
     cmds:
       - task --list
 
   lint:
+    run: once
     desc: Lint proto files with Buf (INPUT=path)
     summary: |
       Run buf lint against INPUT (default: .). Pass CONFIG to use a custom
@@ -45,6 +47,7 @@ tasks:
         && echo "✅ buf lint passed" || { echo "❌ buf lint failed"; exit 1; }
 
   fmt:check:
+    run: once
     desc: Check proto file formatting with Buf (INPUT=path)
     summary: |
       Run buf format --diff to report formatting issues without modifying files.
@@ -63,6 +66,7 @@ tasks:
         && echo "✅ buf format check passed" || { echo "❌ buf format check failed"; exit 1; }
 
   fmt:
+    run: once
     desc: Format proto files in place with Buf (INPUT=path)
     summary: |
       Run buf format --write to reformat all .proto files under INPUT in
@@ -79,6 +83,7 @@ tasks:
         {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
 
   breaking:
+    run: once
     desc: Check proto files for breaking changes against AGAINST
     summary: |
       Run buf breaking to detect backwards-incompatible changes in INPUT
@@ -100,6 +105,7 @@ tasks:
         && echo "✅ buf breaking check passed" || { echo "❌ buf breaking check failed"; exit 1; }
 
   generate:
+    run: once
     desc: Generate code from proto files with Buf (INPUT=path)
     summary: |
       Run buf generate to produce outputs defined in buf.gen.yaml. Requires a
@@ -131,6 +137,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove Buf from the current operating system
     summary: |
       Remove Buf for the current platform.
@@ -148,6 +155,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade Buf to the latest release
     summary: |
       Upgrade Buf to the latest available release.
@@ -160,6 +168,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed Buf version
     summary: Print the active Buf version via buf --version. Auto-installs Buf if missing.
     deps:
@@ -168,6 +177,7 @@ tasks:
       - buf --version
 
   _install:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -182,6 +192,7 @@ tasks:
       - echo 'Buf installed.'
 
   _install:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -216,6 +227,7 @@ tasks:
       - echo 'Buf installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -233,6 +245,7 @@ tasks:
       - echo Buf installed. Restart your terminal if buf is not found.
 
   _install:undo:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -247,6 +260,7 @@ tasks:
       - echo 'Buf removed.'
 
   _install:undo:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -261,6 +275,7 @@ tasks:
       - echo 'Buf removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -273,6 +288,7 @@ tasks:
       - echo Buf removed.
 
   _upgrade:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -290,6 +306,7 @@ tasks:
       - echo 'Buf upgraded.'
 
   _upgrade:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -322,6 +339,7 @@ tasks:
       - echo 'Buf upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:

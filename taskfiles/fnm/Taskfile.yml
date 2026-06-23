@@ -17,6 +17,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available fnm automation tasks
     summary: Display the list of available fnm-related tasks defined in this Taskfile.
     cmds:
@@ -35,6 +36,7 @@ tasks:
       - task: shell:setup
 
   install:undo:
+    run: once
     desc: Remove fnm from the current operating system
     summary: >-
       Undo the fnm installation for the current platform.
@@ -51,6 +53,7 @@ tasks:
       - task: _install:undo:windows
 
   version:
+    run: once
     desc: Show the installed fnm version
     summary: Print the currently installed fnm version for the active platform. Fails clearly if fnm is not installed.
     cmds:
@@ -76,6 +79,7 @@ tasks:
           VERSION: "{{default .DEFAULT_NODE_VERSION .VERSION}}"
 
   node:uninstall:
+    run: once
     desc: Uninstall a Node.js version managed by fnm
     summary: Remove the Node.js version provided through VERSION from the local fnm installation.
     aliases:
@@ -98,6 +102,7 @@ tasks:
           VERSION: "{{.VERSION}}"
 
   node:use:
+    run: once
     desc: Switch to a Node.js version
     summary: >-
       Install (if needed) and activate the Node.js version provided through VERSION.
@@ -115,6 +120,7 @@ tasks:
           VERSION: "{{default .DEFAULT_NODE_VERSION .VERSION}}"
 
   ls:
+    run: once
     desc: List Node.js versions installed through fnm
     summary: >-
       Show all Node.js versions installed and managed by fnm on the current machine.
@@ -126,6 +132,7 @@ tasks:
       - task: _ls:windows
 
   node:version:
+    run: once
     desc: Show the active Node.js and npm versions
     summary: >-
       Print the currently active Node.js and npm versions available through fnm on the current platform.
@@ -138,6 +145,7 @@ tasks:
       - task: _node:version:windows
 
   shell:setup:
+    run: once
     desc: Configure fnm activation in the current user's shell profile
     summary: >-
       Detect the current shell and append the fnm PATH export and env activation line
@@ -148,6 +156,7 @@ tasks:
       - task: _shell:setup:windows
 
   _shell:setup:unix:
+    run: once
     internal: true
     desc: Configure fnm shell activation on Linux or macOS
     summary: >-
@@ -222,6 +231,7 @@ tasks:
         printf 'Restart your shell or run: source %s\n' "$profile"
 
   _shell:setup:windows:
+    run: once
     internal: true
     desc: Configure fnm shell activation on Windows
     summary: Add the fnm PowerShell activation line to the current user's PowerShell profile if not already present.
@@ -247,6 +257,7 @@ tasks:
         Write-Host \"fnm activation added to $p. Restart your terminal.\""
 
   _install:unix:
+    run: once
     internal: true
     desc: Install fnm on Linux or macOS via the official install script
     summary: >-
@@ -270,6 +281,7 @@ tasks:
         Run task shell:setup to configure your shell, then restart your terminal."
 
   _install:undo:unix:
+    run: once
     internal: true
     desc: Remove fnm on Linux or macOS
     summary: >-
@@ -293,6 +305,7 @@ tasks:
         echo "No fnm references found in shell profile files."'
 
   _install:windows:
+    run: once
     internal: true
     desc: Install fnm on Windows via winget
     summary: Install fnm using winget on Windows. Skipped if fnm is already available.
@@ -314,6 +327,7 @@ tasks:
       - echo fnm installed. Restart your terminal for PATH changes to take effect.
 
   _install:undo:windows:
+    run: once
     internal: true
     desc: Remove fnm on Windows via winget
     summary: Uninstall fnm using winget on Windows. Skipped if fnm is not present.
@@ -328,6 +342,7 @@ tasks:
       - echo fnm removed. Restart your terminal.
 
   _version:unix:
+    run: once
     internal: true
     desc: Show fnm version on Linux or macOS
     summary: Print the installed fnm version on Linux or macOS.
@@ -340,6 +355,7 @@ tasks:
       - bash -lc '{{.FNM_LOAD}}; fnm --version'
 
   _version:windows:
+    run: once
     internal: true
     desc: Show fnm version on Windows
     summary: Print the installed fnm version on Windows.
@@ -353,6 +369,7 @@ tasks:
       - fnm --version
 
   _node:install:unix:
+    run: once
     internal: true
     desc: Install Node.js with fnm on Linux or macOS
     summary: >-
@@ -373,6 +390,7 @@ tasks:
       - bash -lc '{{.FNM_LOAD}}; fnm install "$VERSION"'
 
   _node:install:windows:
+    run: once
     internal: true
     desc: Install Node.js with fnm on Windows
     summary: >-
@@ -394,6 +412,7 @@ tasks:
       - fnm install %VERSION%
 
   _node:uninstall:unix:
+    run: once
     internal: true
     desc: Uninstall Node.js from fnm on Linux or macOS
     summary: Remove the requested Node.js version from the local fnm installation on Linux or macOS.
@@ -412,6 +431,7 @@ tasks:
       - bash -lc '{{.FNM_LOAD}}; fnm uninstall "$VERSION"'
 
   _node:uninstall:windows:
+    run: once
     internal: true
     desc: Uninstall Node.js from fnm on Windows
     summary: Remove the requested Node.js version from the local fnm installation on Windows.
@@ -431,6 +451,7 @@ tasks:
       - fnm uninstall %VERSION%
 
   _node:use:unix:
+    run: once
     internal: true
     desc: Activate a Node.js version with fnm on Linux or macOS
     summary: >-
@@ -459,6 +480,7 @@ tasks:
         echo 'For the current shell, run: eval "$(fnm env --use-on-cd --shell bash)"'
 
   _node:use:windows:
+    run: once
     internal: true
     desc: Activate a Node.js version with fnm on Windows
     summary: >-
@@ -483,6 +505,7 @@ tasks:
         fnm use $env:VERSION; fnm default (fnm current)"
 
   _ls:unix:
+    run: once
     internal: true
     desc: List Node.js versions from fnm on Linux or macOS
     summary: Show all Node.js versions installed through fnm on Linux or macOS.
@@ -495,6 +518,7 @@ tasks:
       - bash -lc '{{.FNM_LOAD}}; fnm list'
 
   _ls:windows:
+    run: once
     internal: true
     desc: List Node.js versions from fnm on Windows
     summary: Show all Node.js versions installed through fnm on Windows.
@@ -508,6 +532,7 @@ tasks:
       - fnm list
 
   _node:version:unix:
+    run: once
     internal: true
     desc: Show active Node.js version on Linux or macOS
     summary: >-
@@ -522,6 +547,7 @@ tasks:
       - bash -lc '{{.FNM_LOAD}}; eval "$(fnm env --use-on-cd --shell bash)"; fnm current; node --version; npm --version'
 
   _node:version:windows:
+    run: once
     internal: true
     desc: Show active Node.js version on Windows
     summary: Print the active Node.js and npm versions available on Windows through fnm.

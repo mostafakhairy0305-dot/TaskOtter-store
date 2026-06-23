@@ -22,6 +22,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Biome tasks
     cmds:
       - task --list
@@ -44,6 +45,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
+    run: once
     desc: Remove the locally installed Biome devDependency
     summary: Remove @biomejs/biome from local devDependencies via the active package manager.
     aliases:
@@ -58,6 +60,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   upgrade:
+    run: once
     desc: Upgrade Biome to the latest release
     summary: Reinstall @biomejs/biome at the latest version as a local devDependency.
     cmds:
@@ -67,11 +70,13 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   init:
+    run: once
     desc: Alias for biome:config:init
     cmds:
       - task: config:init
 
   config:init:
+    run: once
     desc: Create a biome.json config file in the current directory
     summary: |
       Run biome init to generate a biome.json config file with recommended
@@ -88,6 +93,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   check:
+    run: once
     desc: Run Biome check
     cmds:
       - task: bun:exec
@@ -106,6 +112,7 @@ tasks:
       - echo "✅ biome passed"
 
   check:write:
+    run: once
     desc: Run Biome check and write safe fixes
     cmds:
       - task: bun:exec
@@ -124,11 +131,13 @@ tasks:
       - echo "✅ biome fixes applied"
 
   fix:
+    run: once
     desc: Alias for biome:check:write
     cmds:
       - task: check:write
 
   lint:
+    run: once
     desc: Run Biome lint
     cmds:
       - task: bun:exec
@@ -147,6 +156,7 @@ tasks:
       - echo "✅ biome passed"
 
   lint:fix:
+    run: once
     desc: Run Biome lint and write fixes
     cmds:
       - task: bun:exec
@@ -165,6 +175,7 @@ tasks:
       - echo "✅ biome fixes applied"
 
   fmt:check:
+    run: once
     desc: Check formatting with Biome
     cmds:
       - task: bun:exec
@@ -182,6 +193,7 @@ tasks:
             {{else}}{{if .EXTRA_ARGS}}{{.EXTRA_ARGS}}{{end}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   fmt:
+    run: once
     desc: Format files with Biome
     cmds:
       - task: bun:exec
@@ -200,6 +212,7 @@ tasks:
       - echo "✅ biome fixes applied"
 
   ci:
+    run: once
     desc: Run Biome CI checks
     cmds:
       - task: bun:exec
@@ -218,12 +231,14 @@ tasks:
       - echo "✅ biome passed"
 
   cache:clean:
+    run: once
     desc: Remove common Biome cache directories if present
     cmds:
       - if [ -d .cache/biome ]; then rm -rf .cache/biome; fi
       - if [ -d node_modules/.cache/biome ]; then rm -rf node_modules/.cache/biome; fi
 
   version:
+    run: once
     desc: Show the locally resolved Biome version
     cmds:
       - task: bun:exec
@@ -232,6 +247,7 @@ tasks:
           ARGS: "--version"
 
   help:
+    run: once
     desc: Show Biome CLI help
     cmds:
       - task: bun:exec

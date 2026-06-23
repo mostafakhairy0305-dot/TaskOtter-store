@@ -21,6 +21,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available NVM automation tasks
     summary: Display the list of available NVM-related tasks defined in this Taskfile.
     cmds:
@@ -37,6 +38,7 @@ tasks:
       - task: _install:unix
 
   install:undo:
+    run: once
     desc: Remove NVM from the current operating system
     summary: >-
       Undo the NVM installation for the current platform.
@@ -53,6 +55,7 @@ tasks:
       - task: _install:undo:unix
 
   version:
+    run: once
     desc: Show the installed NVM version
     summary: Print the currently installed NVM version for the active platform.
     deps:
@@ -80,6 +83,7 @@ tasks:
           VERSION: "{{default .DEFAULT_NODE_VERSION_UNIX .VERSION}}"
 
   node:uninstall:
+    run: once
     desc: Uninstall a Node.js version managed by NVM
     summary: Remove the Node.js version provided through VERSION from the local NVM installation.
     aliases:
@@ -102,6 +106,7 @@ tasks:
           VERSION: "{{.VERSION}}"
 
   node:use:
+    run: once
     desc: Switch to a Node.js version
     summary: >-
       Install (if needed) and activate the Node.js version provided through VERSION.
@@ -119,6 +124,7 @@ tasks:
           VERSION: "{{default .DEFAULT_NODE_VERSION_UNIX .VERSION}}"
 
   ls:
+    run: once
     desc: List Node.js versions installed through NVM
     summary: Show all Node.js versions installed and managed by NVM on the current machine.
     aliases:
@@ -130,6 +136,7 @@ tasks:
       - task: _ls:unix
 
   node:version:
+    run: once
     desc: Show the active Node.js and npm versions
     summary: >-
       Print the currently active Node.js and npm versions available through
@@ -144,6 +151,7 @@ tasks:
       - task: _node:version:unix
 
   _install:windows:
+    run: once
     internal: true
     desc: Install nvm-windows
     summary: >-
@@ -185,6 +193,7 @@ tasks:
       - echo nvm-windows installed. Close and reopen your terminal if nvm is not detected immediately.
 
   _install:undo:windows:
+    run: once
     internal: true
     desc: Remove nvm-windows
     summary: Run the nvm-windows uninstaller from NVM_HOME if it exists.
@@ -213,6 +222,7 @@ tasks:
       - echo nvm-windows uninstall command completed. Reopen terminal after uninstall.
 
   _version:windows:
+    run: once
     internal: true
     desc: Show nvm-windows version
     summary: Print the installed nvm-windows version.
@@ -226,6 +236,7 @@ tasks:
       - nvm version
 
   _node:install:windows:
+    run: once
     internal: true
     desc: Install Node.js with nvm-windows
     summary: >-
@@ -259,6 +270,7 @@ tasks:
       - nvm install %VERSION%
 
   _node:uninstall:windows:
+    run: once
     internal: true
     desc: Uninstall Node.js from nvm-windows
     summary: Remove the requested Node.js version from the local nvm-windows installation.
@@ -282,6 +294,7 @@ tasks:
       - nvm uninstall %VERSION%
 
   _node:use:windows:
+    run: once
     internal: true
     desc: Use Node.js with nvm-windows
     summary: >-
@@ -315,6 +328,7 @@ tasks:
       - nvm use %VERSION%
 
   _ls:windows:
+    run: once
     internal: true
     desc: List Node.js versions from nvm-windows
     summary: Show all Node.js versions installed under nvm-windows.
@@ -328,6 +342,7 @@ tasks:
       - nvm list
 
   _node:version:windows:
+    run: once
     internal: true
     desc: Show active Windows Node.js version
     summary: Print the active Node.js and npm versions available on Windows.
@@ -343,6 +358,7 @@ tasks:
       - npm --version
 
   _install:unix:
+    run: once
     internal: true
     desc: Install nvm-sh
     summary: Install nvm-sh on Linux, macOS, or WSL using curl or wget and the official nvm-sh install script URL.
@@ -366,6 +382,7 @@ tasks:
       - echo 'nvm-sh installed. Restart your shell or run . "$HOME/.nvm/nvm.sh" to load nvm in the current session.'
 
   _install:undo:unix:
+    run: once
     internal: true
     desc: Remove nvm-sh
     summary: Remove the local nvm-sh installation directory from Linux, macOS, or WSL.
@@ -389,6 +406,7 @@ tasks:
         echo "No NVM_DIR references found in shell profile files."'
 
   _version:unix:
+    run: once
     internal: true
     desc: Show nvm-sh version
     summary: Print the installed nvm-sh version on Linux, macOS, or WSL.
@@ -401,6 +419,7 @@ tasks:
       - bash -lc '{{.NVM_LOAD}}; nvm --version'
 
   _node:install:unix:
+    run: once
     internal: true
     desc: Install Node.js with nvm-sh
     summary: >-
@@ -425,6 +444,7 @@ tasks:
       - bash -lc '{{.NVM_LOAD}}; nvm install "$VERSION"'
 
   _node:uninstall:unix:
+    run: once
     internal: true
     desc: Uninstall Node.js from nvm-sh
     summary: Remove the requested Node.js version from the local nvm-sh installation.
@@ -445,6 +465,7 @@ tasks:
       - bash -lc '{{.NVM_LOAD}}; nvm uninstall "$VERSION"'
 
   _node:use:unix:
+    run: once
     internal: true
     desc: Use Node.js with nvm-sh
     summary: >-
@@ -470,6 +491,7 @@ tasks:
         Run . "$HOME/.nvm/nvm.sh" && nvm use {{.VERSION}} to activate in the current session.'
 
   _ls:unix:
+    run: once
     internal: true
     desc: List Node.js versions from nvm-sh
     summary: Show all Node.js versions installed under nvm-sh on Linux, macOS, or WSL.
@@ -482,6 +504,7 @@ tasks:
       - bash -lc '{{.NVM_LOAD}}; nvm ls'
 
   _node:version:unix:
+    run: once
     internal: true
     desc: Show active Unix Node.js version
     summary: Print the active Node.js and npm versions available after loading nvm-sh.

@@ -24,6 +24,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available Prettier tasks
     cmds:
       - task --list
@@ -45,6 +46,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   install:undo:
+    run: once
     desc: Remove the locally installed Prettier devDependency
     summary: Remove prettier from local devDependencies via the active package manager.
     aliases:
@@ -59,6 +61,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   upgrade:
+    run: once
     desc: Upgrade Prettier to the latest release
     summary: Reinstall prettier at the latest version as a local devDependency.
     cmds:
@@ -68,6 +71,7 @@ tasks:
           EXTRA_ARGS: "{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
 
   config:init:
+    run: once
     desc: Create a starter Prettier config when none exists
     vars:
       PRETTIER_CONFIG_PATH: >-
@@ -84,6 +88,7 @@ tasks:
       - echo 'Created {{.PRETTIER_CONFIG_PATH}}.'
 
   fmt:check:
+    run: once
     desc: Check formatting with Prettier
     cmds:
       - task: _exec:ignore
@@ -105,6 +110,7 @@ tasks:
       - echo "✅ prettier passed"
 
   fmt:
+    run: once
     desc: Format files with Prettier
     cmds:
       - task: _exec:ignore
@@ -126,16 +132,19 @@ tasks:
       - echo "✅ prettier fixes applied"
 
   fix:
+    run: once
     desc: Alias for prettier:fmt
     cmds:
       - task: fmt
 
   ci:
+    run: once
     desc: Alias for prettier:fmt:check
     cmds:
       - task: fmt:check
 
   version:
+    run: once
     desc: Show the locally resolved Prettier version
     cmds:
       - task: pnpm:exec
@@ -144,6 +153,7 @@ tasks:
           ARGS: "--version"
 
   help:
+    run: once
     desc: Show Prettier CLI help
     cmds:
       - task: pnpm:exec
@@ -155,6 +165,7 @@ tasks:
             {{- else}}{{.EXTRA_ARGS}}{{end}}{{if .CLI_ARGS}} {{.CLI_ARGS}}{{end}}
 
   _exec:ignore:
+    run: once
     internal: true
     desc: Execute a local project binary and include an ignore file when present
     requires:

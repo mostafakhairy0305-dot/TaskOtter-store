@@ -16,12 +16,14 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available ShellCheck automation tasks
     summary: Display the list of available ShellCheck-related tasks defined in this Taskfile.
     cmds:
       - task --list
 
   lint:
+    run: once
     desc: Lint shell scripts with ShellCheck (TARGETS=glob)
     summary: |
       Run shellcheck against TARGETS. When TARGETS is empty, all *.sh and
@@ -37,6 +39,7 @@ tasks:
       - task: _lint:windows
 
   _lint:unix:
+    run: once
     internal: true
     platforms: [darwin, linux]
     dir: "{{.USER_WORKING_DIR}}"
@@ -61,6 +64,7 @@ tasks:
         fi'
 
   _lint:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:
@@ -102,6 +106,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove ShellCheck from the current operating system
     summary: |
       Remove ShellCheck for the current platform.
@@ -119,6 +124,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade ShellCheck to the latest release
     summary: |
       Upgrade ShellCheck to the latest available release.
@@ -131,6 +137,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed ShellCheck version
     summary: Print the active ShellCheck version via shellcheck --version. Auto-installs ShellCheck if missing.
     deps:
@@ -139,6 +146,7 @@ tasks:
       - shellcheck --version
 
   _install:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -154,6 +162,7 @@ tasks:
       - echo 'ShellCheck installed.'
 
   _install:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -165,6 +174,7 @@ tasks:
       - task: _install:linux:dnf
 
   _install:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -179,6 +189,7 @@ tasks:
       - echo 'ShellCheck installed.'
 
   _install:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -193,6 +204,7 @@ tasks:
       - echo 'ShellCheck installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -213,6 +225,7 @@ tasks:
       - echo ShellCheck installed. Restart your terminal if shellcheck is not found.
 
   _install:undo:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -227,6 +240,7 @@ tasks:
       - echo 'ShellCheck removed.'
 
   _install:undo:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -240,6 +254,7 @@ tasks:
       - task: _install:undo:linux:dnf
 
   _install:undo:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -254,6 +269,7 @@ tasks:
       - echo 'ShellCheck removed.'
 
   _install:undo:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -268,6 +284,7 @@ tasks:
       - echo 'ShellCheck removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -280,6 +297,7 @@ tasks:
       - echo ShellCheck removed.
 
   _upgrade:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -295,6 +313,7 @@ tasks:
       - echo 'ShellCheck upgraded.'
 
   _upgrade:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -306,6 +325,7 @@ tasks:
       - task: _upgrade:linux:dnf
 
   _upgrade:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -320,6 +340,7 @@ tasks:
       - echo 'ShellCheck upgraded.'
 
   _upgrade:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -334,6 +355,7 @@ tasks:
       - echo 'ShellCheck upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:

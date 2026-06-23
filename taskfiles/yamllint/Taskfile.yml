@@ -23,6 +23,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available yamllint automation tasks
     summary: Display the list of available yamllint-related tasks defined in this Taskfile.
     cmds:
@@ -41,6 +42,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove yamllint from the current operating system
     summary: |
       Remove yamllint via uv tool uninstall on all platforms.
@@ -55,6 +57,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade yamllint to the latest release
     summary: |
       Upgrade yamllint via uv tool upgrade on all platforms.
@@ -64,6 +67,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed yamllint version
     summary: Print the active yamllint version via yamllint --version. Auto-installs yamllint if missing.
     deps:
@@ -72,6 +76,7 @@ tasks:
       - bash -lc '{{.UV_LOAD}}; yamllint --version'
 
   lint:
+    run: once
     desc: Lint YAML files with yamllint (TARGETS=path)
     summary: |
       Run yamllint against TARGETS (default .). Pass CONFIG to use a custom
@@ -94,6 +99,7 @@ tasks:
         && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
 
   lint:fix:
+    run: once
     desc: Auto-fix YAML files with yamlfix (TARGETS=path)
     summary: |
       Run yamlfix against YAML files found under TARGETS (default .). Excludes
@@ -117,6 +123,7 @@ tasks:
         {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
 
   ci:
+    run: once
     desc: Lint YAML files in strict mode for CI (TARGETS=path)
     summary: |
       Run yamllint --strict against TARGETS. Exits non-zero on warnings as
@@ -139,6 +146,7 @@ tasks:
         && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
 
   config:init:
+    run: once
     desc: Create a default .yamllint configuration file
     summary: |
       Write a sensible default .yamllint file in the current directory.
@@ -156,6 +164,7 @@ tasks:
       - echo 'Created .yamllint with default configuration.'
 
   _install:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -172,6 +181,7 @@ tasks:
       - echo 'yamllint installed.'
 
   _install:yamlfix:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -188,6 +198,7 @@ tasks:
       - echo 'yamlfix installed.'
 
   _install:yamlfix:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -203,6 +214,7 @@ tasks:
       - echo yamlfix installed.
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -218,6 +230,7 @@ tasks:
       - echo yamllint installed.
 
   _install:undo:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -229,6 +242,7 @@ tasks:
       - echo 'yamllint removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -241,6 +255,7 @@ tasks:
       - echo yamllint removed.
 
   _upgrade:unix:
+    run: once
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -255,6 +270,7 @@ tasks:
       - echo 'yamllint upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     preconditions:

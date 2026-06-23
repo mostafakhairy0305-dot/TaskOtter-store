@@ -14,6 +14,7 @@ vars:
 
 tasks:
   default:
+    run: once
     desc: Show available jq automation tasks
     summary: Display the list of available jq-related tasks defined in this Taskfile.
     cmds:
@@ -35,6 +36,7 @@ tasks:
       - task: _install:windows
 
   install:undo:
+    run: once
     desc: Remove jq from the current operating system
     summary: |
       Remove jq for the current platform.
@@ -52,6 +54,7 @@ tasks:
       - task: _install:undo:windows
 
   upgrade:
+    run: once
     desc: Upgrade jq to the latest release
     summary: |
       Upgrade jq to the latest available release.
@@ -64,6 +67,7 @@ tasks:
       - task: _upgrade:windows
 
   version:
+    run: once
     desc: Show the installed jq version
     summary: Print the active jq version via jq --version. Auto-installs jq if missing.
     deps:
@@ -72,6 +76,7 @@ tasks:
       - jq --version
 
   _install:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -87,6 +92,7 @@ tasks:
       - echo 'jq installed.'
 
   _install:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -98,6 +104,7 @@ tasks:
       - task: _install:linux:dnf
 
   _install:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -112,6 +119,7 @@ tasks:
       - echo 'jq installed.'
 
   _install:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -126,6 +134,7 @@ tasks:
       - echo 'jq installed.'
 
   _install:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -144,6 +153,7 @@ tasks:
       - echo jq installed. Restart your terminal if jq is not found.
 
   _install:undo:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -158,6 +168,7 @@ tasks:
       - echo 'jq removed.'
 
   _install:undo:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -171,6 +182,7 @@ tasks:
       - task: _install:undo:linux:dnf
 
   _install:undo:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -185,6 +197,7 @@ tasks:
       - echo 'jq removed.'
 
   _install:undo:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -199,6 +212,7 @@ tasks:
       - echo 'jq removed.'
 
   _install:undo:windows:
+    run: once
     internal: true
     platforms: [windows]
     status:
@@ -211,6 +225,7 @@ tasks:
       - echo jq removed.
 
   _upgrade:macos:
+    run: once
     internal: true
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
@@ -226,6 +241,7 @@ tasks:
       - echo 'jq upgraded.'
 
   _upgrade:linux:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -237,6 +253,7 @@ tasks:
       - task: _upgrade:linux:dnf
 
   _upgrade:linux:apt:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -251,6 +268,7 @@ tasks:
       - echo 'jq upgraded.'
 
   _upgrade:linux:dnf:
+    run: once
     internal: true
     platforms: [linux]
     set: [errexit, nounset, pipefail]
@@ -265,6 +283,7 @@ tasks:
       - echo 'jq upgraded.'
 
   _upgrade:windows:
+    run: once
     internal: true
     platforms: [windows]
     cmds:

@@ -98,11 +98,13 @@ includes:
 
 tasks:
   default:
+    run: once
     desc: Show all available TaskOtter tasks
     cmds:
       - task --list-all
 
   lint:
+    run: once
     desc: Run YAML and GitHub Actions lint checks
     deps:
       - yamllint:lint
@@ -110,21 +112,25 @@ tasks:
       - actionlint:lint
 
   lint:fix:
+    run: once
     desc: Auto-fix YAML lint issues
     deps:
       - yamllint:lint:fix
 
   fmt:
+    run: once
     desc: Auto-format YAML files
     deps:
       - yamllint:lint:fix
 
   fmt:check:
+    run: once
     desc: Check YAML formatting and style
     deps:
       - yamllint:lint
 
   ci:
+    run: once
     desc: Run CI flow
     deps:
       - fmt:check
