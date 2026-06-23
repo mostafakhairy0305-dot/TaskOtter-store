@@ -104,7 +104,9 @@ tasks:
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v hadolint >/dev/null 2>&1
+      - >-
+        command -v hadolint >/dev/null 2>&1
+        && hadolint --version | grep -Fq "{{.HADOLINT_VERSION}}"
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: Homebrew is required to install hadolint on macOS. Install it from https://brew.sh and re-run this task.
@@ -126,7 +128,9 @@ tasks:
         {{- else if or (eq .HADOLINT_UNAME_ARCH "aarch64") (eq .HADOLINT_UNAME_ARCH "arm64")}}arm64
         {{- else}}{{.HADOLINT_UNAME_ARCH}}{{end}}
     status:
-      - command -v hadolint >/dev/null 2>&1
+      - >-
+        command -v hadolint >/dev/null 2>&1
+        && hadolint --version | grep -Fq "{{.HADOLINT_VERSION}}"
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to download hadolint.
@@ -155,7 +159,9 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command hadolint -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$hadolint = Get-Command hadolint -ErrorAction SilentlyContinue;
+        if ($hadolint -and ((& $hadolint.Source --version) -like '*{{.HADOLINT_VERSION}}*')) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

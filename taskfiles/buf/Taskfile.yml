@@ -182,7 +182,7 @@ tasks:
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v buf >/dev/null 2>&1
+      - command -v buf >/dev/null 2>&1 && buf --version | grep -Fqx "{{.BUF_VERSION}}"
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: Homebrew is required to install Buf on macOS. Install it from https://brew.sh and re-run this task.
@@ -204,7 +204,7 @@ tasks:
         {{- else if or (eq .BUF_UNAME_ARCH "aarch64") (eq .BUF_UNAME_ARCH "arm64")}}aarch64
         {{- else}}{{.BUF_UNAME_ARCH}}{{end}}
     status:
-      - command -v buf >/dev/null 2>&1
+      - command -v buf >/dev/null 2>&1 && buf --version | grep -Fqx "{{.BUF_VERSION}}"
     preconditions:
       - sh: 'command -v curl >/dev/null 2>&1'
         msg: curl is required to download Buf.
@@ -233,7 +233,9 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command buf -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$buf = Get-Command buf -ErrorAction SilentlyContinue;
+        if ($buf -and ((& $buf.Source --version) -eq '{{.BUF_VERSION}}')) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

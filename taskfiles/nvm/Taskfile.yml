@@ -161,7 +161,10 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command nvm -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$nvm = Get-Command nvm -ErrorAction SilentlyContinue;
+        $expected = '{{.NVM_WINDOWS_VERSION}}'.TrimStart('v');
+        if ($nvm -and ((& $nvm.Source version) -eq $expected)) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -365,7 +368,10 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - test -s "$HOME/.nvm/nvm.sh"
+      - >-
+        test -s "$HOME/.nvm/nvm.sh"
+        && { expected="{{.NVM_SH_VERSION}}"; expected="${expected#v}";
+        bash -c '. "$HOME/.nvm/nvm.sh"; nvm --version' | grep -Fqx "$expected"; }
     preconditions:
       - sh: command -v bash >/dev/null 2>&1
         msg: bash is required.

@@ -1496,8 +1496,9 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.VERSION}}" ]'
-      - command -v gh >/dev/null 2>&1
+      - >-
+        command -v gh >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || gh --version | grep -Fqx "gh version {{.VERSION}}"; }
     cmds:
       - |
         VERSION="{{.VERSION}}"
@@ -1569,10 +1570,15 @@ tasks:
       using the first one found. Prefers winget, then Chocolatey, then Scoop.
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.VERSION}}') { exit 1 } else { exit 0 }"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$gh = Get-Command gh -ErrorAction SilentlyContinue;
+        if (-not $gh) { exit 1 };
+        $requested = '{{.VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $gh.Source --version) -match
+        ('(?m)^gh version ' + [regex]::Escape($requested) + '$'))) { exit 0 };
+        exit 1"
     cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -1598,7 +1604,9 @@ tasks:
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v gh >/dev/null 2>&1
+      - >-
+        command -v gh >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || gh --version | grep -Fqx "gh version {{.VERSION}}"; }
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: "Homebrew is required. Install it from https://brew.sh"
@@ -1616,7 +1624,11 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$gh = Get-Command gh -ErrorAction SilentlyContinue;
+        $requested = '{{.VERSION}}';
+        if ($gh -and ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $gh.Source --version) -match ('(?m)^gh version ' + [regex]::Escape($requested) + '$')))) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -1636,7 +1648,11 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$gh = Get-Command gh -ErrorAction SilentlyContinue;
+        $requested = '{{.VERSION}}';
+        if ($gh -and ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $gh.Source --version) -match ('(?m)^gh version ' + [regex]::Escape($requested) + '$')))) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -1656,7 +1672,11 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command gh -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$gh = Get-Command gh -ErrorAction SilentlyContinue;
+        $requested = '{{.VERSION}}';
+        if ($gh -and ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $gh.Source --version) -match ('(?m)^gh version ' + [regex]::Escape($requested) + '$')))) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -1677,7 +1697,9 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v gh >/dev/null 2>&1
+      - >-
+        command -v gh >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || gh --version | grep -Fqx "gh version {{.VERSION}}"; }
     preconditions:
       - sh: command -v apt-get >/dev/null 2>&1
         msg: "apt-get is required. This task supports Debian/Ubuntu-based systems only."
@@ -1708,7 +1730,9 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v gh >/dev/null 2>&1
+      - >-
+        command -v gh >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || gh --version | grep -Fqx "gh version {{.VERSION}}"; }
     preconditions:
       - sh: command -v dnf >/dev/null 2>&1
         msg: "dnf is required. This task supports Fedora/RHEL-based systems only."
@@ -1729,7 +1753,9 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v gh >/dev/null 2>&1
+      - >-
+        command -v gh >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || gh --version | grep -Fqx "gh version {{.VERSION}}"; }
     preconditions:
       - sh: command -v yum >/dev/null 2>&1
         msg: "yum is required. This task supports CentOS/RHEL-based systems only."
@@ -1749,7 +1775,9 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v gh >/dev/null 2>&1
+      - >-
+        command -v gh >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || gh --version | grep -Fqx "gh version {{.VERSION}}"; }
     preconditions:
       - sh: command -v pacman >/dev/null 2>&1
         msg: "pacman is required. This task supports Arch Linux only."
@@ -1768,7 +1796,9 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v gh >/dev/null 2>&1
+      - >-
+        command -v gh >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || gh --version | grep -Fqx "gh version {{.VERSION}}"; }
     preconditions:
       - sh: command -v zypper >/dev/null 2>&1
         msg: "zypper is required. This task supports openSUSE only."
@@ -1789,7 +1819,9 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v gh >/dev/null 2>&1
+      - >-
+        command -v gh >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || gh --version | grep -Fqx "gh version {{.VERSION}}"; }
     preconditions:
       - sh: command -v snap >/dev/null 2>&1
         msg: "snapd is required. Install it for your distribution and try again."
@@ -1808,7 +1840,9 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v gh >/dev/null 2>&1
+      - >-
+        command -v gh >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || gh --version | grep -Fqx "gh version {{.VERSION}}"; }
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: "Homebrew is required. Install it from https://brew.sh"

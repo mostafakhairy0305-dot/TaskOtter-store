@@ -245,10 +245,14 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.ANSIBLE_VERSION}}" ]'
-      - bash -lc '{{.UV_LOAD}}; command -v ansible >/dev/null 2>&1'
-      - '[ -z "{{.ANSIBLE_LINT_VERSION}}" ]'
-      - bash -lc '{{.UV_LOAD}}; command -v ansible-lint >/dev/null 2>&1'
+      - >-
+        bash -lc '{{.UV_LOAD}}; command -v ansible >/dev/null 2>&1
+        && { [ -z "{{.ANSIBLE_VERSION}}" ]
+        || uv tool list | grep -Eq "^ansible v?{{.ANSIBLE_VERSION}}( |$)"; }'
+      - >-
+        bash -lc '{{.UV_LOAD}}; command -v ansible-lint >/dev/null 2>&1
+        && { [ -z "{{.ANSIBLE_LINT_VERSION}}" ]
+        || uv tool list | grep -Eq "^ansible-lint v?{{.ANSIBLE_LINT_VERSION}}( |$)"; }'
     cmds:
       - echo 'Installing Ansible via uv...'
       - >-

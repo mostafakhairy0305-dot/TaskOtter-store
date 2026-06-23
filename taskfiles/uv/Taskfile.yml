@@ -254,8 +254,11 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.UV_VERSION}}" ]'
-      - 'test -f "$HOME/.local/bin/uv" || command -v uv >/dev/null 2>&1'
+      - >-
+        uv_bin="$HOME/.local/bin/uv";
+        if [ ! -x "$uv_bin" ]; then uv_bin="$(command -v uv 2>/dev/null)"; fi;
+        [ -n "$uv_bin" ] && [ -x "$uv_bin" ]
+        && { [ -z "{{.UV_VERSION}}" ] || "$uv_bin" --version | grep -Fqx "uv {{.UV_VERSION}}"; }
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to download the uv installer.
@@ -272,10 +275,14 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.UV_VERSION}}') { exit 1 } else { exit 0 }"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command uv -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$uv = Get-Command uv -ErrorAction SilentlyContinue;
+        if (-not $uv) { exit 1 };
+        $requested = '{{.UV_VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $uv.Source --version) -eq ('uv ' + $requested))) { exit 0 };
+        exit 1"
     cmds:
       - echo Installing uv via the official PowerShell installer...
       - >-

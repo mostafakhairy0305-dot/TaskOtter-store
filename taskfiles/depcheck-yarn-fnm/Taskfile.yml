@@ -34,6 +34,11 @@ tasks:
     summary: |
       Install depcheck as a local devDependency. Pass VERSION=x.y.z to pin a
       specific release instead of the package manager's default resolution.
+    status:
+      - >-
+        node -e "const installed = require('./node_modules/depcheck/package.json');
+        const requested = '{{if .VERSION_OVERRIDE}}{{.VERSION_OVERRIDE}}{{else}}{{.VERSION}}{{end}}';
+        process.exit(!requested || installed.version === requested ? 0 : 1)"
     cmds:
       - task: yarn:add
         vars:

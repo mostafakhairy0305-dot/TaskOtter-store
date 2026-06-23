@@ -91,8 +91,10 @@ tasks:
         go install
         github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{default "latest" .GOLANGCI_LINT_VERSION}}
     status:
-      - test -z "{{.GOLANGCI_LINT_VERSION}}"
-      - test -x "{{.GLOBAL_GO_BIN}}/golangci-lint"
+      - >-
+        test -x "{{.GLOBAL_GO_BIN}}/golangci-lint"
+        && { test -z "{{.GOLANGCI_LINT_VERSION}}" || test "{{.GOLANGCI_LINT_VERSION}}" = "latest"
+        || go version -m "{{.GLOBAL_GO_BIN}}/golangci-lint" | grep -Fq "{{.GOLANGCI_LINT_VERSION}}"; }
 
   install:gofumpt:
     run: once
@@ -103,8 +105,10 @@ tasks:
     cmds:
       - GOBIN="{{.GLOBAL_GO_BIN}}" go install mvdan.cc/gofumpt@{{default "latest" .GOFUMPT_VERSION}}
     status:
-      - test -z "{{.GOFUMPT_VERSION}}"
-      - test -x "{{.GLOBAL_GO_BIN}}/gofumpt"
+      - >-
+        test -x "{{.GLOBAL_GO_BIN}}/gofumpt"
+        && { test -z "{{.GOFUMPT_VERSION}}" || test "{{.GOFUMPT_VERSION}}" = "latest"
+        || go version -m "{{.GLOBAL_GO_BIN}}/gofumpt" | grep -Fq "{{.GOFUMPT_VERSION}}"; }
 
   install:goimports:
     run: once
@@ -117,8 +121,10 @@ tasks:
         GOBIN="{{.GLOBAL_GO_BIN}}"
         go install golang.org/x/tools/cmd/goimports@{{default "latest" .GOIMPORTS_VERSION}}
     status:
-      - test -z "{{.GOIMPORTS_VERSION}}"
-      - test -x "{{.GLOBAL_GO_BIN}}/goimports"
+      - >-
+        test -x "{{.GLOBAL_GO_BIN}}/goimports"
+        && { test -z "{{.GOIMPORTS_VERSION}}" || test "{{.GOIMPORTS_VERSION}}" = "latest"
+        || go version -m "{{.GLOBAL_GO_BIN}}/goimports" | grep -Fq "{{.GOIMPORTS_VERSION}}"; }
 
   install:govulncheck:
     run: once
@@ -131,8 +137,10 @@ tasks:
         GOBIN="{{.GLOBAL_GO_BIN}}"
         go install golang.org/x/vuln/cmd/govulncheck@{{default "latest" .GOVULNCHECK_VERSION}}
     status:
-      - test -z "{{.GOVULNCHECK_VERSION}}"
-      - test -x "{{.GLOBAL_GO_BIN}}/govulncheck"
+      - >-
+        test -x "{{.GLOBAL_GO_BIN}}/govulncheck"
+        && { test -z "{{.GOVULNCHECK_VERSION}}" || test "{{.GOVULNCHECK_VERSION}}" = "latest"
+        || go version -m "{{.GLOBAL_GO_BIN}}/govulncheck" | grep -Fq "{{.GOVULNCHECK_VERSION}}"; }
 
   install:gosec:
     run: once
@@ -145,8 +153,10 @@ tasks:
         GOBIN="{{.GLOBAL_GO_BIN}}"
         go install github.com/securego/gosec/v2/cmd/gosec@{{default "latest" .GOSEC_VERSION}}
     status:
-      - test -z "{{.GOSEC_VERSION}}"
-      - test -x "{{.GLOBAL_GO_BIN}}/gosec"
+      - >-
+        test -x "{{.GLOBAL_GO_BIN}}/gosec"
+        && { test -z "{{.GOSEC_VERSION}}" || test "{{.GOSEC_VERSION}}" = "latest"
+        || go version -m "{{.GLOBAL_GO_BIN}}/gosec" | grep -Fq "{{.GOSEC_VERSION}}"; }
 
   fmt:
     run: once

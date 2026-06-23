@@ -200,8 +200,11 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.VERSION}}" ]'
-      - 'test -f "$HOME/.bun/bin/bun" || command -v bun >/dev/null 2>&1'
+      - >-
+        bun_bin="$HOME/.bun/bin/bun";
+        if [ ! -x "$bun_bin" ]; then bun_bin="$(command -v bun 2>/dev/null)"; fi;
+        [ -n "$bun_bin" ] && [ -x "$bun_bin" ]
+        && { [ -z "{{.VERSION}}" ] || [ "$("$bun_bin" --version)" = "{{.VERSION}}" ]; }
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to download the Bun installation script.
@@ -236,11 +239,15 @@ tasks:
       Skipped when VERSION is empty and Bun is already available.
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.VERSION}}') { exit 1 } else { exit 0 }"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if ((Get-Command bun -ErrorAction SilentlyContinue) -or
-        (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) { exit 0 } else { exit 1 }"
+        "$bun = Get-Command bun -ErrorAction SilentlyContinue;
+        if (-not $bun -and (Test-Path \"$env:USERPROFILE\.bun\bin\bun.exe\")) {
+        $bun = Get-Item \"$env:USERPROFILE\.bun\bin\bun.exe\" };
+        if (-not $bun) { exit 1 };
+        $requested = '{{.VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested) -or ((& $bun.Source --version) -eq $requested)) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

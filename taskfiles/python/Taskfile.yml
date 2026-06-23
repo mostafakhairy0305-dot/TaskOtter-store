@@ -139,7 +139,11 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - 'test -f "$HOME/.local/bin/python3" || command -v python3 >/dev/null 2>&1'
+      - >-
+        python_bin="$HOME/.local/bin/python3";
+        if [ ! -x "$python_bin" ]; then python_bin="$(command -v python3 2>/dev/null)"; fi;
+        [ -n "$python_bin" ] && [ -x "$python_bin" ]
+        && "$python_bin" --version | grep -Eq "^Python {{.PYTHON_PIN_VERSION}}(\\.|$)"
     cmds:
       - echo 'Installing Python via uv...'
       - bash -lc '{{.UV_LOAD}}; uv python install {{.PYTHON_PIN_VERSION}} --default'
@@ -152,7 +156,9 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command python -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$python = Get-Command python -ErrorAction SilentlyContinue;
+        if ($python -and ((& $python.Source --version) -match '^Python {{.PYTHON_PIN_VERSION}}(\.|$)')) { exit 0 };
+        exit 1"
     cmds:
       - echo Installing Python via uv...
       - uv python install {{.PYTHON_PIN_VERSION}} --default

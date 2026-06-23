@@ -567,8 +567,9 @@ tasks:
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.VERSION}}" ]'
-      - command -v git >/dev/null 2>&1
+      - >-
+        command -v git >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || git --version | grep -Fqx "git version {{.VERSION}}"; }
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: Homebrew is required to install git on macOS. Install it from https://brew.sh and re-run this task.
@@ -583,8 +584,9 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.VERSION}}" ]'
-      - command -v git >/dev/null 2>&1
+      - >-
+        command -v git >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || git --version | grep -Fqx "git version {{.VERSION}}"; }
     cmds:
       - task: _install:linux:apt
       - task: _install:linux:dnf
@@ -624,10 +626,14 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.VERSION}}') { exit 1 } else { exit 0 }"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command git -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$git = Get-Command git -ErrorAction SilentlyContinue;
+        if (-not $git) { exit 1 };
+        $requested = '{{.VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $git.Source --version) -eq ('git version ' + $requested))) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

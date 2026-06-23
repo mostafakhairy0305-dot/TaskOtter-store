@@ -37,6 +37,11 @@ tasks:
     summary: |
       Install stylelint and stylelint-config-standard as local devDependencies.
       Pass VERSION=x.y.z to pin stylelint to a specific release.
+    status:
+      - >-
+        node -e "const installed = require('./node_modules/stylelint/package.json');
+        const requested = '{{if .VERSION_OVERRIDE}}{{.VERSION_OVERRIDE}}{{else}}{{.VERSION}}{{end}}';
+        process.exit(!requested || installed.version === requested ? 0 : 1)"
     cmds:
       - task: pnpm:add
         vars:

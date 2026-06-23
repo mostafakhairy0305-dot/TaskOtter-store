@@ -214,7 +214,7 @@ tasks:
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v protoc >/dev/null 2>&1
+      - command -v protoc >/dev/null 2>&1 && protoc --version | grep -Fqx "libprotoc {{.PROTOC_VERSION}}"
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: Homebrew is required to install protoc on macOS. Install it from https://brew.sh and re-run this task.
@@ -238,7 +238,7 @@ tasks:
       PROTOC_ARCHIVE: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}.zip"
       PROTOC_TMP_DIR: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}"
     status:
-      - command -v protoc >/dev/null 2>&1
+      - command -v protoc >/dev/null 2>&1 && protoc --version | grep -Fqx "libprotoc {{.PROTOC_VERSION}}"
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to download protoc.
@@ -277,7 +277,9 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command protoc -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$protoc = Get-Command protoc -ErrorAction SilentlyContinue;
+        if ($protoc -and ((& $protoc.Source --version) -eq 'libprotoc {{.PROTOC_VERSION}}')) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
@@ -295,6 +297,10 @@ tasks:
     status:
       - test -x "{{.GLOBAL_GO_BIN}}/protoc-gen-go"
       - test -x "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc"
+      - '"{{.GLOBAL_GO_BIN}}/protoc-gen-go" --version | grep -Fqx "protoc-gen-go {{.PROTOC_GEN_GO_VERSION}}"'
+      - >-
+        "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc" --version | grep -Fqx
+        "protoc-gen-go-grpc {{.PROTOC_GEN_GO_GRPC_VERSION}}"
       - '[ "{{.FORCE}}" != "true" ]'
     preconditions:
       - sh: command -v "{{.GO_CMD}}" >/dev/null 2>&1 || test -x "{{.GO_CMD}}"

@@ -177,7 +177,9 @@ tasks:
     platforms: [linux, darwin]
     status:
       - test -s "$HOME/.nvm/nvm.sh"
-      - bash -c '{{.NVM_LOAD}}; {{.NVM_USE}}; command -v corepack >/dev/null 2>&1'
+      - >-
+        bash -c '{{.NVM_LOAD}}; {{.NVM_USE}}; command -v corepack >/dev/null 2>&1
+        && corepack --version | grep -Fqx "{{.COREPACK_VERSION}}"'
     preconditions:
       - sh: test -s "$HOME/.nvm/nvm.sh"
         msg: 'nvm is not installed. Run: task node:setup'
@@ -197,7 +199,9 @@ tasks:
         $env:NODE_VERSION = '{{.NODE_VERSION}}';
         if (-not (Get-Command nvm -ErrorAction SilentlyContinue)) { exit 1 };
         {{.WINDOWS_NODE_ACTIVATE}};
-        if (Get-Command corepack -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        $corepack = Get-Command corepack -ErrorAction SilentlyContinue;
+        if ($corepack -and ((& $corepack.Source --version) -eq '{{.COREPACK_VERSION}}')) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

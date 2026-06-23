@@ -382,6 +382,10 @@ tasks:
         - VERSION
     env:
       VERSION: "{{.VERSION}}"
+    status:
+      - >-
+        bash -lc 'case "$VERSION" in --lts|lts|latest|node) exit 1 ;; esac;
+        {{.FNM_LOAD}}; fnm list | grep -Eq "(^|[[:space:]])v{{.VERSION}}([[:space:]]|$)"'
     preconditions:
       - sh: test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1 || test -f "$HOME/.local/bin/fnm"
         msg: fnm is not installed. Run task install first.
@@ -402,6 +406,13 @@ tasks:
         - VERSION
     env:
       VERSION: "{{.VERSION}}"
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$version = $env:VERSION;
+        if ($version -in @('--lts', 'lts', 'latest', 'node')) { exit 1 };
+        if ((fnm list | Select-String -Quiet -Pattern ('(^|\s)v' + [regex]::Escape($version) + '(\s|$)'))) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

@@ -101,7 +101,9 @@ tasks:
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - command -v actionlint >/dev/null 2>&1
+      - >-
+        command -v actionlint >/dev/null 2>&1
+        && actionlint --version | grep -Fqx "{{.ACTIONLINT_VERSION}}"
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: Homebrew is required to install actionlint on macOS. Install it from https://brew.sh and re-run this task.
@@ -125,7 +127,9 @@ tasks:
       ACTIONLINT_ARCHIVE: "/tmp/taskotter-actionlint-{{.ACTIONLINT_VERSION}}.tar.gz"
       ACTIONLINT_TMP_DIR: "/tmp/taskotter-actionlint-{{.ACTIONLINT_VERSION}}"
     status:
-      - command -v actionlint >/dev/null 2>&1
+      - >-
+        command -v actionlint >/dev/null 2>&1
+        && actionlint --version | grep -Fqx "{{.ACTIONLINT_VERSION}}"
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to download actionlint.
@@ -164,7 +168,9 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command actionlint -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$actionlint = Get-Command actionlint -ErrorAction SilentlyContinue;
+        if ($actionlint -and ((& $actionlint.Source --version) -eq '{{.ACTIONLINT_VERSION}}')) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

@@ -472,8 +472,9 @@ tasks:
     platforms: [darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.VERSION}}" ]'
-      - command -v vault >/dev/null 2>&1
+      - >-
+        command -v vault >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || vault version | grep -Fq "v{{.VERSION}}"; }
     preconditions:
       - sh: command -v brew >/dev/null 2>&1
         msg: Homebrew is required to install Vault on macOS. Install it from https://brew.sh and re-run this task.
@@ -504,8 +505,10 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.VERSION}}" ]'
-      - "! command -v apt-get >/dev/null 2>&1 || command -v vault >/dev/null 2>&1"
+      - >-
+        ! command -v apt-get >/dev/null 2>&1 || {
+        command -v vault >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || vault version | grep -Fq "v{{.VERSION}}"; }; }
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to add the HashiCorp APT repository.
@@ -548,8 +551,10 @@ tasks:
     platforms: [linux]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.VERSION}}" ]'
-      - "! command -v dnf >/dev/null 2>&1 || command -v vault >/dev/null 2>&1"
+      - >-
+        ! command -v dnf >/dev/null 2>&1 || {
+        command -v vault >/dev/null 2>&1
+        && { [ -z "{{.VERSION}}" ] || vault version | grep -Fq "v{{.VERSION}}"; }; }
     preconditions:
       - sh: 'test "$(id -u)" -eq 0 || command -v sudo >/dev/null 2>&1'
         msg: sudo is required to install Vault when not running as root.
@@ -577,10 +582,14 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.VERSION}}') { exit 1 } else { exit 0 }"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command vault -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$vault = Get-Command vault -ErrorAction SilentlyContinue;
+        if (-not $vault) { exit 1 };
+        $requested = '{{.VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $vault.Source version) -like ('*v' + $requested + '*'))) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

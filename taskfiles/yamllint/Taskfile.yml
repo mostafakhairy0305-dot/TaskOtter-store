@@ -169,8 +169,9 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.YAMLLINT_VERSION}}" ]'
-      - bash -lc '{{.UV_LOAD}}; command -v yamllint >/dev/null 2>&1'
+      - >-
+        bash -lc '{{.UV_LOAD}}; command -v yamllint >/dev/null 2>&1
+        && { [ -z "{{.YAMLLINT_VERSION}}" ] || yamllint --version | grep -Fq "{{.YAMLLINT_VERSION}}"; }'
     deps:
       - uv:install
     cmds:
@@ -186,8 +187,9 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     status:
-      - '[ -z "{{.YAMLFIX_VERSION}}" ]'
-      - bash -lc '{{.UV_LOAD}}; command -v yamlfix >/dev/null 2>&1'
+      - >-
+        bash -lc '{{.UV_LOAD}}; command -v yamlfix >/dev/null 2>&1
+        && { [ -z "{{.YAMLFIX_VERSION}}" ] || yamlfix --version | grep -Fq "{{.YAMLFIX_VERSION}}"; }'
     deps:
       - uv:install
     cmds:
@@ -202,10 +204,14 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.YAMLFIX_VERSION}}') { exit 1 } else { exit 0 }"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command yamlfix -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$yamlfix = Get-Command yamlfix -ErrorAction SilentlyContinue;
+        if (-not $yamlfix) { exit 1 };
+        $requested = '{{.YAMLFIX_VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $yamlfix.Source --version) -like ('*' + $requested + '*'))) { exit 0 };
+        exit 1"
     deps:
       - uv:install
     cmds:
@@ -218,10 +224,14 @@ tasks:
     internal: true
     platforms: [windows]
     status:
-      - powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{.YAMLLINT_VERSION}}') { exit 1 } else { exit 0 }"
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command yamllint -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$yamllint = Get-Command yamllint -ErrorAction SilentlyContinue;
+        if (-not $yamllint) { exit 1 };
+        $requested = '{{.YAMLLINT_VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $yamllint.Source --version) -like ('*' + $requested + '*'))) { exit 0 };
+        exit 1"
     deps:
       - uv:install
     cmds:

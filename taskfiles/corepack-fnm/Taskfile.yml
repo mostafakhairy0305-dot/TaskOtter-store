@@ -177,7 +177,9 @@ tasks:
       - >-
         test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1
         || test -f "$HOME/.local/bin/fnm"
-      - bash -c '{{.FNM_LOAD}}; {{.FNM_USE}}; command -v corepack >/dev/null 2>&1'
+      - >-
+        bash -c '{{.FNM_LOAD}}; {{.FNM_USE}}; command -v corepack >/dev/null 2>&1
+        && corepack --version | grep -Fqx "{{.COREPACK_VERSION}}"'
     preconditions:
       - sh: >-
           test -f "{{.FNM_INSTALL_DIR}}/fnm" || command -v fnm >/dev/null 2>&1
@@ -199,7 +201,9 @@ tasks:
         $env:NODE_VERSION = '{{.NODE_VERSION}}';
         if (-not (Get-Command fnm -ErrorAction SilentlyContinue)) { exit 1 };
         {{.WINDOWS_NODE_ACTIVATE}};
-        if (Get-Command corepack -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        $corepack = Get-Command corepack -ErrorAction SilentlyContinue;
+        if ($corepack -and ((& $corepack.Source --version) -eq '{{.COREPACK_VERSION}}')) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command

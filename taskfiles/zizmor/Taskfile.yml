@@ -129,7 +129,9 @@ tasks:
       ZIZMOR_ARCHIVE: "/tmp/taskotter-zizmor-{{.ZIZMOR_VERSION}}.tar.gz"
       ZIZMOR_TMP_DIR: "/tmp/taskotter-zizmor-{{.ZIZMOR_VERSION}}"
     status:
-      - command -v zizmor >/dev/null 2>&1
+      - >-
+        command -v zizmor >/dev/null 2>&1
+        && zizmor --version | grep -Fq "{{.ZIZMOR_VERSION}}"
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to download zizmor.
@@ -173,7 +175,9 @@ tasks:
       ZIZMOR_ARCHIVE: "/tmp/taskotter-zizmor-{{.ZIZMOR_VERSION}}.tar.gz"
       ZIZMOR_TMP_DIR: "/tmp/taskotter-zizmor-{{.ZIZMOR_VERSION}}"
     status:
-      - command -v zizmor >/dev/null 2>&1
+      - >-
+        command -v zizmor >/dev/null 2>&1
+        && zizmor --version | grep -Fq "{{.ZIZMOR_VERSION}}"
     preconditions:
       - sh: command -v curl >/dev/null 2>&1
         msg: curl is required to download zizmor.
@@ -215,7 +219,9 @@ tasks:
     status:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command zizmor -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+        "$zizmor = Get-Command zizmor -ErrorAction SilentlyContinue;
+        if ($zizmor -and ((& $zizmor.Source --version) -like '*{{.ZIZMOR_VERSION}}*')) { exit 0 };
+        exit 1"
     cmds:
       - echo Installing zizmor v{{.ZIZMOR_VERSION}} for Windows...
       - >-
