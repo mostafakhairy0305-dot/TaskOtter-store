@@ -1,0 +1,233 @@
+---
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  go:
+    taskfile: ../go/Taskfile.yml
+
+vars:
+  EXTRA_ARGS: ""
+  GLOBAL_GO_BIN:
+    sh: |
+      gobin="${GOBIN:-}"
+      if [ -z "$gobin" ] && command -v go >/dev/null 2>&1; then
+        gobin="$(go env GOBIN)"
+      fi
+      if [ -z "$gobin" ]; then
+        gopath="${GOPATH:-}"
+        if [ -z "$gopath" ] && command -v go >/dev/null 2>&1; then
+          gopath="$(go env GOPATH)"
+        fi
+        gobin="${gopath:-$HOME/go}/bin"
+      fi
+      printf '%s' "$gobin"
+  SHFMT_VERSION: ""
+  TARGETS: "."
+
+tasks:
+  default:
+    run: once
+    desc: Show available shfmt automation tasks
+    summary: Display the list of available shfmt-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    run: once
+    desc: Install shfmt into the global Go bin
+    summary: |
+      Install shfmt from its official Go module into GOBIN, or GOPATH/bin when
+      GOBIN is unset. Leave SHFMT_VERSION empty to install the latest stable v3
+      release, or set an exact module version such as v3.13.1.
+    deps:
+      - go:install
+    cmds:
+      - task: _install:unix
+      - task: _install:windows
+
+  install:undo:
+    run: once
+    desc: Remove shfmt from the global Go bin
+    summary: Remove the shfmt binary previously installed in the global Go bin.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove shfmt from the global Go bin.
+      - Continue?
+    cmds:
+      - task: _install:undo:unix
+      - task: _install:undo:windows
+
+  upgrade:
+    run: once
+    desc: Upgrade shfmt to the requested version
+    summary: |
+      Reinstall shfmt from its official Go module. Leave SHFMT_VERSION empty to
+      upgrade to the latest stable v3 release, or set an exact version.
+    deps:
+      - go:install
+    cmds:
+      - task: _install:unix
+        vars:
+          FORCE: "true"
+      - task: _install:windows
+        vars:
+          FORCE: "true"
+
+  fmt:
+    run: once
+    desc: Format shell scripts with shfmt (TARGETS=path)
+    summary: |
+      Reformat shell scripts at TARGETS (default: .) in place. Pass EXTRA_ARGS
+      for shfmt options such as -i 2, -ci, -sr, or -ln bash. Auto-installs shfmt
+      and its Go toolchain if needed.
+    dir: "{{.USER_WORKING_DIR}}"
+    deps:
+      - install
+    cmds:
+      - task: _fmt:unix
+      - task: _fmt:windows
+
+  fmt:check:
+    run: once
+    desc: Check shell script formatting with shfmt (TARGETS=path)
+    summary: |
+      Report formatting differences for shell scripts at TARGETS (default: .)
+      without modifying files. Pass EXTRA_ARGS for shfmt options such as -i 2,
+      -ci, -sr, or -ln bash. Auto-installs shfmt and its Go toolchain if needed.
+    dir: "{{.USER_WORKING_DIR}}"
+    deps:
+      - install
+    cmds:
+      - task: _fmt:check:unix
+      - task: _fmt:check:windows
+
+  version:
+    run: once
+    desc: Show the installed shfmt version
+    summary: Print the active shfmt version with shfmt -version. Auto-installs shfmt if it is missing.
+    deps:
+      - install
+    cmds:
+      - task: _version:unix
+      - task: _version:windows
+
+  _install:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '[ "{{default "false" .FORCE}}" != "true" ]'
+      - test -x "{{.GLOBAL_GO_BIN}}/shfmt"
+      - >-
+        [ -z "{{.SHFMT_VERSION}}" ]
+        || go version -m "{{.GLOBAL_GO_BIN}}/shfmt" | grep -Fq "{{.SHFMT_VERSION}}"
+    cmds:
+      - >-
+        GOBIN="{{.GLOBAL_GO_BIN}}"
+        go install mvdan.cc/sh/v3/cmd/shfmt@{{default "latest" .SHFMT_VERSION}}
+
+  _install:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if ('{{default "false" .FORCE}}' -eq 'true') { exit 1 };
+        if (-not (Test-Path '{{.GLOBAL_GO_BIN}}/shfmt.exe')) { exit 1 };
+        $requested = '{{.SHFMT_VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested)
+        -or ((go version -m '{{.GLOBAL_GO_BIN}}/shfmt.exe') -like ('*' + $requested + '*'))) { exit 0 };
+        exit 1"
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$env:GOBIN = '{{.GLOBAL_GO_BIN}}';
+        go install mvdan.cc/sh/v3/cmd/shfmt@{{default "latest" .SHFMT_VERSION}}"
+
+  _install:undo:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! test -e "{{.GLOBAL_GO_BIN}}/shfmt"'
+    cmds:
+      - rm -f "{{.GLOBAL_GO_BIN}}/shfmt"
+
+  _install:undo:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path '{{.GLOBAL_GO_BIN}}/shfmt.exe') { exit 1 } else { exit 0 }"
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Remove-Item '{{.GLOBAL_GO_BIN}}/shfmt.exe' -Force -ErrorAction SilentlyContinue"
+
+  _fmt:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    cmds:
+      - >-
+        "{{.GLOBAL_GO_BIN}}/shfmt" -w
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+
+  _fmt:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    cmds:
+      - >-
+        & "{{.GLOBAL_GO_BIN}}/shfmt.exe" -w
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+
+  _fmt:check:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    cmds:
+      - >-
+        "{{.GLOBAL_GO_BIN}}/shfmt" -d
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+
+  _fmt:check:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    cmds:
+      - >-
+        & "{{.GLOBAL_GO_BIN}}/shfmt.exe" -d
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+
+  _version:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    cmds:
+      - '"{{.GLOBAL_GO_BIN}}/shfmt" -version'
+
+  _version:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    cmds:
+      - '& "{{.GLOBAL_GO_BIN}}/shfmt.exe" -version'

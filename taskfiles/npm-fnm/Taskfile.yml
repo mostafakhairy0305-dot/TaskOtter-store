@@ -505,7 +505,7 @@ tasks:
         else { task fnm:node:install }""
 
   _npm:unix:
-    run: once
+    run: when_changed
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -530,7 +530,7 @@ tasks:
         corepack npm {{.ARGS}}'
 
   _npm:windows:
-    run: once
+    run: when_changed
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -587,7 +587,7 @@ tasks:
           ARGS: ci
 
   _run:unix:
-    run: once
+    run: when_changed
     internal: true
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
@@ -607,7 +607,7 @@ tasks:
           ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _run:windows:
-    run: once
+    run: when_changed
     internal: true
     platforms: [windows]
     requires:

@@ -1,0 +1,60 @@
+# protolint Taskfile
+
+## What is this Taskfile?
+
+This Taskfile wraps [protolint](https://github.com/yoheimuta/protolint), a
+pluggable linter and fixer for Protocol Buffer files, with automation tasks
+for installing the tool and linting or fixing .proto files on macOS, Linux,
+and Windows. protolint is installed from its official Go module into the
+global Go bin, so the Go toolchain is bootstrapped automatically when needed.
+
+## Usage
+
+### Standalone
+
+```bash
+task --taskfile taskfiles/protolint/Taskfile.yml lint TARGETS=api
+```
+
+### Included
+
+```yaml
+includes:
+  protolint:
+    taskfile: taskfiles/protolint/Taskfile.yml
+```
+
+```bash
+task protolint:lint TARGETS=api
+task protolint:fix TARGETS=api
+task protolint:install PROTOLINT_VERSION=v0.55.6
+```
+
+## Public Tasks
+
+| Task | Description | Key variables |
+|---|---|---|
+| `install` | Install protolint into the global Go bin | `PROTOLINT_VERSION` |
+| `install:undo` | Remove protolint from the global Go bin (alias: `uninstall`) | |
+| `upgrade` | Reinstall protolint at the requested version | `PROTOLINT_VERSION` |
+| `lint` | Lint protobuf files with protolint | `TARGETS`, `EXTRA_ARGS` |
+| `fix` | Apply automatic fixes with protolint lint -fix | `TARGETS`, `EXTRA_ARGS` |
+| `version` | Show the installed protolint version | |
+
+## Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `PROTOLINT_VERSION` | `""` (latest) | Pin an exact protolint module version, e.g. `v0.55.6` |
+| `TARGETS` | `.` | File or directory protolint operates on |
+| `EXTRA_ARGS` | `""` | Extra flags forwarded to protolint (e.g. `-config_path`, `-reporter json`) |
+| `GLOBAL_GO_BIN` | GOBIN → GOPATH/bin → `$HOME/go/bin` | Resolved global Go bin directory |
+
+## Notes
+
+- Auto-install: every run task depends on `install`, so protolint (and the Go
+  toolchain via the go module) is installed on first use. Installs are
+  idempotent and version-aware — changing `PROTOLINT_VERSION` triggers a
+  reinstall, verified with `go version -m`.
+- Windows tasks invoke `protolint.exe` from the resolved Go bin; macOS and
+  Linux invoke the binary directly, so no PATH changes are required.

@@ -1,0 +1,306 @@
+---
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  cargo:
+    taskfile: ../cargo/Taskfile.yml
+
+vars:
+  CARGO_BIN_UNIX: "$HOME/.cargo/bin"
+  TARGETS: ".env"
+  EXTRA_ARGS: ""
+  DOTENV_LINTER_VERSION: ""
+
+tasks:
+  default:
+    run: once
+    desc: Show available dotenv-linter automation tasks
+    summary: Display the list of available dotenv-linter-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    run: once
+    desc: Install dotenv-linter on the current operating system
+    summary: |
+      Install dotenv-linter with cargo install for the current platform.
+      Pass DOTENV_LINTER_VERSION to pin a specific release instead of the
+      latest. Bootstraps the Rust toolchain via the cargo module if cargo is
+      not already present.
+    deps:
+      - cargo:install
+    cmds:
+      - task: _install:unix
+      - task: _install:windows
+
+  install:undo:
+    run: once
+    desc: Remove dotenv-linter from the current operating system
+    summary: Remove the dotenv-linter binary previously installed with cargo install.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove dotenv-linter from this machine.
+      - Continue?
+    cmds:
+      - task: _install:undo:unix
+      - task: _install:undo:windows
+
+  upgrade:
+    run: once
+    desc: Upgrade dotenv-linter to the requested version
+    summary: |
+      Reinstall dotenv-linter with cargo install --force. Leave
+      DOTENV_LINTER_VERSION empty to upgrade to the latest release, or set an
+      exact version.
+    deps:
+      - cargo:install
+    cmds:
+      - task: _install:unix
+        vars:
+          FORCE: "true"
+      - task: _install:windows
+        vars:
+          FORCE: "true"
+
+  lint:
+    run: once
+    desc: Lint dotenv files with dotenv-linter check (TARGETS=path)
+    summary: |
+      Run dotenv-linter check against TARGETS (default .env). Pass EXTRA_ARGS
+      for additional flags such as --skip or --recursive, or pass arguments
+      after -- to forward them directly. Auto-installs dotenv-linter if
+      missing.
+    dir: "{{.USER_WORKING_DIR}}"
+    deps:
+      - install
+    cmds:
+      - task: _lint:unix
+      - task: _lint:windows
+
+  fix:
+    run: once
+    desc: Fix dotenv lint issues with dotenv-linter (TARGETS=path)
+    summary: |
+      Run dotenv-linter fix against TARGETS (default .env) to apply automatic
+      fixes. A backup of each changed file is created by the tool. Pass
+      EXTRA_ARGS for additional flags. Auto-installs dotenv-linter if missing.
+    dir: "{{.USER_WORKING_DIR}}"
+    deps:
+      - install
+    cmds:
+      - task: _fix:unix
+      - task: _fix:windows
+
+  diff:
+    run: once
+    desc: Compare dotenv files with dotenv-linter diff (TARGETS=files)
+    summary: |
+      Run dotenv-linter diff against TARGETS (two or more .env files) to
+      ensure their key sets match. Pass EXTRA_ARGS for additional flags.
+      Auto-installs dotenv-linter if missing.
+    dir: "{{.USER_WORKING_DIR}}"
+    deps:
+      - install
+    cmds:
+      - task: _diff:unix
+      - task: _diff:windows
+
+  version:
+    run: once
+    desc: Show the installed dotenv-linter version
+    summary: Print the active dotenv-linter version. Auto-installs dotenv-linter if missing.
+    deps:
+      - install
+    cmds:
+      - task: _version:unix
+      - task: _version:windows
+
+  _install:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '[ "{{default "false" .FORCE}}" != "true" ]'
+      - test -x "$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")"
+      - >-
+        [ -z "{{.DOTENV_LINTER_VERSION}}" ]
+        || "$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")" --version
+        | grep -Fq "{{.DOTENV_LINTER_VERSION}}"
+    cmds:
+      - echo 'Installing dotenv-linter via cargo...'
+      - >-
+        cargo="$(command -v cargo || echo "{{.CARGO_BIN_UNIX}}/cargo")";
+        "$cargo" install
+        {{if eq (default "false" .FORCE) "true"}}--force{{end}}
+        dotenv-linter{{if .DOTENV_LINTER_VERSION}}
+        --version {{.DOTENV_LINTER_VERSION}}{{end}}
+      - echo 'dotenv-linter installed.'
+
+  _install:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if ('{{default "false" .FORCE}}' -eq 'true') { exit 1 };
+        $b = (Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
+        if (-not $b) { $b = Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
+        if (-not (Test-Path $b)) { exit 1 };
+        $requested = '{{.DOTENV_LINTER_VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested)
+        -or ((& $b --version) -like ('*' + $requested + '*'))) { exit 0 };
+        exit 1"
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$c = (Get-Command cargo -ErrorAction SilentlyContinue).Source;
+        if (-not $c) { $c = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe' };
+        & $c install
+        {{if eq (default "false" .FORCE) "true"}}--force{{end}}
+        dotenv-linter{{if .DOTENV_LINTER_VERSION}}
+        --version {{.DOTENV_LINTER_VERSION}}{{end}}"
+
+  _install:undo:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - >-
+        ! command -v dotenv-linter >/dev/null 2>&1
+        && ! test -x "{{.CARGO_BIN_UNIX}}/dotenv-linter"
+    cmds:
+      - |
+        cargo="$(command -v cargo || echo "{{.CARGO_BIN_UNIX}}/cargo")"
+        "$cargo" uninstall dotenv-linter
+      - echo 'dotenv-linter removed.'
+
+  _install:undo:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$b = (Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
+        if (-not $b) { $b = Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
+        if (Test-Path $b) { exit 1 } else { exit 0 }"
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$c = (Get-Command cargo -ErrorAction SilentlyContinue).Source;
+        if (-not $c) { $c = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe' };
+        & $c uninstall dotenv-linter"
+
+  _lint:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - >-
+        bin="$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")";
+        "$bin"
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}check
+        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+
+  _lint:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$b = (Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
+        if (-not $b) { $b = Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
+        & $b {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}check
+        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+
+  _fix:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - >-
+        bin="$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")";
+        "$bin" fix
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+
+  _fix:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$b = (Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
+        if (-not $b) { $b = Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
+        & $b fix {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
+        {{- else}}{{.TARGETS}}{{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+
+  _diff:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - >-
+        bin="$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")";
+        "$bin" diff
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+
+  _diff:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$b = (Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
+        if (-not $b) { $b = Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
+        & $b diff {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
+        {{- else}}{{.TARGETS}}{{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+
+  _version:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    cmds:
+      - |
+        bin="$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")"
+        "$bin" --version
+
+  _version:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$b = (Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
+        if (-not $b) { $b = Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
+        & $b --version"

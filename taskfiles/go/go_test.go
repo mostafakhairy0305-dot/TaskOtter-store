@@ -26,9 +26,16 @@ var publicTasks = []string{
 	"install:golangci-lint",
 	"install:gosec",
 	"install:govulncheck",
+	"install:spm-go",
 	"install:undo",
 	"lint",
 	"lint:fix",
+	"spm-go:abstractness",
+	"spm-go:all",
+	"spm-go:dependencies",
+	"spm-go:distance",
+	"spm-go:instability",
+	"spm-go:packages",
 	"upgrade",
 	"verify",
 	"version",
@@ -49,6 +56,7 @@ var publicVars = []string{
 	"GLOBAL_GO_BIN",
 	"GOVULNCHECK_VERSION",
 	"INSTALL_DIR_UNIX",
+	"SPM_GO_VERSION",
 }
 
 func goAvailable() bool {
@@ -124,6 +132,7 @@ func TestDevelopmentToolDependencies(t *testing.T) {
 		"install:goimports":     {"install"},
 		"install:govulncheck":   {"install"},
 		"install:gosec":         {"install"},
+		"install:spm-go":        {"install"},
 	}
 	lintTasks := map[string][]string{
 		"gofumpt:fmt":            {"install:gofumpt"},
@@ -134,6 +143,12 @@ func TestDevelopmentToolDependencies(t *testing.T) {
 		"goimports:lint":         {"install:goimports"},
 		"govulncheck:lint":       {"install:govulncheck"},
 		"gosec:lint":             {"install:gosec"},
+		"spm-go:packages":        {"install:spm-go"},
+		"spm-go:dependencies":    {"install:spm-go"},
+		"spm-go:instability":     {"install:spm-go"},
+		"spm-go:abstractness":    {"install:spm-go"},
+		"spm-go:distance":        {"install:spm-go"},
+		"spm-go:all":             {"install:spm-go"},
 		"lint": {
 			"golangci-lint:lint",
 			"gofumpt:lint",
@@ -182,6 +197,11 @@ func TestDevelopmentToolInstallVersions(t *testing.T) {
 			module:     "github.com/securego/gosec/v2/cmd/gosec",
 			versionVar: "GOSEC_VERSION",
 		},
+		{
+			task:       "install:spm-go",
+			module:     "github.com/fdaines/spm-go",
+			versionVar: "SPM_GO_VERSION",
+		},
 	}
 
 	for _, tt := range tests {
@@ -195,6 +215,30 @@ func TestDevelopmentToolInstallVersions(t *testing.T) {
 			)
 		})
 	}
+}
+
+func TestSpmGoCommandDryRuns(t *testing.T) {
+	for _, cmd := range []string{
+		"packages",
+		"dependencies",
+		"instability",
+		"abstractness",
+		"distance",
+		"all",
+	} {
+		t.Run(cmd, func(t *testing.T) {
+			tasktest.AssertDryRunContains(t, "go", []string{"spm-go:" + cmd}, "spm-go", cmd)
+		})
+	}
+}
+
+func TestSpmGoForwardsCliArgs(t *testing.T) {
+	tasktest.AssertDryRunContains(t, "go",
+		[]string{"spm-go:all", "--", "--format", "json", "--html"},
+		"spm-go",
+		"all",
+		"--format json --html",
+	)
 }
 
 func TestVersionVariablesAreIndependentAndOptional(t *testing.T) {

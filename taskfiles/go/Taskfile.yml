@@ -22,6 +22,7 @@ vars:
   GOIMPORTS_VERSION: ""
   GOVULNCHECK_VERSION: ""
   GOSEC_VERSION: ""
+  SPM_GO_VERSION: ""
   GLOBAL_GO_BIN:
     sh: |
       gobin="${GOBIN:-}"
@@ -157,6 +158,22 @@ tasks:
         test -x "{{.GLOBAL_GO_BIN}}/gosec"
         && { test -z "{{.GOSEC_VERSION}}" || test "{{.GOSEC_VERSION}}" = "latest"
         || go version -m "{{.GLOBAL_GO_BIN}}/gosec" | grep -Fq "{{.GOSEC_VERSION}}"; }
+
+  install:spm-go:
+    run: once
+    desc: Install spm-go globally
+    summary: Install SPM_GO_VERSION, defaulting to latest, into the global Go bin.
+    deps:
+      - install
+    cmds:
+      - >-
+        GOBIN="{{.GLOBAL_GO_BIN}}"
+        go install github.com/fdaines/spm-go@{{default "latest" .SPM_GO_VERSION}}
+    status:
+      - >-
+        test -x "{{.GLOBAL_GO_BIN}}/spm-go"
+        && { test -z "{{.SPM_GO_VERSION}}" || test "{{.SPM_GO_VERSION}}" = "latest"
+        || go version -m "{{.GLOBAL_GO_BIN}}/spm-go" | grep -Fq "{{.SPM_GO_VERSION}}"; }
 
   fmt:
     run: once
@@ -305,6 +322,90 @@ tasks:
       - install:gosec
     cmds:
       - '"{{.GLOBAL_GO_BIN}}/gosec" -exclude-generated {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}'
+
+  spm-go:packages:
+    run: once
+    desc: List packages and file counts with spm-go
+    summary: |
+      Run `spm-go packages` against the Go module in the current directory. Pass
+      spm-go flags after -- such as --format json, --html, or --verbose.
+      Auto-installs spm-go if missing.
+    deps:
+      - install:spm-go
+    cmds:
+      - task: _spm-go
+        vars:
+          SPM_GO_CMD: "packages"
+
+  spm-go:dependencies:
+    run: once
+    desc: List package dependencies with spm-go
+    summary: |
+      Run `spm-go dependencies` against the Go module in the current directory.
+      Pass spm-go flags after -- such as --format json, --html, or --verbose.
+      Auto-installs spm-go if missing.
+    deps:
+      - install:spm-go
+    cmds:
+      - task: _spm-go
+        vars:
+          SPM_GO_CMD: "dependencies"
+
+  spm-go:instability:
+    run: once
+    desc: Analyze package instability with spm-go
+    summary: |
+      Run `spm-go instability` against the Go module in the current directory.
+      Pass spm-go flags after -- such as --format json, --html, or --verbose.
+      Auto-installs spm-go if missing.
+    deps:
+      - install:spm-go
+    cmds:
+      - task: _spm-go
+        vars:
+          SPM_GO_CMD: "instability"
+
+  spm-go:abstractness:
+    run: once
+    desc: Analyze package abstractness with spm-go
+    summary: |
+      Run `spm-go abstractness` against the Go module in the current directory.
+      Pass spm-go flags after -- such as --format json, --html, or --verbose.
+      Auto-installs spm-go if missing.
+    deps:
+      - install:spm-go
+    cmds:
+      - task: _spm-go
+        vars:
+          SPM_GO_CMD: "abstractness"
+
+  spm-go:distance:
+    run: once
+    desc: Analyze distance from the main sequence with spm-go
+    summary: |
+      Run `spm-go distance` against the Go module in the current directory. Pass
+      spm-go flags after -- such as --format json, --html, or --verbose.
+      Auto-installs spm-go if missing.
+    deps:
+      - install:spm-go
+    cmds:
+      - task: _spm-go
+        vars:
+          SPM_GO_CMD: "distance"
+
+  spm-go:all:
+    run: once
+    desc: Display all spm-go metrics for each package
+    summary: |
+      Run `spm-go all` against the Go module in the current directory to show
+      every metric. Pass spm-go flags after -- such as --format json, --html, or
+      --verbose. Auto-installs spm-go if missing.
+    deps:
+      - install:spm-go
+    cmds:
+      - task: _spm-go
+        vars:
+          SPM_GO_CMD: "all"
 
   upgrade:
     run: once
@@ -794,3 +895,12 @@ tasks:
     cmds:
       - go version
       - go env GOROOT GOPATH
+
+  _spm-go:
+    run: once
+    internal: true
+    desc: Run an spm-go metrics command
+    summary: Run spm-go SPM_GO_CMD in the current Go module, forwarding any CLI arguments passed after --.
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - '"{{.GLOBAL_GO_BIN}}/spm-go" {{.SPM_GO_CMD}} {{.CLI_ARGS}}'

@@ -409,7 +409,7 @@ tasks:
         else { task nvm:node:install }""
 
   _pnpm:unix:
-    run: once
+    run: when_changed
     internal: true
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
@@ -432,7 +432,7 @@ tasks:
         corepack pnpm {{.ARGS}}'
 
   _pnpm:windows:
-    run: once
+    run: when_changed
     internal: true
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
@@ -485,7 +485,7 @@ tasks:
         vars: { ARGS: install --frozen-lockfile }
 
   _run:unix:
-    run: once
+    run: when_changed
     internal: true
     platforms: [linux, darwin]
     env:
@@ -499,7 +499,7 @@ tasks:
           ARGS: "run {{.SCRIPT}}{{if .CLI_ARGS}} -- {{.CLI_ARGS}}{{end}}"
 
   _run:windows:
-    run: once
+    run: when_changed
     internal: true
     platforms: [windows]
     env:

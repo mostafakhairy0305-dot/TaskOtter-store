@@ -1,0 +1,233 @@
+---
+version: "3"
+
+output:
+  group:
+    begin: "::group::{{.TASK}}"
+    end: "::endgroup::"
+    error_only: false
+
+silent: true
+
+includes:
+  go:
+    taskfile: ../go/Taskfile.yml
+
+vars:
+  EXTRA_ARGS: ""
+  GLOBAL_GO_BIN:
+    sh: |
+      gobin="${GOBIN:-}"
+      if [ -z "$gobin" ] && command -v go >/dev/null 2>&1; then
+        gobin="$(go env GOBIN)"
+      fi
+      if [ -z "$gobin" ]; then
+        gopath="${GOPATH:-}"
+        if [ -z "$gopath" ] && command -v go >/dev/null 2>&1; then
+          gopath="$(go env GOPATH)"
+        fi
+        gobin="${gopath:-$HOME/go}/bin"
+      fi
+      printf '%s' "$gobin"
+  PROTOLINT_VERSION: ""
+  TARGETS: "."
+
+tasks:
+  default:
+    run: once
+    desc: Show available protolint automation tasks
+    summary: Display the list of available protolint-related tasks defined in this Taskfile.
+    cmds:
+      - task --list
+
+  install:
+    run: once
+    desc: Install protolint into the global Go bin
+    summary: |
+      Install protolint from its official Go module into GOBIN, or GOPATH/bin
+      when GOBIN is unset. Leave PROTOLINT_VERSION empty to install the latest
+      release, or set an exact module version such as v0.55.6.
+    deps:
+      - go:install
+    cmds:
+      - task: _install:unix
+      - task: _install:windows
+
+  install:undo:
+    run: once
+    desc: Remove protolint from the global Go bin
+    summary: Remove the protolint binary previously installed in the global Go bin.
+    aliases:
+      - uninstall
+    prompt:
+      - This will remove protolint from the global Go bin.
+      - Continue?
+    cmds:
+      - task: _install:undo:unix
+      - task: _install:undo:windows
+
+  upgrade:
+    run: once
+    desc: Upgrade protolint to the requested version
+    summary: |
+      Reinstall protolint from its official Go module. Leave PROTOLINT_VERSION
+      empty to upgrade to the latest release, or set an exact version.
+    deps:
+      - go:install
+    cmds:
+      - task: _install:unix
+        vars:
+          FORCE: "true"
+      - task: _install:windows
+        vars:
+          FORCE: "true"
+
+  lint:
+    run: once
+    desc: Lint protobuf files with protolint (TARGETS=path)
+    summary: |
+      Run protolint lint against TARGETS (default: .). Pass EXTRA_ARGS for
+      protolint options such as -config_path or -reporter json.
+      Auto-installs protolint and its Go toolchain if needed.
+    dir: "{{.USER_WORKING_DIR}}"
+    deps:
+      - install
+    cmds:
+      - task: _lint:unix
+      - task: _lint:windows
+
+  fix:
+    run: once
+    desc: Fix protobuf lint issues with protolint (TARGETS=path)
+    summary: |
+      Run protolint lint -fix against TARGETS (default: .) to apply automatic
+      fixes for fixable lint violations. Pass EXTRA_ARGS for protolint options.
+      Auto-installs protolint and its Go toolchain if needed.
+    dir: "{{.USER_WORKING_DIR}}"
+    deps:
+      - install
+    cmds:
+      - task: _fix:unix
+      - task: _fix:windows
+
+  version:
+    run: once
+    desc: Show the installed protolint version
+    summary: Print the active protolint version with protolint version. Auto-installs protolint if it is missing.
+    deps:
+      - install
+    cmds:
+      - task: _version:unix
+      - task: _version:windows
+
+  _install:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '[ "{{default "false" .FORCE}}" != "true" ]'
+      - test -x "{{.GLOBAL_GO_BIN}}/protolint"
+      - >-
+        [ -z "{{.PROTOLINT_VERSION}}" ]
+        || go version -m "{{.GLOBAL_GO_BIN}}/protolint" | grep -Fq "{{.PROTOLINT_VERSION}}"
+    cmds:
+      - >-
+        GOBIN="{{.GLOBAL_GO_BIN}}"
+        go install github.com/yoheimuta/protolint/cmd/protolint@{{default "latest" .PROTOLINT_VERSION}}
+
+  _install:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if ('{{default "false" .FORCE}}' -eq 'true') { exit 1 };
+        if (-not (Test-Path '{{.GLOBAL_GO_BIN}}/protolint.exe')) { exit 1 };
+        $requested = '{{.PROTOLINT_VERSION}}';
+        if ([string]::IsNullOrWhiteSpace($requested)
+        -or ((go version -m '{{.GLOBAL_GO_BIN}}/protolint.exe') -like ('*' + $requested + '*'))) { exit 0 };
+        exit 1"
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$env:GOBIN = '{{.GLOBAL_GO_BIN}}';
+        go install github.com/yoheimuta/protolint/cmd/protolint@{{default "latest" .PROTOLINT_VERSION}}"
+
+  _install:undo:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    status:
+      - '! test -e "{{.GLOBAL_GO_BIN}}/protolint"'
+    cmds:
+      - rm -f "{{.GLOBAL_GO_BIN}}/protolint"
+
+  _install:undo:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    status:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Test-Path '{{.GLOBAL_GO_BIN}}/protolint.exe') { exit 1 } else { exit 0 }"
+    cmds:
+      - >-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Remove-Item '{{.GLOBAL_GO_BIN}}/protolint.exe' -Force -ErrorAction SilentlyContinue"
+
+  _lint:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    cmds:
+      - >-
+        "{{.GLOBAL_GO_BIN}}/protolint" lint
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+
+  _lint:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    cmds:
+      - >-
+        & "{{.GLOBAL_GO_BIN}}/protolint.exe" lint
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+
+  _fix:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    cmds:
+      - >-
+        "{{.GLOBAL_GO_BIN}}/protolint" lint -fix
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+
+  _fix:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    cmds:
+      - >-
+        & "{{.GLOBAL_GO_BIN}}/protolint.exe" lint -fix
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+
+  _version:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    cmds:
+      - '"{{.GLOBAL_GO_BIN}}/protolint" version'
+
+  _version:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    cmds:
+      - '& "{{.GLOBAL_GO_BIN}}/protolint.exe" version'

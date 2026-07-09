@@ -32,10 +32,10 @@ task go:lint
 | Node runtimes | `fnm`, `nvm`, `bun` | 3 | [`fnm`](taskfiles/fnm/README.md) |
 | Package managers | `npm-{fnm,nvm}`, `pnpm-{fnm,nvm}`, `yarn-{fnm,nvm}`, `corepack-{fnm,nvm}` | 8 | [`npm-fnm`](taskfiles/npm-fnm/README.md) |
 | JS lint/format/check | `biome`, `bruno`, `depcheck`, `eslint`, `knip`, `prettier`, `stylelint`, `typescript` — each with 7 variants | 56 | [`eslint-npm-fnm`](taskfiles/eslint-npm-fnm/README.md) |
-| Languages & runtimes | `go`, `python`, `uv`, `proto`, `staticcheck` | 5 | [`go`](taskfiles/go/README.md) |
-| CI & infra | `actionlint`, `shellcheck`, `yamllint`, `zizmor`, `hadolint`, `buf`, `docker`, `git`, `gh`, `jq`, `vault`, `ansible`, `sqlfluff` | 13 | [`actionlint`](taskfiles/actionlint/README.md) |
+| Languages & runtimes | `go`, `python`, `uv`, `cargo`, `proto`, `staticcheck` | 6 | [`go`](taskfiles/go/README.md) |
+| CI & infra | `actionlint`, `bash-exec`, `bencher`, `shellcheck`, `shfmt`, `yamllint`, `zizmor`, `hadolint`, `buf`, `docker`, `git`, `gh`, `jq`, `vault`, `ansible`, `sqlfluff`, `dotenv-linter`, `htmlhint-{npm,pnpm}-{fnm,nvm}`, `djlint`, `jsonlint`, `rumdl`, `protolint`, `spectral-{npm,pnpm}-{fnm,nvm}`, `adrs` | 30 | [`actionlint`](taskfiles/actionlint/README.md) |
 
-**85 modules** total. Per-module docs: `taskfiles/<name>/README.md`.
+**103 modules** total. Per-module docs: `taskfiles/<name>/README.md`.
 
 ### Choosing a variant
 
