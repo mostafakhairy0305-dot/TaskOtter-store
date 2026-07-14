@@ -58,14 +58,14 @@ task go:lint
 The aggregate task runs:
 
 - `golangci-lint:lint`: runs `golangci-lint run ./...`
-- `gofumpt:lint`: reports Go files under `.` that require formatting
-- `goimports:lint`: reports Go files under `.` with incorrect imports
+- `golangci-lint:fmt:check`: checks Go formatting with `gci`, `gofmt`,
+  `gofumpt`, `goimports`, `golines`, and `swaggo`
 - `govulncheck:lint`: runs `govulncheck ./...`
 - `gosec:lint`: runs `gosec ./...`
 
 Each check depends on its matching `install:<tool>` task, so missing tools are
-installed automatically. The formatting checks exit with a nonzero status when
-files require changes.
+installed automatically. The formatter check prints diffs and exits with a
+nonzero status when files require changes.
 
 Run an individual check or override its default arguments with `--`:
 
@@ -83,8 +83,8 @@ task go:lint:fix -- ./internal/...
 ```
 
 `lint:fix` runs `golangci-lint:lint:fix`, then `fmt` so any generated edits are
-normalized with `goimports` and `gofumpt`. `golangci-lint:lint:fix` is also
-available directly when you only want `golangci-lint run --fix`.
+normalized with the same golangci-lint formatter set. `golangci-lint:lint:fix`
+is also available directly when you only want `golangci-lint run --fix`.
 
 ## Formatting
 
@@ -95,14 +95,14 @@ task -t taskfiles/go/Taskfile.yml fmt
 task go:fmt
 ```
 
-The aggregate formatter runs `goimports:fmt` first, then `gofumpt:fmt`, so
-imports are organized before stricter formatting is applied. Both tasks default
-to `.` and accept CLI arguments after `--`:
+The aggregate formatter runs `golangci-lint fmt` with `gci`, `gofmt`,
+`gofumpt`, `goimports`, `golines`, and `swaggo` enabled. The formatter defaults
+to `.` and accepts CLI arguments after `--`:
 
 ```sh
 task go:fmt -- ./internal/...
-task go:goimports:fmt -- ./taskfiles/go
-task go:gofumpt:fmt -- ./taskfiles/go
+task go:golangci-lint:fmt -- ./taskfiles/go
+task go:golangci-lint:fmt:check -- ./taskfiles/go
 ```
 
 ## Versions
@@ -123,65 +123,32 @@ Each development tool has its own optional version variable:
 
 ```sh
 task go:install:golangci-lint GOLANGCI_LINT_VERSION=v2.1.6
-task go:install:gofumpt GOFUMPT_VERSION=v0.8.0
-task go:install:goimports GOIMPORTS_VERSION=v0.36.0
 task go:install:govulncheck GOVULNCHECK_VERSION=v1.1.4
 task go:install:gosec GOSEC_VERSION=v2.22.7
-task go:install:spm-go SPM_GO_VERSION=v1.4.0
 ```
 
 An empty tool version defaults to `latest`. Supplying a tool version forces its
 installer to run even when the executable already exists.
 
-## Package metrics (spm-go)
-
-[`spm-go`](https://github.com/fdaines/spm-go) reports package-level metrics for
-the Go module in the current directory. Each command has its own task, and any
-spm-go flags (`--format json|console|csv`, `--verbose`, `--html`,
-`--main-package`) are passed after `--`:
-
-```sh
-task go:spm-go:packages
-task go:spm-go:dependencies -- --verbose
-task go:spm-go:all -- --format json --html
-task go:spm-go:instability
-task go:spm-go:abstractness
-task go:spm-go:distance
-```
-
-Each task auto-installs spm-go via `go install github.com/fdaines/spm-go`. These
-metrics are informational, so they are not part of the aggregate `lint` task.
-
 ## Public Tasks
 
 | Task                        | Description                                           | Key variables      |
 | --------------------------- | ----------------------------------------------------- | ------------------ |
-| `fmt`                       | Format Go files with goimports and gofumpt            | none               |
-| `fmt:check`                 | Check Go file formatting with goimports and gofumpt   | none               |
-| `gofumpt:fmt`               | Format Go files with gofumpt                          | none               |
+| `fmt`                       | Format Go files with golangci-lint formatters         | none               |
+| `fmt:check`                 | Check Go file formatting with golangci-lint formatters | none               |
 | `install`                   | Install Go on the current operating system if missing | `INSTALL_DIR_UNIX`, `GO_VERSION` |
 | `install:undo`              | Remove Go from the current operating system            | `INSTALL_DIR_UNIX` |
 | `install:golangci-lint`     | Install golangci-lint into the global Go bin          | `GLOBAL_GO_BIN`, `GOLANGCI_LINT_VERSION` |
-| `install:gofumpt`           | Install gofumpt into the global Go bin                 | `GLOBAL_GO_BIN`, `GOFUMPT_VERSION` |
-| `install:goimports`         | Install goimports into the global Go bin               | `GLOBAL_GO_BIN`, `GOIMPORTS_VERSION` |
 | `install:govulncheck`       | Install govulncheck into the global Go bin             | `GLOBAL_GO_BIN`, `GOVULNCHECK_VERSION` |
 | `install:gosec`             | Install gosec into the global Go bin                   | `GLOBAL_GO_BIN`, `GOSEC_VERSION` |
-| `install:spm-go`            | Install spm-go into the global Go bin                  | `GLOBAL_GO_BIN`, `SPM_GO_VERSION` |
 | `lint`                      | Run all Go lint and security checks                    | none               |
 | `lint:fix`                  | Auto-fix Go lint and formatting issues                 | none               |
 | `golangci-lint:lint`        | Lint all Go packages with golangci-lint                | none               |
 | `golangci-lint:lint:fix`    | Auto-fix Go lint issues with golangci-lint             | none               |
-| `goimports:fmt`             | Format Go imports with goimports                      | none               |
-| `gofumpt:lint`              | Check Go formatting with gofumpt                       | none               |
-| `goimports:lint`            | Check Go imports with goimports                        | none               |
+| `golangci-lint:fmt`         | Format Go files with golangci-lint formatters         | none               |
+| `golangci-lint:fmt:check`   | Check Go formatting with golangci-lint formatters      | none               |
 | `govulncheck:lint`          | Scan Go packages for known vulnerabilities             | none               |
 | `gosec:lint`                | Scan Go packages for security issues                   | none               |
-| `spm-go:packages`           | List packages and file counts with spm-go              | none               |
-| `spm-go:dependencies`       | List package dependencies with spm-go                  | none               |
-| `spm-go:instability`        | Analyze package instability with spm-go                | none               |
-| `spm-go:abstractness`       | Analyze package abstractness with spm-go               | none               |
-| `spm-go:distance`           | Analyze distance from the main sequence with spm-go    | none               |
-| `spm-go:all`                | Display all spm-go metrics for each package            | none               |
 | `upgrade`                   | Upgrade Go to the selected or latest stable release    | `INSTALL_DIR_UNIX`, `GO_VERSION` |
 | `version`                   | Show the installed Go version                          | none               |
 | `which`                     | Show the path to the Go binary                         | none               |
@@ -199,11 +166,8 @@ metrics are informational, so they are not part of the aggregate `lint` task.
 | `GO_DOWNLOAD_BASE_URL` | `https://go.dev/dl`             | Base URL for official Go downloads                                    |
 | `GO_VERSION`           | empty (latest stable)           | Optional official Go release name, such as `go1.26.2`                 |
 | `GOLANGCI_LINT_VERSION` | empty (`latest`)               | Optional golangci-lint module version                                 |
-| `GOFUMPT_VERSION`      | empty (`latest`)                | Optional gofumpt module version                                       |
-| `GOIMPORTS_VERSION`    | empty (`latest`)                | Optional goimports module version                                     |
 | `GOVULNCHECK_VERSION`  | empty (`latest`)                | Optional govulncheck module version                                   |
 | `GOSEC_VERSION`        | empty (`latest`)                | Optional gosec module version                                         |
-| `SPM_GO_VERSION`       | empty (`latest`)                | Optional spm-go module version                                        |
 | `GLOBAL_GO_BIN`        | `GOBIN` or `GOPATH/bin`         | Destination and lookup directory for installed Go development tools   |
 
 ## Notes

@@ -12,30 +12,19 @@ import (
 var publicTasks = []string{
 	"fmt",
 	"fmt:check",
-	"gofumpt:fmt",
-	"gofumpt:lint",
-	"goimports:fmt",
-	"goimports:lint",
+	"golangci-lint:fmt",
+	"golangci-lint:fmt:check",
 	"golangci-lint:lint",
 	"golangci-lint:lint:fix",
 	"gosec:lint",
 	"govulncheck:lint",
 	"install",
-	"install:gofumpt",
-	"install:goimports",
 	"install:golangci-lint",
 	"install:gosec",
 	"install:govulncheck",
-	"install:spm-go",
 	"install:undo",
 	"lint",
 	"lint:fix",
-	"spm-go:abstractness",
-	"spm-go:all",
-	"spm-go:dependencies",
-	"spm-go:distance",
-	"spm-go:instability",
-	"spm-go:packages",
 	"upgrade",
 	"verify",
 	"version",
@@ -49,14 +38,11 @@ var publicVars = []string{
 	"GO_VERSION",
 	"GO_ROOT_UNIX",
 	"GO_VERSION_URL",
-	"GOFUMPT_VERSION",
-	"GOIMPORTS_VERSION",
 	"GOLANGCI_LINT_VERSION",
 	"GOSEC_VERSION",
 	"GLOBAL_GO_BIN",
 	"GOVULNCHECK_VERSION",
 	"INSTALL_DIR_UNIX",
-	"SPM_GO_VERSION",
 }
 
 func goAvailable() bool {
@@ -81,10 +67,9 @@ func TestLintDryRuns(t *testing.T) {
 		task  string
 		token string
 	}{
+		{task: "golangci-lint:fmt:check", token: "--diff"},
 		{task: "golangci-lint:lint", token: "golangci-lint"},
 		{task: "golangci-lint:lint:fix", token: "--fix"},
-		{task: "gofumpt:lint", token: "gofumpt"},
-		{task: "goimports:lint", token: "goimports"},
 		{task: "govulncheck:lint", token: "govulncheck"},
 		{task: "gosec:lint", token: "gosec"},
 	}
@@ -100,9 +85,12 @@ func TestLintFixDryRun(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "go", []string{"lint:fix"},
 		"golangci-lint",
 		"--fix",
-		"goimports",
+		"fmt",
+		"-E",
 		"gofumpt",
-		"-w",
+		"goimports",
+		"golines",
+		"swaggo",
 	)
 }
 
@@ -111,9 +99,32 @@ func TestFmtDryRuns(t *testing.T) {
 		task   string
 		tokens []string
 	}{
-		{task: "gofumpt:fmt", tokens: []string{"gofumpt", "-w"}},
-		{task: "goimports:fmt", tokens: []string{"goimports", "-w"}},
-		{task: "fmt", tokens: []string{"goimports", "gofumpt", "-w"}},
+		{
+			task: "golangci-lint:fmt",
+			tokens: []string{
+				"fmt",
+				"-E",
+				"gci",
+				"gofmt",
+				"gofumpt",
+				"goimports",
+				"golines",
+				"swaggo",
+			},
+		},
+		{
+			task: "fmt",
+			tokens: []string{
+				"fmt",
+				"-E",
+				"gci",
+				"gofmt",
+				"gofumpt",
+				"goimports",
+				"golines",
+				"swaggo",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -128,31 +139,20 @@ func TestDevelopmentToolDependencies(t *testing.T) {
 
 	installTasks := map[string][]string{
 		"install:golangci-lint": {"install"},
-		"install:gofumpt":       {"install"},
-		"install:goimports":     {"install"},
 		"install:govulncheck":   {"install"},
 		"install:gosec":         {"install"},
-		"install:spm-go":        {"install"},
 	}
 	lintTasks := map[string][]string{
-		"gofumpt:fmt":            {"install:gofumpt"},
-		"golangci-lint:lint":     {"install:golangci-lint"},
-		"golangci-lint:lint:fix": {"install:golangci-lint"},
-		"goimports:fmt":          {"install:goimports"},
-		"gofumpt:lint":           {"install:gofumpt"},
-		"goimports:lint":         {"install:goimports"},
-		"govulncheck:lint":       {"install:govulncheck"},
-		"gosec:lint":             {"install:gosec"},
-		"spm-go:packages":        {"install:spm-go"},
-		"spm-go:dependencies":    {"install:spm-go"},
-		"spm-go:instability":     {"install:spm-go"},
-		"spm-go:abstractness":    {"install:spm-go"},
-		"spm-go:distance":        {"install:spm-go"},
-		"spm-go:all":             {"install:spm-go"},
+		"fmt:check":               {"golangci-lint:fmt:check"},
+		"golangci-lint:fmt":       {"install:golangci-lint"},
+		"golangci-lint:fmt:check": {"install:golangci-lint"},
+		"golangci-lint:lint":      {"install:golangci-lint"},
+		"golangci-lint:lint:fix":  {"install:golangci-lint"},
+		"govulncheck:lint":        {"install:govulncheck"},
+		"gosec:lint":              {"install:gosec"},
 		"lint": {
 			"golangci-lint:lint",
-			"gofumpt:lint",
-			"goimports:lint",
+			"golangci-lint:fmt:check",
 			"govulncheck:lint",
 			"gosec:lint",
 		},
@@ -178,16 +178,6 @@ func TestDevelopmentToolInstallVersions(t *testing.T) {
 			versionVar: "GOLANGCI_LINT_VERSION",
 		},
 		{
-			task:       "install:gofumpt",
-			module:     "mvdan.cc/gofumpt",
-			versionVar: "GOFUMPT_VERSION",
-		},
-		{
-			task:       "install:goimports",
-			module:     "golang.org/x/tools/cmd/goimports",
-			versionVar: "GOIMPORTS_VERSION",
-		},
-		{
 			task:       "install:govulncheck",
 			module:     "golang.org/x/vuln/cmd/govulncheck",
 			versionVar: "GOVULNCHECK_VERSION",
@@ -196,11 +186,6 @@ func TestDevelopmentToolInstallVersions(t *testing.T) {
 			task:       "install:gosec",
 			module:     "github.com/securego/gosec/v2/cmd/gosec",
 			versionVar: "GOSEC_VERSION",
-		},
-		{
-			task:       "install:spm-go",
-			module:     "github.com/fdaines/spm-go",
-			versionVar: "SPM_GO_VERSION",
 		},
 	}
 
@@ -217,30 +202,6 @@ func TestDevelopmentToolInstallVersions(t *testing.T) {
 	}
 }
 
-func TestSpmGoCommandDryRuns(t *testing.T) {
-	for _, cmd := range []string{
-		"packages",
-		"dependencies",
-		"instability",
-		"abstractness",
-		"distance",
-		"all",
-	} {
-		t.Run(cmd, func(t *testing.T) {
-			tasktest.AssertDryRunContains(t, "go", []string{"spm-go:" + cmd}, "spm-go", cmd)
-		})
-	}
-}
-
-func TestSpmGoForwardsCliArgs(t *testing.T) {
-	tasktest.AssertDryRunContains(t, "go",
-		[]string{"spm-go:all", "--", "--format", "json", "--html"},
-		"spm-go",
-		"all",
-		"--format json --html",
-	)
-}
-
 func TestVersionVariablesAreIndependentAndOptional(t *testing.T) {
 	tf := tasktest.LoadTaskfile(t, "go")
 
@@ -251,8 +212,6 @@ func TestVersionVariablesAreIndependentAndOptional(t *testing.T) {
 	for _, name := range []string{
 		"GO_VERSION",
 		"GOLANGCI_LINT_VERSION",
-		"GOFUMPT_VERSION",
-		"GOIMPORTS_VERSION",
 		"GOVULNCHECK_VERSION",
 		"GOSEC_VERSION",
 	} {
@@ -288,8 +247,12 @@ func TestGoInstallVersionDryRun(t *testing.T) {
 func TestAggregateLintDryRun(t *testing.T) {
 	tasktest.AssertDryRunContains(t, "go", []string{"lint"},
 		"golangci-lint",
+		"--diff",
+		"gci",
 		"gofumpt",
 		"goimports",
+		"golines",
+		"swaggo",
 		"govulncheck",
 		"gosec",
 	)

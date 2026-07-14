@@ -18,11 +18,8 @@ vars:
   GO_DOWNLOAD_BASE_URL: https://go.dev/dl
   GO_VERSION: ""
   GOLANGCI_LINT_VERSION: ""
-  GOFUMPT_VERSION: ""
-  GOIMPORTS_VERSION: ""
   GOVULNCHECK_VERSION: ""
   GOSEC_VERSION: ""
-  SPM_GO_VERSION: ""
   GLOBAL_GO_BIN:
     sh: |
       gobin="${GOBIN:-}"
@@ -97,36 +94,6 @@ tasks:
         && { test -z "{{.GOLANGCI_LINT_VERSION}}" || test "{{.GOLANGCI_LINT_VERSION}}" = "latest"
         || go version -m "{{.GLOBAL_GO_BIN}}/golangci-lint" | grep -Fq "{{.GOLANGCI_LINT_VERSION}}"; }
 
-  install:gofumpt:
-    run: once
-    desc: Install gofumpt globally
-    summary: Install GOFUMPT_VERSION, defaulting to latest, into the global Go bin.
-    deps:
-      - install
-    cmds:
-      - GOBIN="{{.GLOBAL_GO_BIN}}" go install mvdan.cc/gofumpt@{{default "latest" .GOFUMPT_VERSION}}
-    status:
-      - >-
-        test -x "{{.GLOBAL_GO_BIN}}/gofumpt"
-        && { test -z "{{.GOFUMPT_VERSION}}" || test "{{.GOFUMPT_VERSION}}" = "latest"
-        || go version -m "{{.GLOBAL_GO_BIN}}/gofumpt" | grep -Fq "{{.GOFUMPT_VERSION}}"; }
-
-  install:goimports:
-    run: once
-    desc: Install goimports globally
-    summary: Install GOIMPORTS_VERSION, defaulting to latest, into the global Go bin.
-    deps:
-      - install
-    cmds:
-      - >-
-        GOBIN="{{.GLOBAL_GO_BIN}}"
-        go install golang.org/x/tools/cmd/goimports@{{default "latest" .GOIMPORTS_VERSION}}
-    status:
-      - >-
-        test -x "{{.GLOBAL_GO_BIN}}/goimports"
-        && { test -z "{{.GOIMPORTS_VERSION}}" || test "{{.GOIMPORTS_VERSION}}" = "latest"
-        || go version -m "{{.GLOBAL_GO_BIN}}/goimports" | grep -Fq "{{.GOIMPORTS_VERSION}}"; }
-
   install:govulncheck:
     run: once
     desc: Install govulncheck globally
@@ -159,51 +126,32 @@ tasks:
         && { test -z "{{.GOSEC_VERSION}}" || test "{{.GOSEC_VERSION}}" = "latest"
         || go version -m "{{.GLOBAL_GO_BIN}}/gosec" | grep -Fq "{{.GOSEC_VERSION}}"; }
 
-  install:spm-go:
-    run: once
-    desc: Install spm-go globally
-    summary: Install SPM_GO_VERSION, defaulting to latest, into the global Go bin.
-    deps:
-      - install
-    cmds:
-      - >-
-        GOBIN="{{.GLOBAL_GO_BIN}}"
-        go install github.com/fdaines/spm-go@{{default "latest" .SPM_GO_VERSION}}
-    status:
-      - >-
-        test -x "{{.GLOBAL_GO_BIN}}/spm-go"
-        && { test -z "{{.SPM_GO_VERSION}}" || test "{{.SPM_GO_VERSION}}" = "latest"
-        || go version -m "{{.GLOBAL_GO_BIN}}/spm-go" | grep -Fq "{{.SPM_GO_VERSION}}"; }
-
   fmt:
     run: once
-    desc: Format Go files with goimports and gofumpt
+    desc: Format Go files with golangci-lint formatters
     summary: |
-      Rewrite Go files under the current directory with goimports, then apply
-      gofumpt. Pass CLI arguments after -- to override the default target.
+      Rewrite Go files under the current directory with golangci-lint's Go
+      formatters. Pass CLI arguments after -- to override the default target.
     cmds:
-      - task: goimports:fmt
-      - task: gofumpt:fmt
+      - task: golangci-lint:fmt
 
   fmt:check:
     run: once
-    desc: Check Go file formatting with goimports and gofumpt
+    desc: Check Go file formatting with golangci-lint formatters
     summary: |
-      Check Go files under the current directory with goimports and gofumpt
-      without modifying them. Pass CLI arguments after -- to override the
-      default target. Use fmt to apply fixes.
+      Check Go files under the current directory with golangci-lint's Go
+      formatters without modifying them. Pass CLI arguments after -- to
+      override the default target. Use fmt to apply fixes.
     deps:
-      - goimports:lint
-      - gofumpt:lint
+      - golangci-lint:fmt:check
 
   lint:
     run: once
     desc: Run all Go lint and security checks
-    summary: Run golangci-lint, gofumpt, goimports, govulncheck, and gosec.
+    summary: Run golangci-lint, golangci-lint formatters, govulncheck, and gosec.
     deps:
       - golangci-lint:lint
-      - gofumpt:lint
-      - goimports:lint
+      - golangci-lint:fmt:check
       - govulncheck:lint
       - gosec:lint
 
@@ -211,8 +159,8 @@ tasks:
     run: once
     desc: Auto-fix Go lint and formatting issues
     summary: |
-      Run golangci-lint with --fix, then format Go files with goimports and
-      gofumpt. Pass CLI arguments after -- to override the default target.
+      Run golangci-lint with --fix, then format Go files with golangci-lint
+      formatters. Pass CLI arguments after -- to override the default target.
     cmds:
       - task: golangci-lint:lint:fix
       - task: fmt
@@ -241,63 +189,49 @@ tasks:
     cmds:
       - '"{{.GLOBAL_GO_BIN}}/golangci-lint" run --fix {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}'
 
-  gofumpt:lint:
+  golangci-lint:fmt:
     run: once
-    desc: Check Go formatting with gofumpt
+    desc: Format Go files with golangci-lint formatters
     summary: |
-      Check Go files under the current directory with gofumpt. Pass CLI
-      arguments after -- to override the default target. Auto-installs gofumpt
-      if missing.
+      Rewrite Go files with golangci-lint's gci, gofmt, gofumpt, goimports,
+      golines, and swaggo formatters. Pass CLI arguments after -- to override
+      the default target. Auto-installs golangci-lint if missing.
     deps:
-      - install:gofumpt
+      - install:golangci-lint
     cmds:
-      - |
-        files="$("{{.GLOBAL_GO_BIN}}/gofumpt" -l {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}})"
-        if [ -n "$files" ]; then
-          printf 'Files require gofumpt:\n%s\n' "$files"
-          exit 1
-        fi
+      - >-
+        "{{.GLOBAL_GO_BIN}}/golangci-lint"
+        fmt
+        -E gci
+        -E gofmt
+        -E gofumpt
+        -E goimports
+        -E golines
+        -E swaggo
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}
 
-  gofumpt:fmt:
+  golangci-lint:fmt:check:
     run: once
-    desc: Format Go files with gofumpt
+    desc: Check Go formatting with golangci-lint formatters
     summary: |
-      Rewrite Go files under the current directory with gofumpt. Pass CLI
-      arguments after -- to override the default target. Auto-installs gofumpt
-      if missing.
+      Check Go files with golangci-lint's gci, gofmt, gofumpt, goimports,
+      golines, and swaggo formatters by printing diffs instead of rewriting
+      files. Pass CLI arguments after -- to override the default target.
+      Auto-installs golangci-lint if missing.
     deps:
-      - install:gofumpt
+      - install:golangci-lint
     cmds:
-      - '"{{.GLOBAL_GO_BIN}}/gofumpt" -w {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}'
-
-  goimports:lint:
-    run: once
-    desc: Check Go imports with goimports
-    summary: |
-      Check Go files under the current directory with goimports. Pass CLI
-      arguments after -- to override the default target. Auto-installs
-      goimports if missing.
-    deps:
-      - install:goimports
-    cmds:
-      - |
-        files="$("{{.GLOBAL_GO_BIN}}/goimports" -l {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}})"
-        if [ -n "$files" ]; then
-          printf 'Files require goimports:\n%s\n' "$files"
-          exit 1
-        fi
-
-  goimports:fmt:
-    run: once
-    desc: Format Go imports with goimports
-    summary: |
-      Rewrite Go files under the current directory with goimports. Pass CLI
-      arguments after -- to override the default target. Auto-installs
-      goimports if missing.
-    deps:
-      - install:goimports
-    cmds:
-      - '"{{.GLOBAL_GO_BIN}}/goimports" -w {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}'
+      - >-
+        "{{.GLOBAL_GO_BIN}}/golangci-lint"
+        fmt
+        --diff
+        -E gci
+        -E gofmt
+        -E gofumpt
+        -E goimports
+        -E golines
+        -E swaggo
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}
 
   govulncheck:lint:
     run: once
@@ -322,90 +256,6 @@ tasks:
       - install:gosec
     cmds:
       - '"{{.GLOBAL_GO_BIN}}/gosec" -exclude-generated {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}'
-
-  spm-go:packages:
-    run: once
-    desc: List packages and file counts with spm-go
-    summary: |
-      Run `spm-go packages` against the Go module in the current directory. Pass
-      spm-go flags after -- such as --format json, --html, or --verbose.
-      Auto-installs spm-go if missing.
-    deps:
-      - install:spm-go
-    cmds:
-      - task: _spm-go
-        vars:
-          SPM_GO_CMD: "packages"
-
-  spm-go:dependencies:
-    run: once
-    desc: List package dependencies with spm-go
-    summary: |
-      Run `spm-go dependencies` against the Go module in the current directory.
-      Pass spm-go flags after -- such as --format json, --html, or --verbose.
-      Auto-installs spm-go if missing.
-    deps:
-      - install:spm-go
-    cmds:
-      - task: _spm-go
-        vars:
-          SPM_GO_CMD: "dependencies"
-
-  spm-go:instability:
-    run: once
-    desc: Analyze package instability with spm-go
-    summary: |
-      Run `spm-go instability` against the Go module in the current directory.
-      Pass spm-go flags after -- such as --format json, --html, or --verbose.
-      Auto-installs spm-go if missing.
-    deps:
-      - install:spm-go
-    cmds:
-      - task: _spm-go
-        vars:
-          SPM_GO_CMD: "instability"
-
-  spm-go:abstractness:
-    run: once
-    desc: Analyze package abstractness with spm-go
-    summary: |
-      Run `spm-go abstractness` against the Go module in the current directory.
-      Pass spm-go flags after -- such as --format json, --html, or --verbose.
-      Auto-installs spm-go if missing.
-    deps:
-      - install:spm-go
-    cmds:
-      - task: _spm-go
-        vars:
-          SPM_GO_CMD: "abstractness"
-
-  spm-go:distance:
-    run: once
-    desc: Analyze distance from the main sequence with spm-go
-    summary: |
-      Run `spm-go distance` against the Go module in the current directory. Pass
-      spm-go flags after -- such as --format json, --html, or --verbose.
-      Auto-installs spm-go if missing.
-    deps:
-      - install:spm-go
-    cmds:
-      - task: _spm-go
-        vars:
-          SPM_GO_CMD: "distance"
-
-  spm-go:all:
-    run: once
-    desc: Display all spm-go metrics for each package
-    summary: |
-      Run `spm-go all` against the Go module in the current directory to show
-      every metric. Pass spm-go flags after -- such as --format json, --html, or
-      --verbose. Auto-installs spm-go if missing.
-    deps:
-      - install:spm-go
-    cmds:
-      - task: _spm-go
-        vars:
-          SPM_GO_CMD: "all"
 
   upgrade:
     run: once
@@ -895,12 +745,3 @@ tasks:
     cmds:
       - go version
       - go env GOROOT GOPATH
-
-  _spm-go:
-    run: once
-    internal: true
-    desc: Run an spm-go metrics command
-    summary: Run spm-go SPM_GO_CMD in the current Go module, forwarding any CLI arguments passed after --.
-    dir: "{{.USER_WORKING_DIR}}"
-    cmds:
-      - '"{{.GLOBAL_GO_BIN}}/spm-go" {{.SPM_GO_CMD}} {{.CLI_ARGS}}'
