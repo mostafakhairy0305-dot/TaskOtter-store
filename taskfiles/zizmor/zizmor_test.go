@@ -2,6 +2,7 @@ package zizmor_test
 
 import (
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktest"
@@ -16,8 +17,8 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
-	"EXTRA_ARGS",
-	"TARGETS",
+	"ZIZMOR_EXTRA_ARGS",
+	"ZIZMOR_TARGETS",
 	"ZIZMOR_VERSION",
 }
 
@@ -32,10 +33,32 @@ func TestRepresentativeDryRuns(t *testing.T) {
 	)
 
 	tasktest.AssertDryRunContains(t, "zizmor",
+		[]string{"lint", "ZIZMOR_TARGETS=.github/workflows/main.yml"},
+		"zizmor",
+		".github/workflows/main.yml",
+	)
+
+	tasktest.AssertDryRunContains(t, "zizmor",
 		[]string{"version"},
 		"zizmor",
 		"--version",
 	)
+}
+
+func TestLintIgnoresSharedTargetVariable(t *testing.T) {
+	output := tasktest.DryRun(t, "zizmor", "lint", "TARGETS=**/*.html")
+
+	for _, line := range strings.Split(output, "\n") {
+		if !strings.Contains(line, "] env -u GH_TOKEN zizmor") {
+			continue
+		}
+		if strings.Contains(line, "**/*.html") {
+			t.Fatalf("zizmor command should not receive shared TARGETS value:\n%s", output)
+		}
+		return
+	}
+
+	t.Fatalf("zizmor dry-run command not found:\n%s", output)
 }
 
 func TestInstallDryRunDownloadsBinary(t *testing.T) {

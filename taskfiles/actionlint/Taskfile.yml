@@ -11,8 +11,8 @@ silent: true
 
 vars:
   ACTIONLINT_VERSION: "1.7.12"
-  EXTRA_ARGS: ""
-  TARGETS: ""
+  ACTIONLINT_EXTRA_ARGS: ""
+  ACTIONLINT_TARGETS: ""
 
 tasks:
   default:
@@ -26,11 +26,12 @@ tasks:
     run: once
     desc: Lint GitHub Actions workflow files with actionlint
     summary: |
-      Run actionlint against workflow files. When TARGETS is empty actionlint
-      automatically discovers all .github/workflows files. Pass explicit paths
-      to check specific workflows. Pass EXTRA_ARGS for additional flags such as
-      -ignore or -format, or CLI arguments after -- to override all variables
-      directly. Auto-installs actionlint if missing.
+      Run actionlint against workflow files. When ACTIONLINT_TARGETS is empty
+      actionlint automatically discovers all .github/workflows files. Pass
+      explicit paths to check specific workflows. Pass ACTIONLINT_EXTRA_ARGS
+      for additional flags such as -ignore or -format, or CLI arguments after
+      -- to override all variables directly. Auto-installs actionlint if
+      missing.
     deps:
       - install
     cmds:
@@ -38,8 +39,10 @@ tasks:
         actionlint
         {{if .CLI_ARGS}}{{.CLI_ARGS}}
         {{else}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
-        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}{{end}}
+        {{if .ACTIONLINT_EXTRA_ARGS_OVERRIDE}}{{.ACTIONLINT_EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.ACTIONLINT_EXTRA_ARGS}}{{end}}
+        {{if .ACTIONLINT_TARGETS_OVERRIDE}}{{.ACTIONLINT_TARGETS_OVERRIDE}}
+        {{- else}}{{.ACTIONLINT_TARGETS}}{{end}}{{end}}
         && echo "✅ actionlint passed" || { echo "❌ actionlint failed"; exit 1; }
 
   install:

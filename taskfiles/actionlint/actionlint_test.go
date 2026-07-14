@@ -2,6 +2,7 @@ package actionlint_test
 
 import (
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktest"
@@ -16,9 +17,9 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"ACTIONLINT_EXTRA_ARGS",
+	"ACTIONLINT_TARGETS",
 	"ACTIONLINT_VERSION",
-	"EXTRA_ARGS",
-	"TARGETS",
 }
 
 func TestTaskfileModuleContract(t *testing.T) {
@@ -32,10 +33,32 @@ func TestRepresentativeDryRuns(t *testing.T) {
 	)
 
 	tasktest.AssertDryRunContains(t, "actionlint",
+		[]string{"lint", "ACTIONLINT_TARGETS=.github/workflows/main.yml"},
+		"actionlint",
+		".github/workflows/main.yml",
+	)
+
+	tasktest.AssertDryRunContains(t, "actionlint",
 		[]string{"version"},
 		"actionlint",
 		"--version",
 	)
+}
+
+func TestLintIgnoresSharedTargetVariable(t *testing.T) {
+	output := tasktest.DryRun(t, "actionlint", "lint", "TARGETS=.")
+
+	for _, line := range strings.Split(output, "\n") {
+		if !strings.Contains(line, "] actionlint") {
+			continue
+		}
+		if strings.Contains(line, " . ") || strings.HasSuffix(line, " .") {
+			t.Fatalf("actionlint command should not receive shared TARGETS value:\n%s", output)
+		}
+		return
+	}
+
+	t.Fatalf("actionlint dry-run command not found:\n%s", output)
 }
 
 func TestInstallDryRunUsesPlatformPackageManager(t *testing.T) {
