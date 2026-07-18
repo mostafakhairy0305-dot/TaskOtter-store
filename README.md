@@ -1,6 +1,6 @@
 # TaskOtter
 
-Reusable, tested [Taskfile](https://taskfile.dev) modules for installing and running common dev tools. Each module lives under `taskfiles/<name>/` with a `Taskfile.yml`, `README.md`, and Go tests.
+Reusable, tested [Taskfile](https://taskfile.dev) modules for installing and running common dev tools. Each module lives under `taskfiles/<name>/` with a `Taskfile.yml`, `metadata.yml`, `README.md`, and Go tests.
 
 ## Quick start
 
@@ -35,7 +35,8 @@ task go:lint
 | Languages & runtimes | `go`, `python`, `uv`, `cargo`, `proto`, `staticcheck` | 6 | [`go`](taskfiles/go/README.md) |
 | CI & infra | `actionlint`, `bash-exec`, `bencher`, `shellcheck`, `shfmt`, `yamllint`, `zizmor`, `hadolint`, `buf`, `docker`, `git`, `gh`, `jq`, `vault`, `ansible`, `sqlfluff`, `dotenv-linter`, `htmlhint-{npm,pnpm}-{fnm,nvm}`, `djlint`, `jsonlint`, `rumdl`, `protolint`, `spectral-{npm,pnpm}-{fnm,nvm}`, `adrs` | 30 | [`actionlint`](taskfiles/actionlint/README.md) |
 
-**103 modules** total. Per-module docs: `taskfiles/<name>/README.md`.
+**103 modules** total. Per-module docs: `taskfiles/<name>/README.md`. Each module's
+`metadata.yml` is a self-contained, machine-readable list of the tasks it exports.
 
 Direct linter and formatter modules expose an empty-by-default
 `<TOOL>_LINT_SKIP_PATTERN` and/or `<TOOL>_FMT_SKIP_PATTERN`. Patterns are
@@ -93,3 +94,9 @@ go test ./...
 ```
 
 Each module README must include a `## Public Tasks` table listing every public task from its `Taskfile.yml`. Tests enforce this contract — run `go test ./...` after changing Taskfiles or READMEs.
+
+Regenerate the per-module metadata after adding, removing, or renaming an exported task:
+
+```sh
+go run ./scripts/gen_taskfile_metadata.go
+```

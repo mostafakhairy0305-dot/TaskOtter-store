@@ -1,0 +1,13 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: sqlfluff
+taskfile: Taskfile.yml
+exported_tasks:
+  - config:init
+  - fix
+  - install
+  - install:undo
+  - lint
+  - parse
+  - upgrade
+  - version

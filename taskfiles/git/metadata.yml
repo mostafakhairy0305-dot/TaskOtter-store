@@ -1,0 +1,52 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: git
+taskfile: Taskfile.yml
+exported_tasks:
+  - add
+  - add:all
+  - auth:setup
+  - branch:create
+  - branch:delete
+  - branch:list
+  - branch:rename
+  - branch:switch
+  - clean
+  - clone
+  - commit
+  - commit:amend
+  - config:list
+  - config:user
+  - diff
+  - diff:staged
+  - fetch
+  - help
+  - init
+  - install
+  - install:undo
+  - log
+  - log:graph
+  - pr:create
+  - pr:open
+  - pull
+  - push
+  - push:force
+  - release:create
+  - remote:add
+  - remote:list
+  - remote:remove
+  - remote:set-url
+  - reset:hard
+  - reset:soft
+  - stash
+  - stash:drop
+  - stash:list
+  - stash:pop
+  - status
+  - sync
+  - tag:create
+  - tag:delete
+  - tag:list
+  - tag:push
+  - upgrade
+  - version

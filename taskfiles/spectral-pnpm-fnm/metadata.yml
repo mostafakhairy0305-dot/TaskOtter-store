@@ -1,0 +1,12 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: spectral-pnpm-fnm
+taskfile: Taskfile.yml
+exported_tasks:
+  - config:init
+  - help
+  - install
+  - install:undo
+  - lint
+  - upgrade
+  - version

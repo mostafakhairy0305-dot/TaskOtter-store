@@ -1,0 +1,12 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: djlint
+taskfile: Taskfile.yml
+exported_tasks:
+  - fmt
+  - fmt:check
+  - install
+  - install:undo
+  - lint
+  - upgrade
+  - version

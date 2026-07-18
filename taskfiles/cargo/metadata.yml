@@ -1,0 +1,18 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: cargo
+taskfile: Taskfile.yml
+exported_tasks:
+  - build
+  - check
+  - fmt
+  - fmt:check
+  - install
+  - install:undo
+  - lint
+  - lint:fix
+  - test
+  - upgrade
+  - verify
+  - version
+  - which

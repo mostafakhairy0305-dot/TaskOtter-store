@@ -1,0 +1,14 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: buf
+taskfile: Taskfile.yml
+exported_tasks:
+  - breaking
+  - fmt
+  - fmt:check
+  - generate
+  - install
+  - install:undo
+  - lint
+  - upgrade
+  - version

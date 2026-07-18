@@ -1,0 +1,12 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: bruno-bun
+taskfile: Taskfile.yml
+exported_tasks:
+  - ci
+  - help
+  - install
+  - install:undo
+  - run
+  - upgrade
+  - version

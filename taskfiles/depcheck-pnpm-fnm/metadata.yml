@@ -1,0 +1,15 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: depcheck-pnpm-fnm
+taskfile: Taskfile.yml
+exported_tasks:
+  - ci
+  - help
+  - ignores
+  - install
+  - install:undo
+  - json
+  - lint
+  - skip-missing
+  - upgrade
+  - version

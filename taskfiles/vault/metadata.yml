@@ -1,0 +1,25 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: vault
+taskfile: Taskfile.yml
+exported_tasks:
+  - health
+  - init
+  - install
+  - install:undo
+  - kv:get
+  - login
+  - login:approle
+  - login:root-token
+  - peers
+  - restore
+  - root-token
+  - seal
+  - snapshot
+  - status
+  - token:issue:approle
+  - token:revoke-self
+  - unseal
+  - upgrade
+  - verify
+  - version

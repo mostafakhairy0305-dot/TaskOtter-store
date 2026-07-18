@@ -1,0 +1,18 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: docker
+taskfile: Taskfile.yml
+exported_tasks:
+  - build
+  - images
+  - install
+  - install:undo
+  - prune
+  - prune:all
+  - ps
+  - ps:all
+  - pull
+  - stop:all
+  - upgrade
+  - verify
+  - version

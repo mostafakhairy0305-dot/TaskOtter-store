@@ -1,0 +1,12 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: rumdl
+taskfile: Taskfile.yml
+exported_tasks:
+  - fix
+  - fmt
+  - install
+  - install:undo
+  - lint
+  - upgrade
+  - version

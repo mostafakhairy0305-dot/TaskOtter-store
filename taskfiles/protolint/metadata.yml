@@ -1,0 +1,11 @@
+---
+schema: taskotter.dev/taskfile-metadata/v1
+module: protolint
+taskfile: Taskfile.yml
+exported_tasks:
+  - fix
+  - install
+  - install:undo
+  - lint
+  - upgrade
+  - version
