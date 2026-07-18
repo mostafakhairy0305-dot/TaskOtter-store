@@ -14,6 +14,7 @@ includes:
     taskfile: ../npm-fnm/Taskfile.yml
 
 vars:
+  SPECTRAL_LINT_SKIP_PATTERN: ""
   TARGETS: ""
   RULESET: ""
   EXTRA_ARGS: ""
@@ -104,6 +105,8 @@ tasks:
           ARGS: >-
             lint
             {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
+            {{if .SPECTRAL_LINT_SKIP_PATTERN_OVERRIDE}}"!{{.SPECTRAL_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .SPECTRAL_LINT_SKIP_PATTERN}}"!{{.SPECTRAL_LINT_SKIP_PATTERN}}" {{end}}
             {{if .RULESET_OVERRIDE}}--ruleset "{{.RULESET_OVERRIDE}}"
             {{else}}{{if .RULESET}}--ruleset "{{.RULESET}}"{{end}}{{end}}
           EXTRA_ARGS: >-

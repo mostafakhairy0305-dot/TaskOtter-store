@@ -16,6 +16,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"SHELLCHECK_LINT_SKIP_PATTERN",
 	"EXTRA_ARGS",
 	"TARGETS",
 	"VERSION",

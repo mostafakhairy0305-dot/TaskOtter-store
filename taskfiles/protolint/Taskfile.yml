@@ -13,7 +13,12 @@ includes:
   go:
     taskfile: ../go/Taskfile.yml
 
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
+  PROTOLINT_LINT_SKIP_PATTERN: ""
   EXTRA_ARGS: ""
   GLOBAL_GO_BIN:
     sh: |
@@ -183,40 +188,101 @@ tasks:
     internal: true
     platforms: [linux, darwin]
     cmds:
-      - >-
-        "{{.GLOBAL_GO_BIN}}/protolint" lint
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
-        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+      - task: _lint:run:unix
+        vars:
+          PROTOLINT_FIX_FLAG: ""
 
   _lint:windows:
     run: once
     internal: true
     platforms: [windows]
     cmds:
-      - >-
-        & "{{.GLOBAL_GO_BIN}}/protolint.exe" lint
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
-        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+      - task: _lint:run:windows
+        vars:
+          PROTOLINT_FIX_FLAG: ""
 
   _fix:unix:
     run: once
     internal: true
     platforms: [linux, darwin]
     cmds:
-      - >-
-        "{{.GLOBAL_GO_BIN}}/protolint" lint -fix
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
-        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+      - task: _lint:run:unix
+        vars:
+          PROTOLINT_FIX_FLAG: "-fix"
 
   _fix:windows:
     run: once
     internal: true
     platforms: [windows]
     cmds:
+      - task: _lint:run:windows
+        vars:
+          PROTOLINT_FIX_FLAG: "-fix"
+
+  _lint:run:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    cmds:
+      - |
+        skip_pattern='{{if .PROTOLINT_LINT_SKIP_PATTERN_OVERRIDE}}{{.PROTOLINT_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.PROTOLINT_LINT_SKIP_PATTERN}}{{end}}'
+        if [ -z "$skip_pattern" ]; then
+          "{{.GLOBAL_GO_BIN}}/protolint" lint {{.PROTOLINT_FIX_FLAG}} \
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}} \
+            "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
+            {{- else}}{{.TARGETS}}{{end}}"
+          exit
+        fi
+        file_list="$(mktemp)"
+        trap 'rm -f "$file_list"' EXIT
+        target='{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
+        {{- else}}{{.TARGETS}}{{end}}'
+        if [ -d "$target" ]; then
+          find "$target" -type f -name '*.proto' -print0
+        elif [ -f "$target" ]; then
+          printf '%s\000' "$target"
+        fi | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+          filter "SKIPFILES_PATTERN=$skip_pattern" >"$file_list"
+        if [ ! -s "$file_list" ]; then
+          echo 'No matching protobuf files found'
+          exit 0
+        fi
+        xargs -0 "{{.GLOBAL_GO_BIN}}/protolint" lint {{.PROTOLINT_FIX_FLAG}} \
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}} <"$file_list"
+
+  _lint:run:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    cmds:
       - >-
-        & "{{.GLOBAL_GO_BIN}}/protolint.exe" lint -fix
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
-        "{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$skipPattern='{{if .PROTOLINT_LINT_SKIP_PATTERN_OVERRIDE}}{{.PROTOLINT_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.PROTOLINT_LINT_SKIP_PATTERN}}{{end}}';
+        $target='{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
+        {{- else}}{{.TARGETS}}{{end}}';
+        if (-not $skipPattern) {
+          & '{{.GLOBAL_GO_BIN}}/protolint.exe' lint {{.PROTOLINT_FIX_FLAG}}
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}} $target;
+          exit $LASTEXITCODE
+        };
+        if (Test-Path -LiteralPath $target -PathType Container) {
+          $files = Get-ChildItem -LiteralPath $target -Recurse -Filter '*.proto' -File
+        } elseif (Test-Path -LiteralPath $target -PathType Leaf) {
+          $files = @(Get-Item -LiteralPath $target)
+        } else { $files = @() };
+        $paths = @($files | ForEach-Object FullName |
+          task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+            filter ('SKIPFILES_PATTERN=' + $skipPattern));
+        if (-not $paths) { Write-Host 'No matching protobuf files found'; exit 0 };
+        & '{{.GLOBAL_GO_BIN}}/protolint.exe' lint {{.PROTOLINT_FIX_FLAG}}
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}} @paths;
+        exit $LASTEXITCODE"
 
   _version:unix:
     run: once

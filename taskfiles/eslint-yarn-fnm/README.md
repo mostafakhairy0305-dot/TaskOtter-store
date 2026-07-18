@@ -41,6 +41,10 @@ includes:
 `--config <path>`. `CACHE` defaults to `true`; set `CACHE=false` to omit cache
 flags. `EXTRA_ARGS` and arguments after `--` are appended to the command.
 
+- `ESLINT_LINT_SKIP_PATTERN` (default empty): forward-slash path glob for files skipped by lint checks and fixes.
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
+
 ## Examples
 
 ```bash

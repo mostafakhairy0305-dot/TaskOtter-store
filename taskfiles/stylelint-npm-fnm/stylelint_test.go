@@ -20,6 +20,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"STYLELINT_LINT_SKIP_PATTERN",
 	"ALLOW_EMPTY_INPUT",
 	"CACHE",
 	"CONFIG",

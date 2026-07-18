@@ -9,7 +9,6 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"testing"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -31,7 +30,20 @@ type Task struct {
 	Deps          any      `yaml:"deps"`
 }
 
-func AssertModule(t *testing.T, module string, expectedTasks, expectedVars []string) {
+type testT interface {
+	Helper()
+	Fatal(args ...any)
+	Fatalf(format string, args ...any)
+	TempDir() string
+}
+
+var (
+	getWorkingDir = os.Getwd
+	taskBinary    = "task"
+	taskTimeout   = time.Minute
+)
+
+func AssertModule(t testT, module string, expectedTasks, expectedVars []string) {
 	t.Helper()
 
 	assertReadme(t, module, expectedTasks)
@@ -39,7 +51,7 @@ func AssertModule(t *testing.T, module string, expectedTasks, expectedVars []str
 	assertTaskCliCanLoad(t, module)
 }
 
-func AssertDryRunContains(t *testing.T, module string, args []string, tokens ...string) {
+func AssertDryRunContains(t testT, module string, args []string, tokens ...string) {
 	t.Helper()
 
 	output := DryRun(t, module, args...)
@@ -53,7 +65,7 @@ func AssertDryRunContains(t *testing.T, module string, args []string, tokens ...
 // AssertInstallDryRun verifies install dry-run output. When the tool is already
 // on PATH the install task is skipped ("up to date"); otherwise downloadTokens
 // must appear in the output.
-func AssertInstallDryRun(t *testing.T, module, toolName string, downloadTokens ...string) {
+func AssertInstallDryRun(t testT, module, toolName string, downloadTokens ...string) {
 	t.Helper()
 
 	output := DryRun(t, module, "install")
@@ -71,23 +83,23 @@ func AssertInstallDryRun(t *testing.T, module, toolName string, downloadTokens .
 	}
 }
 
-func RootDryRun(t *testing.T, args ...string) string {
+func RootDryRun(t testT, args ...string) string {
 	t.Helper()
 
 	allArgs := append([]string{"--dry", "--yes", "--verbose"}, args...)
 	return runTask(t, allArgs...)
 }
 
-func DryRun(t *testing.T, module string, args ...string) string {
+func DryRun(t testT, module string, args ...string) string {
 	t.Helper()
 
 	projectDir, env := setupDryRunEnv(t)
 	allArgs := append([]string{"--taskfile", taskfilePath(t, module), "--dry", "--yes", "--verbose"}, args...)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), taskTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "task", allArgs...)
+	cmd := exec.CommandContext(ctx, taskBinary, allArgs...)
 	cmd.Dir = projectDir
 	cmd.Env = env
 
@@ -106,7 +118,7 @@ func DryRun(t *testing.T, module string, args ...string) string {
 // for dry-run tests. It stubs common JS package managers, node version managers,
 // and linting/formatting tools so that _install-if-missing skips installation
 // and package-manager preconditions pass without real tools being present.
-func setupDryRunEnv(t *testing.T) (projectDir string, env []string) {
+func setupDryRunEnv(t testT) (projectDir string, env []string) {
 	t.Helper()
 
 	home := t.TempDir()
@@ -183,7 +195,7 @@ func dryRunGetEnv(env []string, key string) string {
 	return ""
 }
 
-func LoadTaskfile(t *testing.T, module string) Taskfile {
+func LoadTaskfile(t testT, module string) Taskfile {
 	t.Helper()
 
 	content, err := os.ReadFile(taskfilePath(t, module))
@@ -206,10 +218,10 @@ func LoadTaskfile(t *testing.T, module string) Taskfile {
 	return tf
 }
 
-func RepoRoot(t *testing.T) string {
+func RepoRoot(t testT) string {
 	t.Helper()
 
-	wd, err := os.Getwd()
+	wd, err := getWorkingDir()
 	if err != nil {
 		t.Fatalf("get working directory: %v", err)
 	}
@@ -227,7 +239,7 @@ func RepoRoot(t *testing.T) string {
 	}
 }
 
-func assertReadme(t *testing.T, module string, expectedTasks []string) {
+func assertReadme(t testT, module string, expectedTasks []string) {
 	t.Helper()
 
 	path := filepath.Join(moduleDir(t, module), "README.md")
@@ -250,7 +262,7 @@ func assertReadme(t *testing.T, module string, expectedTasks []string) {
 	}
 }
 
-func assertTaskfile(t *testing.T, module string, expectedTasks, expectedVars []string) {
+func assertTaskfile(t testT, module string, expectedTasks, expectedVars []string) {
 	t.Helper()
 
 	tf := LoadTaskfile(t, module)
@@ -284,7 +296,7 @@ func assertTaskfile(t *testing.T, module string, expectedTasks, expectedVars []s
 	}
 }
 
-func assertTaskCliCanLoad(t *testing.T, module string) {
+func assertTaskCliCanLoad(t testT, module string) {
 	t.Helper()
 
 	output, _ := runTaskOutput(t, "--taskfile", taskfilePath(t, module), "--list-all", "--json")
@@ -312,17 +324,17 @@ func sortedCopy(values []string) []string {
 	return clone
 }
 
-func taskfilePath(t *testing.T, module string) string {
+func taskfilePath(t testT, module string) string {
 	t.Helper()
 	return filepath.Join(moduleDir(t, module), "Taskfile.yml")
 }
 
-func moduleDir(t *testing.T, module string) string {
+func moduleDir(t testT, module string) string {
 	t.Helper()
 	return filepath.Join(RepoRoot(t), "taskfiles", module)
 }
 
-func runTask(t *testing.T, args ...string) string {
+func runTask(t testT, args ...string) string {
 	t.Helper()
 
 	output, err := runTaskOutput(t, args...)
@@ -333,13 +345,13 @@ func runTask(t *testing.T, args ...string) string {
 	return output
 }
 
-func runTaskOutput(t *testing.T, args ...string) (string, error) {
+func runTaskOutput(t testT, args ...string) (string, error) {
 	t.Helper()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), taskTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "task", args...)
+	cmd := exec.CommandContext(ctx, taskBinary, args...)
 	cmd.Dir = RepoRoot(t)
 	cmd.Env = os.Environ()
 

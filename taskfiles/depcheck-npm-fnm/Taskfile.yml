@@ -14,6 +14,7 @@ includes:
     taskfile: ../npm-fnm/Taskfile.yml
 
 vars:
+  DEPCHECK_LINT_SKIP_PATTERN: ""
   PROJECT_PATH: ""
   DEPCHECK_DEFAULT_PROJECT_PATH: "."
   TARGETS: ""
@@ -83,6 +84,8 @@ tasks:
         vars:
           BINARY: depcheck
           ARGS: >-
+            {{if .DEPCHECK_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-patterns="{{.DEPCHECK_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .DEPCHECK_LINT_SKIP_PATTERN}}--ignore-patterns="{{.DEPCHECK_LINT_SKIP_PATTERN}}" {{end}}
             {{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}
             {{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}
             {{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}
@@ -101,6 +104,8 @@ tasks:
         vars:
           BINARY: depcheck
           ARGS: >-
+            {{if .DEPCHECK_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-patterns="{{.DEPCHECK_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .DEPCHECK_LINT_SKIP_PATTERN}}--ignore-patterns="{{.DEPCHECK_LINT_SKIP_PATTERN}}" {{end}}
             {{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}
             {{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}
             {{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}
@@ -120,6 +125,8 @@ tasks:
         vars:
           BINARY: depcheck
           ARGS: >-
+            {{if .DEPCHECK_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-patterns="{{.DEPCHECK_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .DEPCHECK_LINT_SKIP_PATTERN}}--ignore-patterns="{{.DEPCHECK_LINT_SKIP_PATTERN}}" {{end}}
             {{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}
             {{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}
             {{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}
@@ -138,6 +145,8 @@ tasks:
         vars:
           BINARY: depcheck
           ARGS: >-
+            {{if .DEPCHECK_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-patterns="{{.DEPCHECK_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .DEPCHECK_LINT_SKIP_PATTERN}}--ignore-patterns="{{.DEPCHECK_LINT_SKIP_PATTERN}}" {{end}}
             {{if .DEPCHECK_PROJECT_PATH_OVERRIDE}}{{.DEPCHECK_PROJECT_PATH_OVERRIDE}}
             {{else}}{{if .DEPCHECK_TARGETS_OVERRIDE}}{{.DEPCHECK_TARGETS_OVERRIDE}}
             {{else}}{{if .PROJECT_PATH}}{{.PROJECT_PATH}}

@@ -9,7 +9,13 @@ output:
 
 silent: true
 
+includes:
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
+  SHELLCHECK_LINT_SKIP_PATTERN: ""
   EXTRA_ARGS: ""
   TARGETS: ""
   VERSION: ""
@@ -44,24 +50,40 @@ tasks:
     platforms: [darwin, linux]
     dir: "{{.USER_WORKING_DIR}}"
     cmds:
-      - >-
-        bash -c 'set -e;
-        if [ -n "{{.CLI_ARGS}}" ]; then
+      - |
+        skip_pattern='{{if .SHELLCHECK_LINT_SKIP_PATTERN_OVERRIDE}}{{.SHELLCHECK_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.SHELLCHECK_LINT_SKIP_PATTERN}}{{end}}'
+        if [ -z "$skip_pattern" ] && [ -n "{{.CLI_ARGS}}" ]; then
           shellcheck {{.CLI_ARGS}} && echo "✅ shellcheck passed" || { echo "❌ shellcheck failed"; exit 1; }
+          exit
+        fi
+
+        extra="{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}} {{.CLI_ARGS}}"
+        targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"
+        file_list="$(mktemp)"
+        trap 'rm -f "$file_list"' EXIT
+
+        if [ -z "$targets" ]; then
+          find . -type f \( -name '*.sh' -o -name '*.bash' \) ! -path '*/.git/*' -print0
         else
-          extra="{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}";
-          targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}";
-          if [ -z "$targets" ]; then
-            if ! find . -type f \( -name "*.sh" -o -name "*.bash" \) ! -path "*/.git/*" -print -quit | grep -q .; then
-              echo "✅ shellcheck passed (no shell scripts found)";
-              exit 0;
-            fi;
-            find . -type f \( -name "*.sh" -o -name "*.bash" \) ! -path "*/.git/*" -exec shellcheck $extra {} +;
-          else
-            shellcheck $extra $targets;
-          fi;
-          echo "✅ shellcheck passed";
-        fi'
+          for target in $targets; do
+            if [ -d "$target" ]; then
+              find "$target" -type f \( -name '*.sh' -o -name '*.bash' \) ! -path '*/.git/*' -print0
+            elif [ -f "$target" ]; then
+              printf '%s\000' "$target"
+            fi
+          done
+        fi | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+          filter "SKIPFILES_PATTERN=$skip_pattern" >"$file_list"
+
+        if [ ! -s "$file_list" ]; then
+          echo "✅ shellcheck passed (no matching shell scripts found)"
+          exit 0
+        fi
+
+        xargs -0 shellcheck $extra <"$file_list"
+        echo "✅ shellcheck passed"
 
   _lint:windows:
     run: once
@@ -71,22 +93,34 @@ tasks:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
         "$ErrorActionPreference='Stop';
-        if ('{{.CLI_ARGS}}') {
+        $skipPattern='{{if .SHELLCHECK_LINT_SKIP_PATTERN_OVERRIDE}}{{.SHELLCHECK_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.SHELLCHECK_LINT_SKIP_PATTERN}}{{end}}';
+        if (-not $skipPattern -and '{{.CLI_ARGS}}') {
           shellcheck {{.CLI_ARGS}}; exit $LASTEXITCODE
-        }
+        };
         $extra='{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}';
         $targets='{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}';
         if (-not $targets) {
           $files = Get-ChildItem -Recurse -Filter '*.sh' -File |
             Where-Object { $_.FullName -notmatch '\\\.git\\' };
-          if (-not $files) { Write-Host 'No shell scripts found'; exit 0 }
-          if ($extra) { shellcheck $extra.Split(' ') @($files | ForEach-Object FullName) }
-          else { shellcheck @($files | ForEach-Object FullName) }
-        } elseif ($extra) {
-          shellcheck $extra.Split(' ') $targets.Split(' ')
         } else {
-          shellcheck $targets.Split(' ')
+          $files = @($targets.Split(' ') | ForEach-Object {
+            if (Test-Path -LiteralPath $_ -PathType Container) {
+              Get-ChildItem -LiteralPath $_ -Recurse -File |
+                Where-Object { $_.Extension -in @('.sh', '.bash') -and $_.FullName -notmatch '\\\.git\\' }
+            } elseif (Test-Path -LiteralPath $_ -PathType Leaf) {
+              Get-Item -LiteralPath $_
+            }
+          });
         };
+        $paths = @($files | ForEach-Object FullName |
+          task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+            filter ('SKIPFILES_PATTERN=' + $skipPattern));
+        if (-not $paths) { Write-Host 'No matching shell scripts found'; exit 0 };
+        $arguments = @();
+        if ($extra) { $arguments += $extra.Split(' ') };
+        if ('{{.CLI_ARGS}}') { $arguments += '{{.CLI_ARGS}}'.Split(' ') };
+        shellcheck @arguments @paths;
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
         Write-Host '✅ shellcheck passed'"
 

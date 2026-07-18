@@ -75,6 +75,23 @@ task -t taskfiles/go/Taskfile.yml golangci-lint:lint -- ./internal/...
 task go:govulncheck:lint -- -test ./...
 ```
 
+Set `GO_LINT_SKIP_PATTERN` to exclude matching file paths from golangci-lint,
+govulncheck, and gosec analysis. It applies to both `lint` and `lint:fix` and
+uses the same shell-style path glob syntax as `GO_FMT_SKIP_PATTERN`; quote the
+value so your shell passes it through unchanged:
+
+```sh
+task go:lint GO_LINT_SKIP_PATTERN="**/generated/**"
+task go:lint:fix GO_LINT_SKIP_PATTERN="**/mocks/*.go"
+```
+
+The skip pattern is added to a temporary overlay of the existing
+golangci-lint YAML or JSON configuration, so project-specific settings remain
+active. govulncheck and gosec operate on packages rather than individual
+files, so any package containing a matching file is omitted from those checks.
+Use `GO_FMT_SKIP_PATTERN` as well when the same files should be excluded from
+formatting.
+
 Auto-fix lint issues that supported tools can rewrite:
 
 ```sh
@@ -103,6 +120,52 @@ to `.` and accepts CLI arguments after `--`:
 task go:fmt -- ./internal/...
 task go:golangci-lint:fmt -- ./taskfiles/go
 task go:golangci-lint:fmt:check -- ./taskfiles/go
+```
+
+Set `GO_FMT_SKIP_PATTERN` to exclude matching Go file paths from both `fmt` and
+`fmt:check`. The value is a shell-style path glob matched against paths with
+forward slashes; quote it so your shell does not expand it before Task receives
+it:
+
+```sh
+task go:fmt GO_FMT_SKIP_PATTERN="**/generated/**"
+task go:fmt:check GO_FMT_SKIP_PATTERN="**/mocks/*.go"
+```
+
+An empty pattern keeps the default behavior. When a pattern is set, formatter
+targets are expanded to `.go` files first and matching paths are omitted.
+
+## Testing
+
+Run unit tests, benchmarks, fuzz targets, and coverage against the current
+project:
+
+```sh
+task go:test
+task go:bench
+task go:coverage
+task go:fuzz -- -fuzz FuzzName ./internal/parser
+```
+
+Each task defaults to the `./...` package pattern (except `fuzz`, which fuzzes
+one target in a single package). Pass extra `go test` flags or a narrower target
+after `--`:
+
+```sh
+task go:test -- -race -run TestName ./internal/...
+task go:bench -- -bench BenchmarkName ./internal/parser
+```
+
+`coverage` writes a profile to `GO_COVER_PROFILE` (default `coverage.out`) and
+prints only packages containing executable statements, ordered from lowest to
+highest coverage. Packages with statements and zero coverage are included.
+`fuzz` runs a single target for `GO_FUZZTIME` (default `30s`); Go fuzzes one
+target in one package per run, so supply the `-fuzz` pattern and package after
+`--`:
+
+```sh
+task go:coverage GO_COVER_PROFILE=cover.out
+task go:fuzz GO_FUZZTIME=60s -- -fuzz FuzzName ./internal/parser
 ```
 
 ## Versions
@@ -134,25 +197,29 @@ installer to run even when the executable already exists.
 
 | Task                        | Description                                           | Key variables      |
 | --------------------------- | ----------------------------------------------------- | ------------------ |
-| `fmt`                       | Format Go files with golangci-lint formatters         | none               |
-| `fmt:check`                 | Check Go file formatting with golangci-lint formatters | none               |
+| `fmt`                       | Format Go files with golangci-lint formatters         | `GO_FMT_SKIP_PATTERN` |
+| `fmt:check`                 | Check Go file formatting with golangci-lint formatters | `GO_FMT_SKIP_PATTERN` |
 | `install`                   | Install Go on the current operating system if missing | `INSTALL_DIR_UNIX`, `GO_VERSION` |
 | `install:undo`              | Remove Go from the current operating system            | `INSTALL_DIR_UNIX` |
 | `install:golangci-lint`     | Install golangci-lint into the global Go bin          | `GLOBAL_GO_BIN`, `GOLANGCI_LINT_VERSION` |
 | `install:govulncheck`       | Install govulncheck into the global Go bin             | `GLOBAL_GO_BIN`, `GOVULNCHECK_VERSION` |
 | `install:gosec`             | Install gosec into the global Go bin                   | `GLOBAL_GO_BIN`, `GOSEC_VERSION` |
-| `lint`                      | Run all Go lint and security checks                    | none               |
-| `lint:fix`                  | Auto-fix Go lint and formatting issues                 | none               |
-| `golangci-lint:lint`        | Lint all Go packages with golangci-lint                | none               |
-| `golangci-lint:lint:fix`    | Auto-fix Go lint issues with golangci-lint             | none               |
-| `golangci-lint:fmt`         | Format Go files with golangci-lint formatters         | none               |
-| `golangci-lint:fmt:check`   | Check Go formatting with golangci-lint formatters      | none               |
-| `govulncheck:lint`          | Scan Go packages for known vulnerabilities             | none               |
-| `gosec:lint`                | Scan Go packages for security issues                   | none               |
+| `lint`                      | Run all Go lint and security checks                    | `GO_LINT_SKIP_PATTERN` |
+| `lint:fix`                  | Auto-fix Go lint and formatting issues                 | `GO_LINT_SKIP_PATTERN`, `GO_FMT_SKIP_PATTERN` |
+| `golangci-lint:lint`        | Lint all Go packages with golangci-lint                | `GO_LINT_SKIP_PATTERN` |
+| `golangci-lint:lint:fix`    | Auto-fix Go lint issues with golangci-lint             | `GO_LINT_SKIP_PATTERN` |
+| `golangci-lint:fmt`         | Format Go files with golangci-lint formatters         | `GO_FMT_SKIP_PATTERN` |
+| `golangci-lint:fmt:check`   | Check Go formatting with golangci-lint formatters      | `GO_FMT_SKIP_PATTERN` |
+| `govulncheck:lint`          | Scan Go packages for known vulnerabilities             | `GO_LINT_SKIP_PATTERN` |
+| `gosec:lint`                | Scan Go packages for security issues                   | `GO_LINT_SKIP_PATTERN` |
 | `upgrade`                   | Upgrade Go to the selected or latest stable release    | `INSTALL_DIR_UNIX`, `GO_VERSION` |
 | `version`                   | Show the installed Go version                          | none               |
 | `which`                     | Show the path to the Go binary                         | none               |
 | `verify`                    | Print Go version, GOROOT, and GOPATH                   | none               |
+| `test`                      | Run Go unit tests                                      | none               |
+| `bench`                     | Run Go benchmarks                                      | none               |
+| `fuzz`                      | Run a Go fuzz target                                   | `GO_FUZZTIME`      |
+| `coverage`                  | Run Go tests and report coverage                       | `GO_COVER_PROFILE` |
 
 ## Variables
 
@@ -168,6 +235,10 @@ installer to run even when the executable already exists.
 | `GOLANGCI_LINT_VERSION` | empty (`latest`)               | Optional golangci-lint module version                                 |
 | `GOVULNCHECK_VERSION`  | empty (`latest`)                | Optional govulncheck module version                                   |
 | `GOSEC_VERSION`        | empty (`latest`)                | Optional gosec module version                                         |
+| `GO_FMT_SKIP_PATTERN`  | empty                           | Shell-style path glob for Go files skipped by `fmt` and `fmt:check`   |
+| `GO_LINT_SKIP_PATTERN` | empty                           | Shell-style path glob for Go files skipped by `lint` and `lint:fix`   |
+| `GO_COVER_PROFILE`     | empty (`coverage.out`)          | Output path for the `coverage` profile file                          |
+| `GO_FUZZTIME`          | empty (`30s`)                   | Duration a single `fuzz` target runs before stopping                 |
 | `GLOBAL_GO_BIN`        | `GOBIN` or `GOPATH/bin`         | Destination and lookup directory for installed Go development tools   |
 
 ## Notes

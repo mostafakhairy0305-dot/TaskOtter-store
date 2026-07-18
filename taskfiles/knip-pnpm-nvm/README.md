@@ -43,6 +43,16 @@ command.
 
 Review Knip findings before deleting files or dependencies.
 
+- `KNIP_LINT_SKIP_PATTERN` (default empty): forward-slash path glob for files skipped by lint checks and fixes.
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
+
+Knip still analyzes its project graph; the generated configuration suppresses findings for files matching `KNIP_LINT_SKIP_PATTERN`.
+
+When a skip pattern is set, TaskOtter can merge JSON, JSONC, and
+`package.json#knip` configurations. Dynamic JavaScript and TypeScript Knip
+configurations must add the pattern to their own `ignore` array.
+
 ## Examples
 
 ```bash

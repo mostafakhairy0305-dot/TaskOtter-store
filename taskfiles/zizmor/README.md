@@ -52,6 +52,9 @@ task zizmor:install
 | `ZIZMOR_EXTRA_ARGS` | `"--offline"` | Additional flags passed to `zizmor` (e.g. `--format`, `--min-severity`, `--gh-token`) |
 | `ZIZMOR_TARGETS` | `".github"` | Path to audit; scans workflows and composite actions under `.github` |
 | `ZIZMOR_VERSION` | `"1.25.2"` | Pinned release version for binary download |
+| `ZIZMOR_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

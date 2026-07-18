@@ -84,6 +84,10 @@ task buf:generate INPUT=api/v1
 | `CONFIG`      | empty                | Path to a `buf.yaml` config file passed via `--config`  |
 | `EXTRA_ARGS`  | empty                | Extra arguments appended when `CLI_ARGS` is not provided |
 | `INPUT`       | `.`                  | Proto source directory or Buf module passed to buf       |
+| `BUF_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint and breaking checks |
+| `BUF_FMT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by formatting checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

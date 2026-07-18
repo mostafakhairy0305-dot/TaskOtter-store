@@ -18,6 +18,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"SQLFLUFF_LINT_SKIP_PATTERN",
 	"SQLFLUFF_VERSION",
 	"UV_LOAD",
 }

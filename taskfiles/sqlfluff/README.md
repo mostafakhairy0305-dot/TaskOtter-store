@@ -55,6 +55,9 @@ task sqlfluff:fix DIALECT_OVERRIDE=postgres
 | `CONFIG_OVERRIDE`     | _(empty)_ | Path to a sqlfluff config file passed via `--config`         |
 | `DIALECT_OVERRIDE`    | _(empty)_ | SQL dialect passed via `--dialect` (e.g. `ansi`, `postgres`) |
 | `EXTRA_ARGS_OVERRIDE` | _(empty)_ | Extra flags forwarded to sqlfluff                            |
+| `SQLFLUFF_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint, fix, and parse tasks |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

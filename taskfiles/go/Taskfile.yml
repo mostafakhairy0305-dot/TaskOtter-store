@@ -9,6 +9,11 @@ output:
 
 silent: true
 
+includes:
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
   INSTALL_DIR_UNIX: "/usr/local"
   GO_ROOT_UNIX: "{{.INSTALL_DIR_UNIX}}/go"
@@ -20,6 +25,10 @@ vars:
   GOLANGCI_LINT_VERSION: ""
   GOVULNCHECK_VERSION: ""
   GOSEC_VERSION: ""
+  GO_FMT_SKIP_PATTERN: ""
+  GO_LINT_SKIP_PATTERN: ""
+  GO_COVER_PROFILE: ""
+  GO_FUZZTIME: ""
   GLOBAL_GO_BIN:
     sh: |
       gobin="${GOBIN:-}"
@@ -131,7 +140,8 @@ tasks:
     desc: Format Go files with golangci-lint formatters
     summary: |
       Rewrite Go files under the current directory with golangci-lint's Go
-      formatters. Pass CLI arguments after -- to override the default target.
+      formatters. Set GO_FMT_SKIP_PATTERN to a shell-style path glob for files
+      to skip. Pass CLI arguments after -- to override the default target.
     cmds:
       - task: golangci-lint:fmt
 
@@ -141,14 +151,18 @@ tasks:
     summary: |
       Check Go files under the current directory with golangci-lint's Go
       formatters without modifying them. Pass CLI arguments after -- to
-      override the default target. Use fmt to apply fixes.
+      override the default target. Set GO_FMT_SKIP_PATTERN to a shell-style
+      path glob for files to skip. Use fmt to apply fixes.
     deps:
       - golangci-lint:fmt:check
 
   lint:
     run: once
     desc: Run all Go lint and security checks
-    summary: Run golangci-lint, golangci-lint formatters, govulncheck, and gosec.
+    summary: |
+      Run golangci-lint, golangci-lint formatters, govulncheck, and gosec.
+      Set GO_LINT_SKIP_PATTERN to a shell-style path glob for files that lint
+      and security analysis should skip.
     deps:
       - golangci-lint:lint
       - golangci-lint:fmt:check
@@ -160,7 +174,9 @@ tasks:
     desc: Auto-fix Go lint and formatting issues
     summary: |
       Run golangci-lint with --fix, then format Go files with golangci-lint
-      formatters. Pass CLI arguments after -- to override the default target.
+      formatters. Set GO_LINT_SKIP_PATTERN to a shell-style path glob for files
+      that golangci-lint must not modify. Pass CLI arguments after -- to
+      override the default target.
     cmds:
       - task: golangci-lint:lint:fix
       - task: fmt
@@ -169,46 +185,131 @@ tasks:
     run: once
     desc: Lint Go packages with golangci-lint
     summary: |
-      Run golangci-lint against all Go packages by default. Pass CLI arguments
-      after -- to override the default ./... target. Auto-installs
-      golangci-lint if missing.
-    deps:
-      - install:golangci-lint
-    cmds:
-      - '"{{.GLOBAL_GO_BIN}}/golangci-lint" run {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}'
-
-  golangci-lint:lint:fix:
-    run: once
-    desc: Auto-fix Go lint issues with golangci-lint
-    summary: |
-      Run golangci-lint with --fix against all Go packages by default. Pass
+      Run golangci-lint against all Go packages by default. Set
+      GO_LINT_SKIP_PATTERN to a shell-style path glob for files to skip. Pass
       CLI arguments after -- to override the default ./... target.
       Auto-installs golangci-lint if missing.
     deps:
       - install:golangci-lint
     cmds:
-      - '"{{.GLOBAL_GO_BIN}}/golangci-lint" run --fix {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}'
+      - task: _golangci-lint:lint
+        vars:
+          GO_LINT_FIX: ""
+          GO_LINT_ARGS: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}"
+
+  golangci-lint:lint:fix:
+    run: once
+    desc: Auto-fix Go lint issues with golangci-lint
+    summary: |
+      Run golangci-lint with --fix against all Go packages by default. Set
+      GO_LINT_SKIP_PATTERN to a shell-style path glob for files that must not
+      be modified. Pass CLI arguments after -- to override the default ./...
+      target. Auto-installs golangci-lint if missing.
+    deps:
+      - install:golangci-lint
+    cmds:
+      - task: _golangci-lint:lint
+        vars:
+          GO_LINT_FIX: "--fix"
+          GO_LINT_ARGS: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}"
+
+  _golangci-lint:lint:
+    run: once
+    internal: true
+    cmds:
+      - cmd: |
+          skip_pattern='{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}'
+          if [ -z "$skip_pattern" ]; then
+            "{{.GLOBAL_GO_BIN}}/golangci-lint" run {{.GO_LINT_FIX}} {{.GO_LINT_ARGS}}
+            exit
+          fi
+
+          config_path="$("{{.GLOBAL_GO_BIN}}/golangci-lint" config path 2>/dev/null || true)"
+          config_dir=.
+          if [ -n "$config_path" ]; then
+            config_dir="$(dirname "$config_path")"
+          fi
+
+          overlay_temp="$(mktemp "$config_dir/.golangci-taskotter.XXXXXX")"
+          overlay_config="${overlay_temp}.yml"
+          mv "$overlay_temp" "$overlay_config"
+          if ! task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+            prepare-overlay \
+            SKIPFILES_TOOL=golangci \
+            "SKIPFILES_SOURCE_CONFIG=$config_path" \
+            "SKIPFILES_OUTPUT=$overlay_config" \
+            "SKIPFILES_PATTERN=$skip_pattern"; then
+            rm -f "$overlay_config"
+            exit 1
+          fi
+
+          lint_status=0
+          "{{.GLOBAL_GO_BIN}}/golangci-lint" run \
+            {{.GO_LINT_FIX}} \
+            {{.GO_LINT_ARGS}} \
+            --config "$overlay_config" || lint_status=$?
+          rm -f "$overlay_config"
+          exit "$lint_status"
+        platforms: [linux, darwin]
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "$ErrorActionPreference='Stop';
+          $skipPattern = '{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}';
+          if (-not $skipPattern) {
+            & '{{.GLOBAL_GO_BIN}}/golangci-lint' run
+              {{.GO_LINT_FIX}}
+              {{.GO_LINT_ARGS}};
+            exit $LASTEXITCODE;
+          };
+          $configPath = (& '{{.GLOBAL_GO_BIN}}/golangci-lint' config path 2>$null | Select-Object -First 1);
+          if ($LASTEXITCODE -ne 0) {
+            $configPath = '';
+          };
+          if ($configPath) {
+            $configPath = (Resolve-Path -LiteralPath $configPath).Path;
+            $configDir = Split-Path -Parent $configPath;
+          } else {
+            $configDir = (Get-Location).Path;
+          };
+          $overlayConfig = Join-Path $configDir ('.golangci-taskotter.' + [Guid]::NewGuid().ToString('N') + '.yml');
+          try {
+            & task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+              prepare-overlay
+              'SKIPFILES_TOOL=golangci'
+              "SKIPFILES_SOURCE_CONFIG=$configPath"
+              "SKIPFILES_OUTPUT=$overlayConfig"
+              "SKIPFILES_PATTERN=$skipPattern";
+            if ($LASTEXITCODE -ne 0) {
+              exit $LASTEXITCODE;
+            };
+            & '{{.GLOBAL_GO_BIN}}/golangci-lint' run
+              {{.GO_LINT_FIX}}
+              {{.GO_LINT_ARGS}}
+              --config $overlayConfig;
+            $exitCode = $LASTEXITCODE;
+          } finally {
+            Remove-Item -LiteralPath $overlayConfig -Force -ErrorAction SilentlyContinue;
+          };
+          exit $exitCode"
+        platforms: [windows]
 
   golangci-lint:fmt:
     run: once
     desc: Format Go files with golangci-lint formatters
     summary: |
       Rewrite Go files with golangci-lint's gci, gofmt, gofumpt, goimports,
-      golines, and swaggo formatters. Pass CLI arguments after -- to override
-      the default target. Auto-installs golangci-lint if missing.
+      golines, and swaggo formatters. Set GO_FMT_SKIP_PATTERN to a shell-style
+      path glob for files to skip. Pass CLI arguments after -- to override the
+      default target. Auto-installs golangci-lint if missing.
     deps:
       - install:golangci-lint
     cmds:
-      - >-
-        "{{.GLOBAL_GO_BIN}}/golangci-lint"
-        fmt
-        -E gci
-        -E gofmt
-        -E gofumpt
-        -E goimports
-        -E golines
-        -E swaggo
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}
+      - task: _golangci-lint:fmt
+        vars:
+          GO_FMT_DIFF: ""
+          GO_FMT_TARGETS: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}"
 
   golangci-lint:fmt:check:
     run: once
@@ -216,22 +317,127 @@ tasks:
     summary: |
       Check Go files with golangci-lint's gci, gofmt, gofumpt, goimports,
       golines, and swaggo formatters by printing diffs instead of rewriting
-      files. Pass CLI arguments after -- to override the default target.
+      files. Set GO_FMT_SKIP_PATTERN to a shell-style path glob for files to
+      skip. Pass CLI arguments after -- to override the default target.
       Auto-installs golangci-lint if missing.
     deps:
       - install:golangci-lint
     cmds:
-      - >-
-        "{{.GLOBAL_GO_BIN}}/golangci-lint"
-        fmt
-        --diff
-        -E gci
-        -E gofmt
-        -E gofumpt
-        -E goimports
-        -E golines
-        -E swaggo
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}
+      - task: _golangci-lint:fmt
+        vars:
+          GO_FMT_DIFF: "--diff"
+          GO_FMT_TARGETS: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}"
+
+  _golangci-lint:fmt:
+    run: once
+    internal: true
+    cmds:
+      - cmd: |
+          skip_pattern='{{if .GO_FMT_SKIP_PATTERN_OVERRIDE}}{{.GO_FMT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.GO_FMT_SKIP_PATTERN}}{{end}}'
+          if [ -z "$skip_pattern" ]; then
+            "{{.GLOBAL_GO_BIN}}/golangci-lint" fmt \
+              {{.GO_FMT_DIFF}} \
+              -E gci \
+              -E gofmt \
+              -E gofumpt \
+              -E goimports \
+              -E golines \
+              -E swaggo \
+              {{.GO_FMT_TARGETS}}
+            exit
+          fi
+
+          file_list="$(mktemp)"
+          trap 'rm -f "$file_list"' EXIT
+          set --
+          for target in {{.GO_FMT_TARGETS}}; do
+            target="${target%...}"
+            target="${target%/}"
+            if [ -z "$target" ]; then
+              target=.
+            fi
+            set -- "$@" "$target"
+          done
+
+          for target in "$@"; do
+            if [ -d "$target" ]; then
+              find "$target" \
+                -type f \
+                -name '*.go' \
+                ! -path '*/node_modules/*' \
+                ! -path '*/testdata/*' \
+                ! -path '*/vendor/*' \
+                -print0
+            elif [ -f "$target" ]; then
+              printf '%s\000' "$target"
+            fi
+          done | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+            filter "SKIPFILES_PATTERN=$skip_pattern" >"$file_list"
+
+          if [ ! -s "$file_list" ]; then
+            echo 'No matching Go files found'
+            exit 0
+          fi
+
+          xargs -0 "{{.GLOBAL_GO_BIN}}/golangci-lint" fmt \
+              {{.GO_FMT_DIFF}} \
+              -E gci \
+              -E gofmt \
+              -E gofumpt \
+              -E goimports \
+              -E golines \
+              -E swaggo <"$file_list"
+        platforms: [linux, darwin]
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "$ErrorActionPreference='Stop';
+          $skipPattern = '{{if .GO_FMT_SKIP_PATTERN_OVERRIDE}}{{.GO_FMT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.GO_FMT_SKIP_PATTERN}}{{end}}';
+          if (-not $skipPattern) {
+            & '{{.GLOBAL_GO_BIN}}/golangci-lint' fmt
+              {{.GO_FMT_DIFF}}
+              -E gci
+              -E gofmt
+              -E gofumpt
+              -E goimports
+              -E golines
+              -E swaggo
+              {{.GO_FMT_TARGETS}};
+            exit $LASTEXITCODE;
+          };
+          $targets = '{{.GO_FMT_TARGETS}}' -split '\s+';
+          $files = @($targets | ForEach-Object {
+            $target = $_ -replace '\.\.\.$', '';
+            $target = $target.TrimEnd('/').TrimEnd('\');
+            if (-not $target) { $target = '.' };
+            if (Test-Path -LiteralPath $target -PathType Leaf) {
+              Get-Item -LiteralPath $target;
+            } else {
+              Get-ChildItem -LiteralPath $target -Recurse -Filter '*.go' -File;
+            };
+          } | Where-Object {
+            $path = [string](Resolve-Path -LiteralPath $_.FullName -Relative);
+            $path = $path.Replace('\', '/');
+            $path -notlike '*/node_modules/*' -and
+              $path -notlike '*/testdata/*' -and
+              $path -notlike '*/vendor/*';
+          } | ForEach-Object FullName |
+            task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+              filter ('SKIPFILES_PATTERN=' + $skipPattern));
+          if ($files.Count -gt 0) {
+            & '{{.GLOBAL_GO_BIN}}/golangci-lint' fmt
+              {{.GO_FMT_DIFF}}
+              -E gci
+              -E gofmt
+              -E gofumpt
+              -E goimports
+              -E golines
+              -E swaggo
+              @files;
+            exit $LASTEXITCODE;
+          }"
+        platforms: [windows]
 
   govulncheck:lint:
     run: once
@@ -239,11 +445,15 @@ tasks:
     summary: |
       Scan all Go packages for known vulnerabilities by default. Pass CLI
       arguments after -- to override the default ./... target. Auto-installs
-      govulncheck if missing.
+      govulncheck if missing. Packages containing files matched by
+      GO_LINT_SKIP_PATTERN are omitted.
     deps:
       - install:govulncheck
     cmds:
-      - '"{{.GLOBAL_GO_BIN}}/govulncheck" {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}'
+      - task: _go:package-analysis
+        vars:
+          GO_ANALYSIS_BINARY: "{{.GLOBAL_GO_BIN}}/govulncheck"
+          GO_ANALYSIS_PREFIX_ARGS: ""
 
   gosec:lint:
     run: once
@@ -251,11 +461,76 @@ tasks:
     summary: |
       Scan all Go packages for security issues by default. Pass CLI arguments
       after -- to override the default ./... target. Auto-installs gosec if
-      missing.
+      missing. Packages containing files matched by GO_LINT_SKIP_PATTERN are
+      omitted.
     deps:
       - install:gosec
     cmds:
-      - '"{{.GLOBAL_GO_BIN}}/gosec" -exclude-generated {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}'
+      - task: _go:package-analysis
+        vars:
+          GO_ANALYSIS_BINARY: "{{.GLOBAL_GO_BIN}}/gosec"
+          GO_ANALYSIS_PREFIX_ARGS: "-exclude-generated"
+
+  _go:package-analysis:
+    internal: true
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - cmd: |
+          skip_pattern='{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}'
+          if [ -z "$skip_pattern" ]; then
+            "{{.GO_ANALYSIS_BINARY}}" {{.GO_ANALYSIS_PREFIX_ARGS}} \
+              {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}
+            exit
+          fi
+          targets=''
+          options=''
+          for argument in {{.CLI_ARGS}}; do
+            case "$argument" in
+              .|*/*|*\\*|*...) targets="$targets $argument" ;;
+              *) options="$options $argument" ;;
+            esac
+          done
+          [ -n "$targets" ] || targets='./...'
+          package_list="$(mktemp)"
+          trap 'rm -f "$package_list"' EXIT
+          export SKIPFILES_PATTERN="$skip_pattern"
+          export SKIPFILES_GO_TARGETS="$targets"
+          task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+            go-packages >"$package_list"
+          if [ ! -s "$package_list" ]; then
+            echo 'No matching Go packages found'
+            exit 0
+          fi
+          xargs -0 "{{.GO_ANALYSIS_BINARY}}" {{.GO_ANALYSIS_PREFIX_ARGS}} $options <"$package_list"
+        platforms: [linux, darwin]
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "$skipPattern='{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}';
+          if (-not $skipPattern) {
+            & '{{.GO_ANALYSIS_BINARY}}' {{.GO_ANALYSIS_PREFIX_ARGS}}
+              {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}};
+            exit $LASTEXITCODE
+          };
+          $targets=@(); $options=@();
+          foreach ($argument in '{{.CLI_ARGS}}'.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)) {
+            if ($argument -eq '.' -or $argument.Contains('/') -or
+                $argument.Contains('\') -or $argument.EndsWith('...')) {
+              $targets += $argument
+            } else { $options += $argument }
+          };
+          if (-not $targets) { $targets=@('./...') };
+          $env:SKIPFILES_PATTERN = $skipPattern;
+          $env:SKIPFILES_GO_TARGETS = $targets -join ' ';
+          $packages=@(& task --silent
+            --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+            go-packages);
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+          if (-not $packages) { Write-Host 'No matching Go packages found'; exit 0 };
+          & '{{.GO_ANALYSIS_BINARY}}' {{.GO_ANALYSIS_PREFIX_ARGS}} @options @packages;
+          exit $LASTEXITCODE"
+        platforms: [windows]
 
   upgrade:
     run: once
@@ -310,6 +585,156 @@ tasks:
     cmds:
       - task: _verify:unix
       - task: _verify:windows
+
+  test:
+    run: once
+    dir: "{{.USER_WORKING_DIR}}"
+    desc: Run Go unit tests
+    summary: |
+      Run `go test` against all Go packages by default. Pass CLI arguments after
+      -- to override the default ./... target or add flags, for example:
+      `task go:test -- -race -run TestName ./internal/...`.
+    cmds:
+      - go test {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}
+
+  bench:
+    run: once
+    dir: "{{.USER_WORKING_DIR}}"
+    desc: Run Go benchmarks
+    summary: |
+      Run `go test` benchmarks (-bench .) with memory statistics and no
+      unit-test execution (-run '^$'). Pass CLI arguments after -- to override
+      the default ./... target or the -bench pattern, for example:
+      `task go:bench -- -bench BenchmarkName ./internal/parser`.
+    cmds:
+      - go test -run '^$' -bench . -benchmem {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}
+
+  fuzz:
+    run: once
+    dir: "{{.USER_WORKING_DIR}}"
+    desc: Run a Go fuzz target
+    summary: |
+      Run a Go fuzz target for a bounded duration (GO_FUZZTIME, default 30s). Go
+      fuzzes a single target in one package per run, so pass the -fuzz pattern
+      and package after --, for example:
+      `task go:fuzz -- -fuzz FuzzName ./internal/parser`.
+    vars:
+      GO_FUZZ_TIME: '{{if .GO_FUZZTIME}}{{.GO_FUZZTIME}}{{else}}30s{{end}}'
+    cmds:
+      - go test -run '^$' -fuzztime '{{.GO_FUZZ_TIME}}' {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}-fuzz . .{{end}}
+
+  coverage:
+    run: once
+    dir: "{{.USER_WORKING_DIR}}"
+    desc: Report Go test coverage
+    summary: |
+      Run `go test` with coverage across all Go packages, writing the profile to
+      GO_COVER_PROFILE (default coverage.out) and printing packages containing
+      executable statements from lowest to highest coverage. Pass CLI arguments
+      after -- to override the default ./... target.
+    vars:
+      GO_COVER_OUT: '{{if .GO_COVER_PROFILE}}{{.GO_COVER_PROFILE}}{{else}}coverage.out{{end}}'
+    cmds:
+      - cmd: |
+          coverage_log="$(mktemp)"
+          coverage_rows="$(mktemp)"
+          coverage_sorted="$(mktemp)"
+          trap 'rm -f "$coverage_log" "$coverage_rows" "$coverage_sorted"' EXIT
+
+          coverage_status=0
+          go test -covermode atomic -coverprofile '{{.GO_COVER_OUT}}' \
+            {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}} \
+            >"$coverage_log" 2>&1 || coverage_status=$?
+          if [ "$coverage_status" -ne 0 ]; then
+            cat "$coverage_log"
+            exit "$coverage_status"
+          fi
+
+          awk '
+            NR == 1 { next }
+            {
+              file = $1
+              sub(/:[[:digit:]]+\.[[:digit:]]+,[[:digit:]]+\.[[:digit:]]+$/, "", file)
+              slash = 0
+              for (position = length(file); position > 0; position--) {
+                if (substr(file, position, 1) == "/") {
+                  slash = position
+                  break
+                }
+              }
+              if (slash == 0) { next }
+
+              package = substr(file, 1, slash - 1)
+              statements = $2 + 0
+              total[package] += statements
+              if (($3 + 0) > 0) { covered[package] += statements }
+            }
+            END {
+              for (package in total) {
+                if (total[package] == 0) { continue }
+                percentage = 100 * covered[package] / total[package]
+                printf "%.12f %.1f %s\n", percentage, percentage, package
+              }
+            }
+          ' '{{.GO_COVER_OUT}}' >"$coverage_rows"
+          LC_ALL=C sort -k1,1n -k3,3 "$coverage_rows" >"$coverage_sorted"
+          awk '{ printf "%5.1f%%  %s\n", $2, $3 }' "$coverage_sorted"
+        platforms: [linux, darwin]
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "$ErrorActionPreference='Stop';
+          $coverageLog=[System.IO.Path]::GetTempFileName();
+          try {
+            & go test -covermode atomic -coverprofile '{{.GO_COVER_OUT}}'
+              {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}
+              *> $coverageLog;
+            $coverageStatus=$LASTEXITCODE;
+            if ($coverageStatus -ne 0) {
+              Get-Content -LiteralPath $coverageLog;
+              exit $coverageStatus;
+            };
+            $packages=@{};
+            Get-Content -LiteralPath '{{.GO_COVER_OUT}}' |
+              Select-Object -Skip 1 |
+              ForEach-Object {
+                if ($_ -notmatch
+                    '^(?<file>.+):\d+\.\d+,\d+\.\d+\s+(?<statements>\d+)\s+(?<count>\d+)$') {
+                  return;
+                };
+                $file=$Matches['file'].Replace('\', '/');
+                $slash=$file.LastIndexOf('/');
+                if ($slash -lt 1) { return };
+                $package=$file.Substring(0, $slash);
+                if (-not $packages.ContainsKey($package)) {
+                  $packages[$package]=[PSCustomObject]@{
+                    Package=$package; Covered=[int64]0; Total=[int64]0
+                  };
+                };
+                $statements=[int64]$Matches['statements'];
+                $packages[$package].Total += $statements;
+                if ([int64]$Matches['count'] -gt 0) {
+                  $packages[$package].Covered += $statements;
+                };
+              };
+            $packages.Values |
+              Where-Object { $_.Total -gt 0 } |
+              ForEach-Object {
+                [PSCustomObject]@{
+                  Package=$_.Package;
+                  Percentage=100.0 * $_.Covered / $_.Total
+                };
+              } |
+              Sort-Object Percentage, Package |
+              ForEach-Object {
+                $percentage=$_.Percentage.ToString(
+                  'F1', [System.Globalization.CultureInfo]::InvariantCulture
+                ).PadLeft(5);
+                Write-Output ($percentage + '%  ' + $_.Package);
+              };
+          } finally {
+            Remove-Item -LiteralPath $coverageLog -Force -ErrorAction SilentlyContinue;
+          }"
+        platforms: [windows]
 
   _install:macos:brew:
     run: once

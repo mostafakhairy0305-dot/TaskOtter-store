@@ -17,6 +17,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"SHFMT_FMT_SKIP_PATTERN",
 	"EXTRA_ARGS",
 	"GLOBAL_GO_BIN",
 	"SHFMT_VERSION",

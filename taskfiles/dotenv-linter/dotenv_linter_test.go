@@ -18,6 +18,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"DOTENV_LINTER_LINT_SKIP_PATTERN",
 	"CARGO_BIN_UNIX",
 	"DOTENV_LINTER_VERSION",
 	"EXTRA_ARGS",

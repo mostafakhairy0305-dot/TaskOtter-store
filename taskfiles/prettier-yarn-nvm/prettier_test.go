@@ -20,6 +20,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"PRETTIER_FMT_SKIP_PATTERN",
 	"CONFIG",
 	"EXTRA_ARGS",
 	"IGNORE_PATH",

@@ -9,7 +9,14 @@ output:
 
 silent: true
 
+includes:
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
+  BUF_LINT_SKIP_PATTERN: ""
+  BUF_FMT_SKIP_PATTERN: ""
   AGAINST: ".git#branch=main"
   BUF_VERSION: "1.47.2"
   CONFIG: ""
@@ -30,21 +37,31 @@ tasks:
     summary: |
       Run buf lint against INPUT (default: .). Pass CONFIG to use a custom
       buf.yaml via --config, and EXTRA_ARGS for additional flags such as
-      --error-format. Pass CLI arguments after -- to override all variables
-      directly. Auto-installs Buf if missing.
+      --error-format. Pass CLI arguments after -- to override targets and
+      options; BUF_LINT_SKIP_PATTERN remains active. Auto-installs Buf if missing.
+    dir: "{{.USER_WORKING_DIR}}"
     deps:
       - install
     cmds:
-      - >-
-        buf lint
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}
-        {{else}}
-        {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
-        {{else if .CONFIG}}--config "{{.CONFIG}}"{{end}}
-        "{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}{{else}}{{.INPUT}}{{end}}"
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
-        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
-        && echo "✅ buf lint passed" || { echo "❌ buf lint failed"; exit 1; }
+      - task: _buf:unix
+        vars:
+          BUF_SUBCOMMAND: "lint"
+          BUF_SKIP_PATTERN: >-
+            {{if .BUF_LINT_SKIP_PATTERN_OVERRIDE}}{{.BUF_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.BUF_LINT_SKIP_PATTERN}}{{end}}
+          BUF_CONFIG_FLAG: >-
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else if .CONFIG}}--config "{{.CONFIG}}"{{end}}
+      - task: _buf:windows
+        vars:
+          BUF_SUBCOMMAND: "lint"
+          BUF_SKIP_PATTERN: >-
+            {{if .BUF_LINT_SKIP_PATTERN_OVERRIDE}}{{.BUF_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.BUF_LINT_SKIP_PATTERN}}{{end}}
+          BUF_CONFIG_FLAG: >-
+            {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+            {{else if .CONFIG}}--config "{{.CONFIG}}"{{end}}
+      - echo "✅ buf lint passed"
 
   fmt:check:
     run: once
@@ -53,17 +70,25 @@ tasks:
       Run buf format --diff to report formatting issues without modifying files.
       Pass INPUT to check a specific directory or module. Use fmt to
       apply fixes. Auto-installs Buf if missing.
+    dir: "{{.USER_WORKING_DIR}}"
     deps:
       - install
     cmds:
-      - >-
-        buf format --diff
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}
-        {{else}}
-        "{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}{{else}}{{.INPUT}}{{end}}"
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
-        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
-        && echo "✅ buf format check passed" || { echo "❌ buf format check failed"; exit 1; }
+      - task: _buf:unix
+        vars:
+          BUF_SUBCOMMAND: "format --diff"
+          BUF_SKIP_PATTERN: >-
+            {{if .BUF_FMT_SKIP_PATTERN_OVERRIDE}}{{.BUF_FMT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.BUF_FMT_SKIP_PATTERN}}{{end}}
+          BUF_CONFIG_FLAG: ""
+      - task: _buf:windows
+        vars:
+          BUF_SUBCOMMAND: "format --diff"
+          BUF_SKIP_PATTERN: >-
+            {{if .BUF_FMT_SKIP_PATTERN_OVERRIDE}}{{.BUF_FMT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.BUF_FMT_SKIP_PATTERN}}{{end}}
+          BUF_CONFIG_FLAG: ""
+      - echo "✅ buf format check passed"
 
   fmt:
     run: once
@@ -71,16 +96,93 @@ tasks:
     summary: |
       Run buf format --write to reformat all .proto files under INPUT in
       place. Auto-installs Buf if missing.
+    dir: "{{.USER_WORKING_DIR}}"
     deps:
       - install
     cmds:
+      - task: _buf:unix
+        vars:
+          BUF_SUBCOMMAND: "format --write"
+          BUF_SKIP_PATTERN: >-
+            {{if .BUF_FMT_SKIP_PATTERN_OVERRIDE}}{{.BUF_FMT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.BUF_FMT_SKIP_PATTERN}}{{end}}
+          BUF_CONFIG_FLAG: ""
+      - task: _buf:windows
+        vars:
+          BUF_SUBCOMMAND: "format --write"
+          BUF_SKIP_PATTERN: >-
+            {{if .BUF_FMT_SKIP_PATTERN_OVERRIDE}}{{.BUF_FMT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.BUF_FMT_SKIP_PATTERN}}{{end}}
+          BUF_CONFIG_FLAG: ""
+
+  _buf:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    cmds:
+      - |
+        input='{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}
+        {{- else}}{{.INPUT}}{{end}}'
+        skip_pattern='{{.BUF_SKIP_PATTERN}}'
+        if [ -z "$skip_pattern" ]; then
+          buf {{.BUF_SUBCOMMAND}} {{.BUF_CONFIG_FLAG}} \
+            {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}"$input" \
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+          exit
+        fi
+        matched_files="$(mktemp)"
+        trap 'rm -f "$matched_files"' EXIT
+        scan_input="$input"
+        if [ -n "{{.CLI_ARGS}}" ]; then scan_input=.; fi
+        if [ -d "$scan_input" ]; then
+          find "$scan_input" -type f -name '*.proto' -print0
+        elif [ -f "$scan_input" ]; then
+          printf '%s\000' "$scan_input"
+        fi | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+          filter "SKIPFILES_PATTERN=$skip_pattern" SKIPFILES_MATCHING=true |
+          tr '\0' '\n' >"$matched_files"
+        set --
+        while IFS= read -r path; do
+          set -- "$@" --exclude-path "$path"
+        done <"$matched_files"
+        buf {{.BUF_SUBCOMMAND}} "$@" {{.BUF_CONFIG_FLAG}} \
+          {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}"$input" \
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+
+  _buf:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    cmds:
       - >-
-        buf format --write
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}
-        {{else}}
-        "{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}{{else}}{{.INPUT}}{{end}}"
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
-        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$inputPath='{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}
+        {{- else}}{{.INPUT}}{{end}}';
+        $skipPattern='{{.BUF_SKIP_PATTERN}}';
+        if (-not $skipPattern) {
+          buf {{.BUF_SUBCOMMAND}} {{.BUF_CONFIG_FLAG}}
+            {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}$inputPath
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}};
+          exit $LASTEXITCODE
+        };
+        $scanInput=if ('{{.CLI_ARGS}}') { '.' } else { $inputPath };
+        if (Test-Path -LiteralPath $scanInput -PathType Container) {
+          $files=Get-ChildItem -LiteralPath $scanInput -Recurse -Filter '*.proto' -File
+        } elseif (Test-Path -LiteralPath $scanInput -PathType Leaf) {
+          $files=@(Get-Item -LiteralPath $scanInput)
+        } else { $files=@() };
+        $excluded=@($files | ForEach-Object FullName |
+          task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+            filter ('SKIPFILES_PATTERN=' + $skipPattern) 'SKIPFILES_MATCHING=true');
+        $excludeArgs=@(); foreach ($path in $excluded) { $excludeArgs += @('--exclude-path', $path) };
+        buf {{.BUF_SUBCOMMAND}} @excludeArgs {{.BUF_CONFIG_FLAG}}
+          {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}$inputPath
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}};
+        exit $LASTEXITCODE"
 
   breaking:
     run: once
@@ -93,16 +195,27 @@ tasks:
       Buf if missing.
     deps:
       - install
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
-      - >-
-        buf breaking
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}
-        {{else}}
-        "{{if .INPUT_OVERRIDE}}{{.INPUT_OVERRIDE}}{{else}}{{.INPUT}}{{end}}"
-        --against "{{if .AGAINST_OVERRIDE}}{{.AGAINST_OVERRIDE}}{{else}}{{.AGAINST}}{{end}}"
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
-        {{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
-        && echo "✅ buf breaking check passed" || { echo "❌ buf breaking check failed"; exit 1; }
+      - task: _buf:unix
+        vars:
+          BUF_SUBCOMMAND: "breaking"
+          BUF_SKIP_PATTERN: >-
+            {{if .BUF_LINT_SKIP_PATTERN_OVERRIDE}}{{.BUF_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.BUF_LINT_SKIP_PATTERN}}{{end}}
+          BUF_CONFIG_FLAG: >-
+            {{if not .CLI_ARGS}}--against
+            "{{if .AGAINST_OVERRIDE}}{{.AGAINST_OVERRIDE}}{{else}}{{.AGAINST}}{{end}}"{{end}}
+      - task: _buf:windows
+        vars:
+          BUF_SUBCOMMAND: "breaking"
+          BUF_SKIP_PATTERN: >-
+            {{if .BUF_LINT_SKIP_PATTERN_OVERRIDE}}{{.BUF_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.BUF_LINT_SKIP_PATTERN}}{{end}}
+          BUF_CONFIG_FLAG: >-
+            {{if not .CLI_ARGS}}--against
+            "{{if .AGAINST_OVERRIDE}}{{.AGAINST_OVERRIDE}}{{else}}{{.AGAINST}}{{end}}"{{end}}
+      - echo "✅ buf breaking check passed"
 
   generate:
     run: once

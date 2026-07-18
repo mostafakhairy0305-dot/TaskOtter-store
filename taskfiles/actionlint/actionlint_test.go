@@ -17,6 +17,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"ACTIONLINT_LINT_SKIP_PATTERN",
 	"ACTIONLINT_EXTRA_ARGS",
 	"ACTIONLINT_TARGETS",
 	"ACTIONLINT_VERSION",
@@ -47,18 +48,12 @@ func TestRepresentativeDryRuns(t *testing.T) {
 
 func TestLintIgnoresSharedTargetVariable(t *testing.T) {
 	output := tasktest.DryRun(t, "actionlint", "lint", "TARGETS=.")
-
-	for _, line := range strings.Split(output, "\n") {
-		if !strings.Contains(line, "] actionlint") {
-			continue
-		}
-		if strings.Contains(line, " . ") || strings.HasSuffix(line, " .") {
-			t.Fatalf("actionlint command should not receive shared TARGETS value:\n%s", output)
-		}
-		return
+	if !strings.Contains(output, "actionlint") {
+		t.Fatalf("actionlint dry-run command not found:\n%s", output)
 	}
-
-	t.Fatalf("actionlint dry-run command not found:\n%s", output)
+	if strings.Contains(output, "targets='.'") {
+		t.Fatalf("actionlint command should not receive shared TARGETS value:\n%s", output)
+	}
 }
 
 func TestInstallDryRunUsesPlatformPackageManager(t *testing.T) {

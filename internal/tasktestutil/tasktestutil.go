@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"testing"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -58,6 +57,15 @@ type SimpleTaskResult struct {
 	Err    error
 }
 
+type testT interface {
+	Helper()
+	Fatal(args ...any)
+	Fatalf(format string, args ...any)
+	TempDir() string
+}
+
+var getWorkingDir = os.Getwd
+
 // Field returns the YAML child node for the given mapping key.
 func (n TaskNode) Field(name string) *yaml.Node {
 	if n.Node == nil || n.Node.Kind != yaml.MappingNode {
@@ -86,10 +94,10 @@ func (n TaskNode) BoolField(name string) bool {
 // ModuleRoot walks up from the working directory to find the nearest ancestor
 // that contains a Taskfile.yml or Taskfile.yaml. When tests run from a module
 // directory (e.g. taskfiles/bun/) this returns that directory, not the repo root.
-func ModuleRoot(t *testing.T) string {
+func ModuleRoot(t testT) string {
 	t.Helper()
 
-	wd, err := os.Getwd()
+	wd, err := getWorkingDir()
 	if err != nil {
 		t.Fatalf("failed to get working directory: %v", err)
 	}
@@ -109,10 +117,13 @@ func ModuleRoot(t *testing.T) string {
 }
 
 // ModuleTaskfilePath returns the path of the Taskfile.yml found by ModuleRoot.
-func ModuleTaskfilePath(t *testing.T) string {
+func ModuleTaskfilePath(t testT) string {
 	t.Helper()
+	return moduleTaskfilePath(t, ModuleRoot(t))
+}
 
-	root := ModuleRoot(t)
+func moduleTaskfilePath(t testT, root string) string {
+	t.Helper()
 	for _, name := range []string{"Taskfile.yml", "Taskfile.yaml"} {
 		if p := filepath.Join(root, name); FileExists(p) {
 			return p
@@ -124,7 +135,7 @@ func ModuleTaskfilePath(t *testing.T) string {
 }
 
 // LoadTaskfile parses the Taskfile in the module root and returns a LoadedTaskfile.
-func LoadTaskfile(t *testing.T) LoadedTaskfile {
+func LoadTaskfile(t testT) LoadedTaskfile {
 	t.Helper()
 
 	path := ModuleTaskfilePath(t)
@@ -155,7 +166,7 @@ func LoadTaskfile(t *testing.T) LoadedTaskfile {
 }
 
 // MustTask returns the named task or fails the test if it is missing.
-func MustTask(t *testing.T, tf LoadedTaskfile, name string) TaskNode {
+func MustTask(t testT, tf LoadedTaskfile, name string) TaskNode {
 	t.Helper()
 
 	task, ok := tf.Tasks[name]
@@ -180,13 +191,13 @@ func HasAlias(task TaskNode, alias string) bool {
 }
 
 // RunTask runs the task binary with the given args and returns the result.
-func RunTask(t *testing.T, root string, env []string, args ...string) CommandResult {
+func RunTask(t testT, root string, env []string, args ...string) CommandResult {
 	t.Helper()
 	return RunTaskTimeout(t, root, env, 2*time.Minute, args...)
 }
 
 // RunTaskTimeout runs the task binary with a custom timeout.
-func RunTaskTimeout(t *testing.T, root string, env []string, timeout time.Duration, args ...string) CommandResult {
+func RunTaskTimeout(t testT, root string, env []string, timeout time.Duration, args ...string) CommandResult {
 	t.Helper()
 
 	taskBin := os.Getenv("TASK_BIN")
@@ -221,7 +232,7 @@ func RunTaskTimeout(t *testing.T, root string, env []string, timeout time.Durati
 
 // RunSimpleTask runs task in the given directory and returns combined output.
 // Use this for the simple pnpm/yarn-style tests that don't need separate stdout/stderr.
-func RunSimpleTask(t *testing.T, dir string, env []string, args ...string) SimpleTaskResult {
+func RunSimpleTask(t testT, dir string, env []string, args ...string) SimpleTaskResult {
 	t.Helper()
 
 	cmd := exec.Command("task", args...)
@@ -234,7 +245,7 @@ func RunSimpleTask(t *testing.T, dir string, env []string, args ...string) Simpl
 
 // IsolatedEnv returns a clean environment with a temporary HOME for tests that
 // must not interact with the real user's shell profile or tool installations.
-func IsolatedEnv(t *testing.T) []string {
+func IsolatedEnv(t testT) []string {
 	t.Helper()
 
 	home := t.TempDir()
@@ -290,7 +301,7 @@ func ExpectedPublicTaskNames(specs []PublicTaskSpec) []string {
 }
 
 // PublicTaskNamesFromTaskfile returns sorted names of public tasks in the Taskfile.
-func PublicTaskNamesFromTaskfile(t *testing.T, tf LoadedTaskfile) []string {
+func PublicTaskNamesFromTaskfile(t testT, tf LoadedTaskfile) []string {
 	t.Helper()
 
 	var names []string
@@ -327,7 +338,7 @@ func TaskArgs(args map[string]string) []string {
 func FormatList(values []string) string { return "- " + strings.Join(values, "\n- ") }
 
 // WriteStub writes a stub shell script to dir/name with the given body.
-func WriteStub(t *testing.T, dir, name, body string) {
+func WriteStub(t testT, dir, name, body string) {
 	t.Helper()
 	if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0755); err != nil {
 		t.Fatalf("write %s stub: %v", name, err)
@@ -378,7 +389,7 @@ func ReadmePublicTaskNames(content string) []string {
 }
 
 // MustRead reads a file and fails the test on error.
-func MustRead(t *testing.T, path string) string {
+func MustRead(t testT, path string) string {
 	t.Helper()
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -390,7 +401,7 @@ func MustRead(t *testing.T, path string) string {
 // --- YAML helpers ---
 
 // DocumentRoot returns the root mapping node of a YAML document node.
-func DocumentRoot(t *testing.T, doc *yaml.Node) *yaml.Node {
+func DocumentRoot(t testT, doc *yaml.Node) *yaml.Node {
 	t.Helper()
 
 	if doc.Kind != yaml.DocumentNode || len(doc.Content) == 0 {
@@ -465,7 +476,7 @@ func FileExists(path string) bool {
 }
 
 // ReadFile reads a file and fails the test on error.
-func ReadFile(t *testing.T, path string) string {
+func ReadFile(t testT, path string) string {
 	t.Helper()
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -521,7 +532,7 @@ func ReferencedLocalShellScripts(command string) []string {
 
 // --- Assertion helpers ---
 
-func AssertExitCode(t *testing.T, result CommandResult, expected int) {
+func AssertExitCode(t testT, result CommandResult, expected int) {
 	t.Helper()
 
 	actual := 0
@@ -544,28 +555,28 @@ func AssertExitCode(t *testing.T, result CommandResult, expected int) {
 	}
 }
 
-func AssertContains(t *testing.T, value, expected string) {
+func AssertContains(t testT, value, expected string) {
 	t.Helper()
 	if !strings.Contains(value, expected) {
 		t.Fatalf("expected output to contain %q\n\nOutput:\n%s", expected, value)
 	}
 }
 
-func AssertNotContains(t *testing.T, value, unexpected string) {
+func AssertNotContains(t testT, value, unexpected string) {
 	t.Helper()
 	if strings.Contains(value, unexpected) {
 		t.Fatalf("expected output not to contain %q\n\nOutput:\n%s", unexpected, value)
 	}
 }
 
-func AssertNotEmpty(t *testing.T, value, message string) {
+func AssertNotEmpty(t testT, value, message string) {
 	t.Helper()
 	if strings.TrimSpace(value) == "" {
 		t.Fatal(message)
 	}
 }
 
-func AssertFileExists(t *testing.T, path string) {
+func AssertFileExists(t testT, path string) {
 	t.Helper()
 	info, err := os.Stat(path)
 	if err != nil {
@@ -576,7 +587,7 @@ func AssertFileExists(t *testing.T, path string) {
 	}
 }
 
-func AssertDirExists(t *testing.T, path string) {
+func AssertDirExists(t testT, path string) {
 	t.Helper()
 	info, err := os.Stat(path)
 	if err != nil {
@@ -587,14 +598,14 @@ func AssertDirExists(t *testing.T, path string) {
 	}
 }
 
-func AssertDirNotExists(t *testing.T, path string) {
+func AssertDirNotExists(t testT, path string) {
 	t.Helper()
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		t.Fatalf("expected %s to not exist, but it does", path)
 	}
 }
 
-func AssertDirHasEntries(t *testing.T, path string) {
+func AssertDirHasEntries(t testT, path string) {
 	t.Helper()
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -605,7 +616,7 @@ func AssertDirHasEntries(t *testing.T, path string) {
 	}
 }
 
-func AssertGithubGroupOutput(t *testing.T, taskName string, outputNode *yaml.Node) {
+func AssertGithubGroupOutput(t testT, taskName string, outputNode *yaml.Node) {
 	t.Helper()
 
 	if outputNode == nil {
@@ -638,7 +649,7 @@ func AssertGithubGroupOutput(t *testing.T, taskName string, outputNode *yaml.Nod
 	}
 }
 
-func AssertTextFileClean(t *testing.T, path, content string) {
+func AssertTextFileClean(t testT, path, content string) {
 	t.Helper()
 
 	if content == "" {
@@ -660,7 +671,7 @@ func AssertTextFileClean(t *testing.T, path, content string) {
 	}
 }
 
-func AssertNoDuplicateMappingKeys(t *testing.T, node *yaml.Node, path string) {
+func AssertNoDuplicateMappingKeys(t testT, node *yaml.Node, path string) {
 	t.Helper()
 
 	if node == nil {
@@ -689,7 +700,7 @@ func AssertNoDuplicateMappingKeys(t *testing.T, node *yaml.Node, path string) {
 	}
 }
 
-func AssertNoYamlAliases(t *testing.T, node *yaml.Node, path string) {
+func AssertNoYamlAliases(t testT, node *yaml.Node, path string) {
 	t.Helper()
 
 	if node == nil {
@@ -703,7 +714,7 @@ func AssertNoYamlAliases(t *testing.T, node *yaml.Node, path string) {
 	}
 }
 
-func AssertNoPlaceholderText(t *testing.T, taskName, value string) {
+func AssertNoPlaceholderText(t testT, taskName, value string) {
 	t.Helper()
 
 	upper := strings.ToUpper(value)

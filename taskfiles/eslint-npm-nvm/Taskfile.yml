@@ -14,6 +14,7 @@ includes:
     taskfile: ../npm-nvm/Taskfile.yml
 
 vars:
+  ESLINT_LINT_SKIP_PATTERN: ""
   TARGETS: ""
   ESLINT_DEFAULT_TARGETS: "src/**/*.{js,jsx,ts,tsx}"
   CONFIG: ""
@@ -121,6 +122,8 @@ tasks:
             {{else}}{{if .CACHE}}{{if eq .CACHE "true"}}--cache --cache-location .cache/eslint/ {{end}}
             {{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}
             --cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}
+            {{if .ESLINT_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-pattern "{{.ESLINT_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .ESLINT_LINT_SKIP_PATTERN}}--ignore-pattern "{{.ESLINT_LINT_SKIP_PATTERN}}" {{end}}
             {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}
             {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}
           EXTRA_ARGS: >-
@@ -143,6 +146,8 @@ tasks:
             {{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}
             --cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}
             --fix
+            {{if .ESLINT_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-pattern "{{.ESLINT_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .ESLINT_LINT_SKIP_PATTERN}}--ignore-pattern "{{.ESLINT_LINT_SKIP_PATTERN}}" {{end}}
             {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}
             {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}
           EXTRA_ARGS: >-
@@ -165,6 +170,8 @@ tasks:
             {{else}}{{if eq .ESLINT_DEFAULT_CACHE "true"}}
             --cache --cache-location .cache/eslint/ {{end}}{{end}}{{end}}
             --max-warnings=0
+            {{if .ESLINT_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-pattern "{{.ESLINT_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .ESLINT_LINT_SKIP_PATTERN}}--ignore-pattern "{{.ESLINT_LINT_SKIP_PATTERN}}" {{end}}
             {{if .ESLINT_TARGETS_OVERRIDE}}{{.ESLINT_TARGETS_OVERRIDE}}
             {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.ESLINT_DEFAULT_TARGETS}}{{end}}{{end}}
           EXTRA_ARGS: >-

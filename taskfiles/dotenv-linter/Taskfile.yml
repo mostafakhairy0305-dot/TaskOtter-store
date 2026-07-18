@@ -13,7 +13,12 @@ includes:
   cargo:
     taskfile: ../cargo/Taskfile.yml
 
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
+  DOTENV_LINTER_LINT_SKIP_PATTERN: ""
   CARGO_BIN_UNIX: "$HOME/.cargo/bin"
   TARGETS: ".env"
   EXTRA_ARGS: ""
@@ -209,12 +214,9 @@ tasks:
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
     cmds:
-      - >-
-        bin="$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")";
-        "$bin"
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}check
-        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+      - task: _lint:run:unix
+        vars:
+          DOTENV_LINTER_SUBCOMMAND: "check"
 
   _lint:windows:
     run: once
@@ -222,14 +224,9 @@ tasks:
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
     cmds:
-      - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "$b = (Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
-        if (-not $b) { $b = Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
-        & $b {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}check
-        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
-        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+      - task: _lint:run:windows
+        vars:
+          DOTENV_LINTER_SUBCOMMAND: "check"
 
   _fix:unix:
     run: once
@@ -237,11 +234,9 @@ tasks:
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
     cmds:
-      - >-
-        bin="$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")";
-        "$bin" fix
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+      - task: _lint:run:unix
+        vars:
+          DOTENV_LINTER_SUBCOMMAND: "fix"
 
   _fix:windows:
     run: once
@@ -249,14 +244,81 @@ tasks:
     platforms: [windows]
     dir: "{{.USER_WORKING_DIR}}"
     cmds:
+      - task: _lint:run:windows
+        vars:
+          DOTENV_LINTER_SUBCOMMAND: "fix"
+
+  _lint:run:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - |
+        bin="$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")"
+        targets='{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
+        {{- else}}{{.TARGETS}}{{end}}'
+        skip_pattern='{{if .DOTENV_LINTER_LINT_SKIP_PATTERN_OVERRIDE}}{{.DOTENV_LINTER_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.DOTENV_LINTER_LINT_SKIP_PATTERN}}{{end}}'
+        if [ -z "$skip_pattern" ]; then
+          "$bin" {{.DOTENV_LINTER_SUBCOMMAND}} $targets \
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}} {{.CLI_ARGS}}
+          exit
+        fi
+        matched_files="$(mktemp)"
+        trap 'rm -f "$matched_files"' EXIT
+        for target in $targets; do
+          if [ -d "$target" ]; then
+            find "$target" -type f \( -name '.env' -o -name '.env.*' \) -print0
+          elif [ -f "$target" ]; then
+            printf '%s\000' "$target"
+          fi
+        done | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+          filter "SKIPFILES_PATTERN=$skip_pattern" SKIPFILES_MATCHING=true |
+          tr '\0' '\n' >"$matched_files"
+        set --
+        while IFS= read -r path; do
+          set -- "$@" --exclude "$path"
+        done <"$matched_files"
+        "$bin" {{.DOTENV_LINTER_SUBCOMMAND}} "$@" $targets \
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}} {{.CLI_ARGS}}
+
+  _lint:run:windows:
+    run: once
+    internal: true
+    platforms: [windows]
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
       - >-
         powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "$b = (Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
-        if (-not $b) { $b = Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
-        & $b fix {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
-        {{- else}}{{.TARGETS}}{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
-        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+        "$b=(Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
+        if (-not $b) { $b=Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
+        $targets='{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
+        {{- else}}{{.TARGETS}}{{end}}';
+        $skipPattern='{{if .DOTENV_LINTER_LINT_SKIP_PATTERN_OVERRIDE}}{{.DOTENV_LINTER_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.DOTENV_LINTER_LINT_SKIP_PATTERN}}{{end}}';
+        if (-not $skipPattern) {
+          & $b {{.DOTENV_LINTER_SUBCOMMAND}} $targets.Split(' ')
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}} {{.CLI_ARGS}};
+          exit $LASTEXITCODE
+        };
+        $files=@($targets.Split(' ') | ForEach-Object {
+          if (Test-Path -LiteralPath $_ -PathType Container) {
+            Get-ChildItem -LiteralPath $_ -Recurse -File |
+              Where-Object { $_.Name -eq '.env' -or $_.Name -like '.env.*' }
+          } elseif (Test-Path -LiteralPath $_ -PathType Leaf) { Get-Item -LiteralPath $_ }
+        });
+        $excluded=@($files | ForEach-Object FullName |
+          task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+            filter ('SKIPFILES_PATTERN=' + $skipPattern) 'SKIPFILES_MATCHING=true');
+        $excludeArgs=@(); foreach ($path in $excluded) { $excludeArgs += @('--exclude', $path) };
+        & $b {{.DOTENV_LINTER_SUBCOMMAND}} @excludeArgs $targets.Split(' ')
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}} {{.CLI_ARGS}};
+        exit $LASTEXITCODE"
 
   _diff:unix:
     run: once
@@ -264,11 +326,48 @@ tasks:
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
     cmds:
-      - >-
-        bin="$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")";
-        "$bin" diff
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+      - |
+        bin="$(command -v dotenv-linter || echo "{{.CARGO_BIN_UNIX}}/dotenv-linter")"
+        targets='{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
+        {{- else}}{{.TARGETS}}{{end}}'
+        options='{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}'
+        if [ -n '{{.CLI_ARGS}}' ]; then
+          targets=''
+          options=''
+          for argument in {{.CLI_ARGS}}; do
+            case "$argument" in
+              -*) options="$options $argument" ;;
+              *) targets="$targets $argument" ;;
+            esac
+          done
+        fi
+        skip_pattern='{{if .DOTENV_LINTER_LINT_SKIP_PATTERN_OVERRIDE}}{{.DOTENV_LINTER_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.DOTENV_LINTER_LINT_SKIP_PATTERN}}{{end}}'
+        if [ -z "$skip_pattern" ]; then
+          "$bin" diff $options $targets
+          exit
+        fi
+        file_list="$(mktemp)"
+        trap 'rm -f "$file_list"' EXIT
+        for target in $targets; do
+          if [ -d "$target" ]; then
+            find "$target" -type f \( -name '.env' -o -name '.env.*' \) -print0
+          elif [ -f "$target" ]; then
+            printf '%s\000' "$target"
+          fi
+        done | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+          filter "SKIPFILES_PATTERN=$skip_pattern" |
+          tr '\0' '\n' >"$file_list"
+        if [ ! -s "$file_list" ]; then
+          echo 'No matching dotenv files found'
+          exit 0
+        fi
+        set --
+        while IFS= read -r path; do
+          set -- "$@" "$path"
+        done <"$file_list"
+        "$bin" diff $options "$@"
 
   _diff:windows:
     run: once
@@ -280,10 +379,30 @@ tasks:
         powershell -NoProfile -ExecutionPolicy Bypass -Command
         "$b = (Get-Command dotenv-linter -ErrorAction SilentlyContinue).Source;
         if (-not $b) { $b = Join-Path $env:USERPROFILE '.cargo\bin\dotenv-linter.exe' };
-        & $b diff {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
-        {{- else}}{{.TARGETS}}{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
-        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}"
+        $targets='{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}
+        {{- else}}{{.TARGETS}}{{end}}'.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries);
+        $options='{{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}'.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries);
+        if ('{{.CLI_ARGS}}') {
+          $arguments='{{.CLI_ARGS}}'.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries);
+          $targets=@($arguments | Where-Object { -not $_.StartsWith('-') });
+          $options=@($arguments | Where-Object { $_.StartsWith('-') });
+        };
+        $skipPattern='{{if .DOTENV_LINTER_LINT_SKIP_PATTERN_OVERRIDE}}{{.DOTENV_LINTER_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.DOTENV_LINTER_LINT_SKIP_PATTERN}}{{end}}';
+        if (-not $skipPattern) { & $b diff @options @targets; exit $LASTEXITCODE };
+        $files=@($targets | ForEach-Object {
+          if (Test-Path -LiteralPath $_ -PathType Container) {
+            Get-ChildItem -LiteralPath $_ -Recurse -File |
+              Where-Object { $_.Name -eq '.env' -or $_.Name -like '.env.*' }
+          } elseif (Test-Path -LiteralPath $_ -PathType Leaf) { Get-Item -LiteralPath $_ }
+        });
+        $paths=@($files | ForEach-Object FullName |
+          task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+            filter ('SKIPFILES_PATTERN=' + $skipPattern));
+        if (-not $paths) { Write-Host 'No matching dotenv files found'; exit 0 };
+        & $b diff @options @paths;
+        exit $LASTEXITCODE"
 
   _version:unix:
     run: once

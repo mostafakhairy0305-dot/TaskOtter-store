@@ -9,7 +9,13 @@ output:
 
 silent: true
 
+includes:
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
+  ACTIONLINT_LINT_SKIP_PATTERN: ""
   ACTIONLINT_VERSION: "1.7.12"
   ACTIONLINT_EXTRA_ARGS: ""
   ACTIONLINT_TARGETS: ""
@@ -30,20 +36,127 @@ tasks:
       actionlint automatically discovers all .github/workflows files. Pass
       explicit paths to check specific workflows. Pass ACTIONLINT_EXTRA_ARGS
       for additional flags such as -ignore or -format, or CLI arguments after
-      -- to override all variables directly. Auto-installs actionlint if
-      missing.
+      -- to override targets and options. ACTIONLINT_LINT_SKIP_PATTERN remains
+      active when CLI arguments are supplied. Auto-installs actionlint if missing.
+    dir: "{{.USER_WORKING_DIR}}"
     deps:
       - install
     cmds:
-      - >-
-        actionlint
-        {{if .CLI_ARGS}}{{.CLI_ARGS}}
-        {{else}}
-        {{if .ACTIONLINT_EXTRA_ARGS_OVERRIDE}}{{.ACTIONLINT_EXTRA_ARGS_OVERRIDE}}
-        {{- else}}{{.ACTIONLINT_EXTRA_ARGS}}{{end}}
-        {{if .ACTIONLINT_TARGETS_OVERRIDE}}{{.ACTIONLINT_TARGETS_OVERRIDE}}
-        {{- else}}{{.ACTIONLINT_TARGETS}}{{end}}{{end}}
-        && echo "✅ actionlint passed" || { echo "❌ actionlint failed"; exit 1; }
+      - cmd: |
+          skip_pattern='{{if .ACTIONLINT_LINT_SKIP_PATTERN_OVERRIDE}}{{.ACTIONLINT_LINT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.ACTIONLINT_LINT_SKIP_PATTERN}}{{end}}'
+          if [ -z "$skip_pattern" ]; then
+            actionlint \
+              {{if .CLI_ARGS}}{{.CLI_ARGS}} \
+              {{else}}{{if .ACTIONLINT_EXTRA_ARGS_OVERRIDE}}{{.ACTIONLINT_EXTRA_ARGS_OVERRIDE}}
+              {{- else}}{{.ACTIONLINT_EXTRA_ARGS}}{{end}} \
+              {{if .ACTIONLINT_TARGETS_OVERRIDE}}{{.ACTIONLINT_TARGETS_OVERRIDE}}
+              {{- else}}{{.ACTIONLINT_TARGETS}}{{end}}{{end}} \
+              && echo "✅ actionlint passed" || { echo "❌ actionlint failed"; exit 1; }
+            exit
+          fi
+
+          file_list="$(mktemp)"
+          argument_list="$(mktemp)"
+          target_list="$(mktemp)"
+          trap 'rm -f "$file_list" "$argument_list" "$target_list"' EXIT
+          parse_arguments() {
+            while [ "$#" -gt 0 ]; do
+              argument="$1"
+              shift
+              case "$argument" in
+                -config-file|-format|-ignore|-pyflakes|-shellcheck|-stdin-filename)
+                  printf '%s\000' "$argument" >>"$argument_list"
+                  if [ "$#" -gt 0 ]; then
+                    printf '%s\000' "$1" >>"$argument_list"
+                    shift
+                  fi
+                  ;;
+                -*) printf '%s\000' "$argument" >>"$argument_list" ;;
+                *) printf '%s\n' "$argument" >>"$target_list" ;;
+              esac
+            done
+          }
+          parse_arguments {{if .ACTIONLINT_EXTRA_ARGS_OVERRIDE}}{{.ACTIONLINT_EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.ACTIONLINT_EXTRA_ARGS}}{{end}}
+          parse_arguments {{.CLI_ARGS}}
+          targets='{{if .ACTIONLINT_TARGETS_OVERRIDE}}{{.ACTIONLINT_TARGETS_OVERRIDE}}
+          {{- else}}{{.ACTIONLINT_TARGETS}}{{end}}'
+          if [ ! -s "$target_list" ]; then
+            if [ -n "{{.CLI_ARGS}}" ] || [ -z "$targets" ]; then targets='.github/workflows'; fi
+            for target in $targets; do printf '%s\n' "$target" >>"$target_list"; done
+          fi
+          while IFS= read -r target; do
+            if [ -d "$target" ]; then
+              find "$target" -type f \( -name '*.yml' -o -name '*.yaml' \) -print0
+            elif [ -f "$target" ]; then
+              printf '%s\000' "$target"
+            fi
+          done <"$target_list" |
+            task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+              filter "SKIPFILES_PATTERN=$skip_pattern" >"$file_list"
+          if [ ! -s "$file_list" ]; then
+            echo "✅ actionlint passed (no matching workflows found)"
+            exit 0
+          fi
+          cat "$argument_list" "$file_list" | xargs -0 actionlint \
+            && echo "✅ actionlint passed" || { echo "❌ actionlint failed"; exit 1; }
+        platforms: [linux, darwin]
+      - cmd: >-
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "$skipPattern='{{if .ACTIONLINT_LINT_SKIP_PATTERN_OVERRIDE}}{{.ACTIONLINT_LINT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.ACTIONLINT_LINT_SKIP_PATTERN}}{{end}}';
+          if (-not $skipPattern) {
+            actionlint {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}
+              {{if .ACTIONLINT_EXTRA_ARGS_OVERRIDE}}{{.ACTIONLINT_EXTRA_ARGS_OVERRIDE}}
+              {{- else}}{{.ACTIONLINT_EXTRA_ARGS}}{{end}}
+              {{if .ACTIONLINT_TARGETS_OVERRIDE}}{{.ACTIONLINT_TARGETS_OVERRIDE}}
+              {{- else}}{{.ACTIONLINT_TARGETS}}{{end}}{{end}};
+            exit $LASTEXITCODE
+          };
+          $toolArguments=[System.Collections.Generic.List[string]]::new();
+          $targetPaths=[System.Collections.Generic.List[string]]::new();
+          function Add-ActionlintArguments([string]$Text) {
+            $tokens=$Text.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries);
+            for ($index=0; $index -lt $tokens.Count; $index++) {
+              $argument=$tokens[$index];
+              if ($argument -in @('-config-file','-format','-ignore','-pyflakes','-shellcheck','-stdin-filename')) {
+                $toolArguments.Add($argument);
+                if (($index + 1) -lt $tokens.Count) {
+                  $index++;
+                  $toolArguments.Add($tokens[$index]);
+                }
+              } elseif ($argument.StartsWith('-')) {
+                $toolArguments.Add($argument)
+              } else {
+                $targetPaths.Add($argument)
+              }
+            }
+          };
+          Add-ActionlintArguments '{{if .ACTIONLINT_EXTRA_ARGS_OVERRIDE}}{{.ACTIONLINT_EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.ACTIONLINT_EXTRA_ARGS}}{{end}}';
+          Add-ActionlintArguments '{{.CLI_ARGS}}';
+          $configuredTargets='{{if .ACTIONLINT_TARGETS_OVERRIDE}}{{.ACTIONLINT_TARGETS_OVERRIDE}}
+          {{- else}}{{.ACTIONLINT_TARGETS}}{{end}}';
+          if (-not $targetPaths.Count) {
+            if ('{{.CLI_ARGS}}' -or -not $configuredTargets) { $configuredTargets='.github/workflows' };
+            foreach ($target in $configuredTargets.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)) {
+              $targetPaths.Add($target)
+            }
+          };
+          $files=@($targetPaths | ForEach-Object {
+            if (Test-Path -LiteralPath $_ -PathType Container) {
+              Get-ChildItem -LiteralPath $_ -Recurse -File |
+                Where-Object { $_.Extension -in @('.yml', '.yaml') }
+            } elseif (Test-Path -LiteralPath $_ -PathType Leaf) { Get-Item -LiteralPath $_ }
+          });
+          $paths=@($files | ForEach-Object FullName |
+            task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+              filter ('SKIPFILES_PATTERN=' + $skipPattern));
+          if (-not $paths) { Write-Host 'No matching workflows found'; exit 0 };
+          actionlint @toolArguments @paths;
+          exit $LASTEXITCODE"
+        platforms: [windows]
 
   install:
     run: once

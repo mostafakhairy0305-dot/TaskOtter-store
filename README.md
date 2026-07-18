@@ -37,6 +37,12 @@ task go:lint
 
 **103 modules** total. Per-module docs: `taskfiles/<name>/README.md`.
 
+Direct linter and formatter modules expose an empty-by-default
+`<TOOL>_LINT_SKIP_PATTERN` and/or `<TOOL>_FMT_SKIP_PATTERN`. Patterns are
+matched against forward-slash paths relative to the task working directory;
+`*` stays within a path segment, `**` crosses directories, and `?` matches one
+character. For example, `**/generated/**` skips generated files in any folder.
+
 ### Choosing a variant
 
 For JavaScript tools, pick a module that matches your package manager and Node runtime:

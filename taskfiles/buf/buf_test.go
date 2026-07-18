@@ -20,6 +20,8 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"BUF_LINT_SKIP_PATTERN",
+	"BUF_FMT_SKIP_PATTERN",
 	"AGAINST",
 	"BUF_VERSION",
 	"CONFIG",

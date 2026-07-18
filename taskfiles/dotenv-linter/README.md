@@ -50,6 +50,9 @@ task dotenv-linter:install DOTENV_LINTER_VERSION=3.3.0
 | `TARGETS` | `.env` | File or directory dotenv-linter operates on |
 | `EXTRA_ARGS` | `""` | Extra flags forwarded to dotenv-linter (e.g. `--recursive`, `--skip`) |
 | `CARGO_BIN_UNIX` | `$HOME/.cargo/bin` | Fallback cargo bin directory on macOS and Linux |
+| `DOTENV_LINTER_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by check, fix, and diff tasks |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

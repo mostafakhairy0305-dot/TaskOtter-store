@@ -18,6 +18,8 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"DJLINT_LINT_SKIP_PATTERN",
+	"DJLINT_FMT_SKIP_PATTERN",
 	"DJLINT_VERSION",
 	"EXTRA_ARGS",
 	"TARGETS",

@@ -13,7 +13,12 @@ includes:
   uv:
     taskfile: ../uv/Taskfile.yml
 
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
+  ANSIBLE_LINT_SKIP_PATTERN: ""
   ANSIBLE_CONFIG: "ansible/ansible.cfg"
   UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"; export ANSIBLE_CONFIG="ansible/ansible.cfg"'
   PLAYBOOK: ""
@@ -313,11 +318,9 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     cmds:
-      - >-
-        bash -lc '{{.UV_LOAD}};
-        ansible-lint
-        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - task: _lint:run:unix
+        vars:
+          ANSIBLE_LINT_FIX_FLAG: ""
 
   _lint:fix:unix:
     run: once
@@ -325,11 +328,45 @@ tasks:
     platforms: [linux, darwin]
     set: [errexit, nounset, pipefail]
     cmds:
-      - >-
-        bash -lc '{{.UV_LOAD}};
-        ansible-lint --fix
-        {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - task: _lint:run:unix
+        vars:
+          ANSIBLE_LINT_FIX_FLAG: "--fix"
+
+  _lint:run:unix:
+    run: once
+    internal: true
+    platforms: [linux, darwin]
+    set: [errexit, nounset, pipefail]
+    cmds:
+      - |
+        {{.UV_LOAD}}
+        targets='{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}'
+        skip_pattern='{{if .ANSIBLE_LINT_SKIP_PATTERN_OVERRIDE}}{{.ANSIBLE_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.ANSIBLE_LINT_SKIP_PATTERN}}{{end}}'
+        if [ -z "$skip_pattern" ]; then
+          ansible-lint {{.ANSIBLE_LINT_FIX_FLAG}} $targets \
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}
+          exit
+        fi
+        matched_files="$(mktemp)"
+        trap 'rm -f "$matched_files"' EXIT
+        for target in $targets; do
+          if [ -d "$target" ]; then
+            find "$target" -type f \( -name '*.yml' -o -name '*.yaml' \) -print0
+          elif [ -f "$target" ]; then
+            printf '%s\000' "$target"
+          fi
+        done | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+          filter "SKIPFILES_PATTERN=$skip_pattern" SKIPFILES_MATCHING=true |
+          tr '\0' '\n' >"$matched_files"
+        set --
+        while IFS= read -r path; do
+          set -- "$@" --exclude "$path"
+        done <"$matched_files"
+        ansible-lint {{.ANSIBLE_LINT_FIX_FLAG}} "$@" $targets \
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}}
 
   _syntax:check:unix:
     run: once
@@ -340,13 +377,25 @@ tasks:
       - sh: bash -lc '{{.UV_LOAD}}; command -v ansible-playbook >/dev/null 2>&1'
         msg: ansible-playbook is not installed. Run task install first.
     cmds:
-      - >-
-        bash -lc '{{.UV_LOAD}};
-        ansible-playbook --syntax-check
-        "{{if .PLAYBOOK_OVERRIDE}}{{.PLAYBOOK_OVERRIDE}}{{else}}{{.PLAYBOOK}}{{end}}"
-        {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}"
-        {{else if .INVENTORY}}-i "{{.INVENTORY}}" {{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+      - |
+        {{.UV_LOAD}}
+        playbook='{{if .PLAYBOOK_OVERRIDE}}{{.PLAYBOOK_OVERRIDE}}{{else}}{{.PLAYBOOK}}{{end}}'
+        skip_pattern='{{if .ANSIBLE_LINT_SKIP_PATTERN_OVERRIDE}}{{.ANSIBLE_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.ANSIBLE_LINT_SKIP_PATTERN}}{{end}}'
+        if [ -n "$skip_pattern" ] && [ -z "$(
+          printf '%s\000' "$playbook" |
+            task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+              filter "SKIPFILES_PATTERN=$skip_pattern" |
+            tr -d '\0'
+        )" ]; then
+          echo 'Ansible syntax check skipped'
+          exit 0
+        fi
+        ansible-playbook --syntax-check "$playbook" \
+          {{if .INVENTORY_OVERRIDE}}-i "{{.INVENTORY_OVERRIDE}}"
+          {{- else if .INVENTORY}}-i "{{.INVENTORY}}"{{end}} \
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}} {{.CLI_ARGS}}
 
   _run:unix:
     run: once

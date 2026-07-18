@@ -25,6 +25,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"ANSIBLE_LINT_SKIP_PATTERN",
 	"ANSIBLE_LINT_VERSION",
 	"ANSIBLE_VERSION",
 	"EXTRA_ARGS",

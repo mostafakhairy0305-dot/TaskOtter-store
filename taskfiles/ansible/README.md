@@ -68,6 +68,9 @@ task ansible:run PLAYBOOK=site.yml INVENTORY=hosts
 | `ANSIBLE_VERSION` | _(empty)_                           | Pin a specific ansible release for `install`/`upgrade`; empty installs latest |
 | `ANSIBLE_LINT_VERSION` | _(empty)_                      | Pin a specific ansible-lint release for `install`/`upgrade`; empty installs latest |
 | `UV_LOAD`      | `export PATH="$HOME/.local/bin:$PATH"` | Shell snippet that ensures uv-managed binaries are in PATH       |
+| `ANSIBLE_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint, fix, and syntax-check tasks |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

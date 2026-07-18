@@ -16,6 +16,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"JSONLINT_LINT_SKIP_PATTERN",
 	"EXTRA_ARGS",
 	"JSONLINT_VERSION",
 	"TARGETS",

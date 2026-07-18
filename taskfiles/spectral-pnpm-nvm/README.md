@@ -56,6 +56,11 @@ Run the tasks from the Node.js project root (where `package.json` lives).
 | `TARGETS` | `""` | API document(s) to lint, e.g. `openapi.yaml` |
 | `RULESET` | `""` | Path to a Spectral ruleset file passed via `--ruleset` |
 | `EXTRA_ARGS` | `""` | Extra flags forwarded to spectral |
+| `SPECTRAL_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
+
+Spectral skips matching files as top-level lint targets, but may still load them when another document references them through `$ref`.
 
 ## Notes
 

@@ -9,7 +9,14 @@ output:
 
 silent: true
 
+includes:
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
+  CARGO_LINT_SKIP_PATTERN: ""
+  CARGO_FMT_SKIP_PATTERN: ""
   RUSTUP_INSTALL_URL: "https://sh.rustup.rs"
   RUSTUP_INSTALL_URL_WINDOWS: "https://win.rustup.rs/x86_64"
   RUST_TOOLCHAIN: ""
@@ -126,9 +133,15 @@ tasks:
       - task: _cargo:unix
         vars:
           CARGO_SUBCMD: "fmt"
+          CARGO_SKIP_PATTERN: >-
+            {{if .CARGO_FMT_SKIP_PATTERN_OVERRIDE}}{{.CARGO_FMT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.CARGO_FMT_SKIP_PATTERN}}{{end}}
       - task: _cargo:windows
         vars:
           CARGO_SUBCMD: "fmt"
+          CARGO_SKIP_PATTERN: >-
+            {{if .CARGO_FMT_SKIP_PATTERN_OVERRIDE}}{{.CARGO_FMT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.CARGO_FMT_SKIP_PATTERN}}{{end}}
 
   fmt:check:
     run: once
@@ -143,9 +156,15 @@ tasks:
       - task: _cargo:unix
         vars:
           CARGO_SUBCMD: "fmt --check"
+          CARGO_SKIP_PATTERN: >-
+            {{if .CARGO_FMT_SKIP_PATTERN_OVERRIDE}}{{.CARGO_FMT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.CARGO_FMT_SKIP_PATTERN}}{{end}}
       - task: _cargo:windows
         vars:
           CARGO_SUBCMD: "fmt --check"
+          CARGO_SKIP_PATTERN: >-
+            {{if .CARGO_FMT_SKIP_PATTERN_OVERRIDE}}{{.CARGO_FMT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.CARGO_FMT_SKIP_PATTERN}}{{end}}
 
   lint:
     run: once
@@ -160,9 +179,15 @@ tasks:
       - task: _cargo:unix
         vars:
           CARGO_SUBCMD: "clippy"
+          CARGO_SKIP_PATTERN: >-
+            {{if .CARGO_LINT_SKIP_PATTERN_OVERRIDE}}{{.CARGO_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.CARGO_LINT_SKIP_PATTERN}}{{end}}
       - task: _cargo:windows
         vars:
           CARGO_SUBCMD: "clippy"
+          CARGO_SKIP_PATTERN: >-
+            {{if .CARGO_LINT_SKIP_PATTERN_OVERRIDE}}{{.CARGO_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.CARGO_LINT_SKIP_PATTERN}}{{end}}
 
   lint:fix:
     run: once
@@ -177,9 +202,15 @@ tasks:
       - task: _cargo:unix
         vars:
           CARGO_SUBCMD: "clippy --fix"
+          CARGO_SKIP_PATTERN: >-
+            {{if .CARGO_LINT_SKIP_PATTERN_OVERRIDE}}{{.CARGO_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.CARGO_LINT_SKIP_PATTERN}}{{end}}
       - task: _cargo:windows
         vars:
           CARGO_SUBCMD: "clippy --fix"
+          CARGO_SKIP_PATTERN: >-
+            {{if .CARGO_LINT_SKIP_PATTERN_OVERRIDE}}{{.CARGO_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.CARGO_LINT_SKIP_PATTERN}}{{end}}
 
   version:
     run: once
@@ -350,10 +381,72 @@ tasks:
     platforms: [linux, darwin]
     dir: "{{.USER_WORKING_DIR}}"
     cmds:
-      - >-
-        cargo="$(command -v cargo || echo "{{.CARGO_BIN_UNIX}}/cargo")";
-        "$cargo" {{if .RUST_TOOLCHAIN}}+{{.RUST_TOOLCHAIN}} {{end}}{{.CARGO_SUBCMD}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+      - |
+        cargo="$(command -v cargo || echo "{{.CARGO_BIN_UNIX}}/cargo")"
+        skip_pattern='{{default "" .CARGO_SKIP_PATTERN}}'
+        if [ -z "$skip_pattern" ]; then
+          "$cargo" {{if .RUST_TOOLCHAIN}}+{{.RUST_TOOLCHAIN}} {{end}}{{.CARGO_SUBCMD}} \
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}
+          exit
+        fi
+
+        skipped_packages=''
+        while IFS= read -r source_file; do
+          package_dir="$(dirname "$source_file")"
+          while [ "$package_dir" != '/' ] && [ ! -f "$package_dir/Cargo.toml" ]; do
+            package_dir="$(dirname "$package_dir")"
+          done
+          [ -f "$package_dir/Cargo.toml" ] || continue
+          package_name="$(awk '
+            /^\[package\][[:space:]]*$/ { in_package=1; next }
+            /^\[/ { in_package=0 }
+            in_package && /^[[:space:]]*name[[:space:]]*=/ {
+              value=$0; sub(/^[^=]*=[[:space:]]*/, "", value); gsub(/["'"'"']/, "", value); print value; exit
+            }
+          ' "$package_dir/Cargo.toml")"
+          [ -n "$package_name" ] || continue
+          case " $skipped_packages " in
+            *" $package_name "*) ;;
+            *) skipped_packages="$skipped_packages $package_name" ;;
+          esac
+        done < <(
+          find . -type f -name '*.rs' ! -path './target/*' ! -path './.git/*' -print0 |
+            task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+              filter "SKIPFILES_PATTERN=$skip_pattern" SKIPFILES_MATCHING=true |
+            tr '\0' '\n'
+        )
+
+        if [ -z "${skipped_packages# }" ]; then
+          "$cargo" {{if .RUST_TOOLCHAIN}}+{{.RUST_TOOLCHAIN}} {{end}}{{.CARGO_SUBCMD}} \
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}}
+          exit
+        fi
+
+        set --
+        while IFS= read -r manifest; do
+          package_name="$(awk '
+            /^\[package\][[:space:]]*$/ { in_package=1; next }
+            /^\[/ { in_package=0 }
+            in_package && /^[[:space:]]*name[[:space:]]*=/ {
+              value=$0; sub(/^[^=]*=[[:space:]]*/, "", value); gsub(/["'"'"']/, "", value); print value; exit
+            }
+          ' "$manifest")"
+          [ -n "$package_name" ] || continue
+          case " $skipped_packages " in
+            *" $package_name "*) ;;
+            *) set -- "$@" --package "$package_name" ;;
+          esac
+        done < <(find . -type f -name Cargo.toml ! -path './target/*' ! -path './.git/*' | sort)
+
+        if [ "$#" -eq 0 ]; then
+          echo 'No matching Cargo packages found'
+          exit 0
+        fi
+        "$cargo" {{if .RUST_TOOLCHAIN}}+{{.RUST_TOOLCHAIN}} {{end}}{{.CARGO_SUBCMD}} "$@" \
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}}
 
   _cargo:windows:
     run: once
@@ -365,5 +458,54 @@ tasks:
         powershell -NoProfile -ExecutionPolicy Bypass -Command
         "$c = (Get-Command cargo -ErrorAction SilentlyContinue).Source;
         if (-not $c) { $c = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe' };
-        & $c {{if .RUST_TOOLCHAIN}}+{{.RUST_TOOLCHAIN}} {{end}}{{.CARGO_SUBCMD}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}"
+        $skipPattern='{{default "" .CARGO_SKIP_PATTERN}}';
+        if (-not $skipPattern) {
+          & $c {{if .RUST_TOOLCHAIN}}+{{.RUST_TOOLCHAIN}} {{end}}{{.CARGO_SUBCMD}}
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}};
+          exit $LASTEXITCODE
+        };
+        function Get-PackageName([string]$manifest) {
+          $inPackage=$false;
+          foreach ($line in Get-Content -LiteralPath $manifest) {
+            if ($line -match '^\s*\[package\]\s*$') { $inPackage=$true; continue };
+            if ($line -match '^\s*\[') { $inPackage=$false };
+            if ($inPackage -and $line -match '^\s*name\s*=\s*[''\"]([^''\"]+)[''\"]') { return $Matches[1] };
+          };
+          return ''
+        };
+        $allFiles=@(Get-ChildItem -Recurse -Filter '*.rs' -File |
+          Where-Object { $_.FullName -notmatch '\\target\\|\\.git\\' });
+        $retained=@($allFiles | ForEach-Object FullName |
+          task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+            filter ('SKIPFILES_PATTERN=' + $skipPattern));
+        $skippedPackages=@{};
+        foreach ($file in $allFiles) {
+          if ($retained -contains $file.FullName) { continue };
+          $directory=$file.Directory;
+          while ($directory -and -not (Test-Path -LiteralPath (Join-Path $directory.FullName 'Cargo.toml'))) {
+            $directory=$directory.Parent
+          };
+          if ($directory) {
+            $name=Get-PackageName (Join-Path $directory.FullName 'Cargo.toml');
+            if ($name) { $skippedPackages[$name]=$true }
+          }
+        };
+        if ($skippedPackages.Count -eq 0) {
+          & $c {{if .RUST_TOOLCHAIN}}+{{.RUST_TOOLCHAIN}} {{end}}{{.CARGO_SUBCMD}}
+            {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.EXTRA_ARGS}}{{end}};
+          exit $LASTEXITCODE
+        };
+        $packageArgs=@();
+        Get-ChildItem -Recurse -Filter Cargo.toml -File |
+          Where-Object { $_.FullName -notmatch '\\target\\|\\.git\\' } |
+          ForEach-Object {
+            $name=Get-PackageName $_.FullName;
+            if ($name -and -not $skippedPackages.ContainsKey($name)) { $packageArgs += @('--package', $name) }
+          };
+        if ($packageArgs.Count -eq 0) { Write-Host 'No matching Cargo packages found'; exit 0 };
+        & $c {{if .RUST_TOOLCHAIN}}+{{.RUST_TOOLCHAIN}} {{end}}{{.CARGO_SUBCMD}} @packageArgs
+          {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+          {{- else}}{{.EXTRA_ARGS}}{{end}};
+        exit $LASTEXITCODE"

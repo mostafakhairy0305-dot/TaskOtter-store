@@ -1,17 +1,24 @@
 package go_test
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/mostafakhairy0305-dot/TaskOtter/internal/tasktest"
 )
 
 var publicTasks = []string{
+	"bench",
+	"coverage",
 	"fmt",
 	"fmt:check",
+	"fuzz",
 	"golangci-lint:fmt",
 	"golangci-lint:fmt:check",
 	"golangci-lint:lint",
@@ -25,6 +32,7 @@ var publicTasks = []string{
 	"install:undo",
 	"lint",
 	"lint:fix",
+	"test",
 	"upgrade",
 	"verify",
 	"version",
@@ -34,7 +42,11 @@ var publicTasks = []string{
 var publicVars = []string{
 	"GO_BIN_UNIX",
 	"GO_CMD_UNIX",
+	"GO_COVER_PROFILE",
 	"GO_DOWNLOAD_BASE_URL",
+	"GO_FMT_SKIP_PATTERN",
+	"GO_FUZZTIME",
+	"GO_LINT_SKIP_PATTERN",
 	"GO_VERSION",
 	"GO_ROOT_UNIX",
 	"GO_VERSION_URL",
@@ -94,6 +106,174 @@ func TestLintFixDryRun(t *testing.T) {
 	)
 }
 
+func TestTestingTaskCommands(t *testing.T) {
+	tf := tasktest.LoadTaskfile(t, "go")
+
+	tests := []struct {
+		task   string
+		tokens []string
+	}{
+		{task: "test", tokens: []string{"go test", "./..."}},
+		{task: "bench", tokens: []string{"go test", "-bench", "-benchmem"}},
+		{task: "fuzz", tokens: []string{"go test", "-fuzz", "-fuzztime"}},
+		{task: "coverage", tokens: []string{"-coverprofile", "awk", "LC_ALL=C sort", "Sort-Object"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.task, func(t *testing.T) {
+			task, ok := tf.Tasks[tt.task]
+			if !ok {
+				t.Fatalf("go Taskfile missing task %q", tt.task)
+			}
+
+			cmds := fmt.Sprintf("%v", task.Cmds)
+			for _, token := range tt.tokens {
+				if !strings.Contains(cmds, token) {
+					t.Fatalf("go task %q cmds missing %q: %s", tt.task, token, cmds)
+				}
+			}
+		})
+	}
+
+	coverageCommands := fmt.Sprintf("%v", tf.Tasks["coverage"].Cmds)
+	if strings.Contains(coverageCommands, "go tool cover") {
+		t.Fatalf("go coverage task must not run the per-function cover report: %s", coverageCommands)
+	}
+}
+
+func TestCoverageReportsStatementPackagesInAscendingOrder(t *testing.T) {
+	projectDir := t.TempDir()
+	writeCoverageFixture(t, projectDir, map[string]string{
+		"go.mod": "module example.com/coveragefixture\n\ngo 1.22\n",
+		"zero/zero.go": `package zero
+
+func Value() int { return 0 }
+`,
+		"partial/partial.go": `package partial
+
+func Covered() int { return 1 }
+func Uncovered() int { return 2 }
+`,
+		"partial/partial_test.go": `package partial
+
+import "testing"
+
+func TestCovered(t *testing.T) { Covered() }
+`,
+		"fulla/fulla.go": `package fulla
+
+func Value() int { return 1 }
+`,
+		"fulla/fulla_test.go": `package fulla
+
+import "testing"
+
+func TestValue(t *testing.T) { Value() }
+`,
+		"fullb/fullb.go": `package fullb
+
+func Value() int { return 1 }
+`,
+		"fullb/fullb_test.go": `package fullb
+
+import "testing"
+
+func TestValue(t *testing.T) { Value() }
+`,
+		"nostmt/nostmt.go": `package nostmt
+
+const Value = 1
+`,
+	})
+
+	profile := filepath.Join(projectDir, "coverage.out")
+	output, err := runCoverageTask(t, projectDir, profile)
+	if err != nil {
+		t.Fatalf("go coverage task failed: %v\n%s", err, output)
+	}
+
+	var rows []string
+	for _, line := range strings.Split(output, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.Contains(line, "%  example.com/coveragefixture/") {
+			rows = append(rows, line)
+		}
+	}
+	want := []string{
+		"0.0%  example.com/coveragefixture/zero",
+		"50.0%  example.com/coveragefixture/partial",
+		"100.0%  example.com/coveragefixture/fulla",
+		"100.0%  example.com/coveragefixture/fullb",
+	}
+	if !slices.Equal(rows, want) {
+		t.Fatalf("coverage rows mismatch\nwant: %v\ngot:  %v\noutput:\n%s", want, rows, output)
+	}
+	if strings.Contains(output, "nostmt") {
+		t.Fatalf("coverage output contains package without statements:\n%s", output)
+	}
+	if strings.Contains(output, "total:") {
+		t.Fatalf("coverage output contains an aggregate total:\n%s", output)
+	}
+	if info, statErr := os.Stat(profile); statErr != nil || info.Size() == 0 {
+		t.Fatalf("coverage profile was not written: info=%v err=%v", info, statErr)
+	}
+}
+
+func TestCoveragePreservesTestFailure(t *testing.T) {
+	projectDir := t.TempDir()
+	writeCoverageFixture(t, projectDir, map[string]string{
+		"go.mod": "module example.com/coveragefailure\n\ngo 1.22\n",
+		"failure/failure.go": `package failure
+
+func Value() int { return 1 }
+`,
+		"failure/failure_test.go": `package failure
+
+import "testing"
+
+func TestFailure(t *testing.T) { t.Fatal("coverage failure sentinel") }
+`,
+	})
+
+	output, err := runCoverageTask(t, projectDir, filepath.Join(projectDir, "coverage.out"))
+	if err == nil {
+		t.Fatalf("go coverage task succeeded despite a failing test:\n%s", output)
+	}
+	if !strings.Contains(output, "coverage failure sentinel") {
+		t.Fatalf("go coverage task hid the test failure diagnostics:\n%s", output)
+	}
+}
+
+func writeCoverageFixture(t *testing.T, root string, files map[string]string) {
+	t.Helper()
+
+	for name, contents := range files {
+		path := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatalf("create fixture directory for %s: %v", name, err)
+		}
+		if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
+			t.Fatalf("write fixture file %s: %v", name, err)
+		}
+	}
+}
+
+func runCoverageTask(t *testing.T, projectDir, profile string) (string, error) {
+	t.Helper()
+
+	taskfile := filepath.Join(tasktest.RepoRoot(t), "taskfiles", "go", "Taskfile.yml")
+	command := exec.Command(
+		"task",
+		"--silent",
+		"--taskfile", taskfile,
+		"coverage",
+		"GO_COVER_PROFILE="+profile,
+	)
+	command.Dir = projectDir
+	output, err := command.CombinedOutput()
+	return string(output), err
+}
+
 func TestFmtDryRuns(t *testing.T) {
 	tests := []struct {
 		task   string
@@ -132,6 +312,64 @@ func TestFmtDryRuns(t *testing.T) {
 			tasktest.AssertDryRunContains(t, "go", []string{tt.task}, tt.tokens...)
 		})
 	}
+}
+
+func TestFmtSkipPatternDefaultsEmpty(t *testing.T) {
+	tf := tasktest.LoadTaskfile(t, "go")
+
+	value, exists := tf.Vars["GO_FMT_SKIP_PATTERN"]
+	if !exists {
+		t.Fatal("GO_FMT_SKIP_PATTERN must be defined")
+	}
+	if value != "" {
+		t.Fatalf("GO_FMT_SKIP_PATTERN default = %#v, want empty", value)
+	}
+}
+
+func TestLintSkipPatternDefaultsEmpty(t *testing.T) {
+	tf := tasktest.LoadTaskfile(t, "go")
+
+	value, exists := tf.Vars["GO_LINT_SKIP_PATTERN"]
+	if !exists {
+		t.Fatal("GO_LINT_SKIP_PATTERN must be defined")
+	}
+	if value != "" {
+		t.Fatalf("GO_LINT_SKIP_PATTERN default = %#v, want empty", value)
+	}
+}
+
+func TestFmtSkipPatternDryRuns(t *testing.T) {
+	const pattern = "**/generated/**"
+
+	tasktest.AssertDryRunContains(t, "go",
+		[]string{"fmt", "GO_FMT_SKIP_PATTERN=" + pattern},
+		"golangci-lint",
+		pattern,
+	)
+	tasktest.AssertDryRunContains(t, "go",
+		[]string{"fmt:check", "GO_FMT_SKIP_PATTERN=" + pattern},
+		"golangci-lint",
+		pattern,
+		"--diff",
+	)
+}
+
+func TestLintSkipPatternDryRuns(t *testing.T) {
+	const pattern = "**/generated/**"
+
+	tasktest.AssertDryRunContains(t, "go",
+		[]string{"lint", "GO_LINT_SKIP_PATTERN=" + pattern},
+		"golangci-lint",
+		"SKIPFILES_TOOL=golangci",
+		pattern,
+	)
+	tasktest.AssertDryRunContains(t, "go",
+		[]string{"lint:fix", "GO_LINT_SKIP_PATTERN=" + pattern},
+		"golangci-lint",
+		"SKIPFILES_TOOL=golangci",
+		pattern,
+		"--fix",
+	)
 }
 
 func TestDevelopmentToolDependencies(t *testing.T) {

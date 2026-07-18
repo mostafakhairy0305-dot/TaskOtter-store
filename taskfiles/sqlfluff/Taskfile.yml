@@ -13,7 +13,13 @@ includes:
   uv:
     taskfile: ../uv/Taskfile.yml
 
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
+  SQLFLUFF_LINT_SKIP_PATTERN: ""
+  SQLFLUFF_INTERNAL_SKIP_CONFIG: ".taskotter-sqlfluff-skip.cfg"
   UV_LOAD: 'export PATH="$HOME/.local/bin:$PATH"'
   SQLFLUFF_VERSION: "4.2.2"
 
@@ -79,21 +85,65 @@ tasks:
       and EXTRA_ARGS for additional flags. Auto-installs sqlfluff if missing.
     deps:
       - install
+    dir: "{{.USER_WORKING_DIR}}"
     vars:
       TARGETS: "."
       CONFIG: ""
       DIALECT: ""
       EXTRA_ARGS: ""
     cmds:
+      - task: skipfiles:prepare-overlay
+        vars:
+          SKIPFILES_TOOL: sqlfluff
+          SKIPFILES_PATTERN: >-
+            {{if .SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}{{.SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.SQLFLUFF_LINT_SKIP_PATTERN}}{{end}}
+          SKIPFILES_SOURCE_CONFIG: >-
+            {{if .CONFIG_OVERRIDE}}{{.CONFIG_OVERRIDE}}{{else}}{{.CONFIG}}{{end}}
+          SKIPFILES_OUTPUT: "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}"
+      - defer:
+          task: skipfiles:cleanup
+          vars:
+            SKIPFILES_OUTPUT: "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}"
       - >-
         bash -c '{{.UV_LOAD}};
+        _skip="{{if .SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}{{.SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.SQLFLUFF_LINT_SKIP_PATTERN}}{{end}}";
+        if [ -n "$_skip" ]; then
+        _files="$(mktemp)"; trap "rm -f $_files" EXIT;
+        _targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}";
+        if [ -n "{{.CLI_ARGS}}" ]; then _targets="";
+        for _argument in {{.CLI_ARGS}}; do
+        if [ -e "$_argument" ]; then _targets="$_targets $_argument"; fi; done;
+        [ -n "$_targets" ] || _targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"; fi;
+        for _target in $_targets; do
+        if [ -d "$_target" ]; then find "$_target" -type f
+        \( -name "*.sql" -o -name "*.sql.j2" -o -name "*.dml" -o -name "*.ddl" \) -print0;
+        elif [ -f "$_target" ]; then printf "%s\000" "$_target"; fi; done
+        | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml"
+        filter "SKIPFILES_PATTERN=$_skip" >"$_files";
+        if [ ! -s "$_files" ]; then echo "No matching SQL files found"; exit 0; fi;
+        xargs -0 sqlfluff lint
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
+        {{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}}
+        {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        --config "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}" <"$_files"
+        && echo "✅ sqlfluff passed" || { echo "❌ sqlfluff failed"; exit 1; }; exit; fi;
         sqlfluff lint
-        {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
-        {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
         {{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}}
         {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}
         {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        {{if or .SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE .SQLFLUFF_LINT_SKIP_PATTERN}}
+        --config "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}"
+        {{else if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+        {{else if .CONFIG}}--config "{{.CONFIG}}"{{end}}
         && echo "✅ sqlfluff passed" || { echo "❌ sqlfluff failed"; exit 1; }'
 
   fix:
@@ -105,21 +155,65 @@ tasks:
       Auto-installs sqlfluff if missing.
     deps:
       - install
+    dir: "{{.USER_WORKING_DIR}}"
     vars:
       TARGETS: "."
       CONFIG: ""
       DIALECT: ""
       EXTRA_ARGS: ""
     cmds:
+      - task: skipfiles:prepare-overlay
+        vars:
+          SKIPFILES_TOOL: sqlfluff
+          SKIPFILES_PATTERN: >-
+            {{if .SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}{{.SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.SQLFLUFF_LINT_SKIP_PATTERN}}{{end}}
+          SKIPFILES_SOURCE_CONFIG: >-
+            {{if .CONFIG_OVERRIDE}}{{.CONFIG_OVERRIDE}}{{else}}{{.CONFIG}}{{end}}
+          SKIPFILES_OUTPUT: "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}"
+      - defer:
+          task: skipfiles:cleanup
+          vars:
+            SKIPFILES_OUTPUT: "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}"
       - >-
         bash -c '{{.UV_LOAD}};
+        _skip="{{if .SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}{{.SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.SQLFLUFF_LINT_SKIP_PATTERN}}{{end}}";
+        if [ -n "$_skip" ]; then
+        _files="$(mktemp)"; trap "rm -f $_files" EXIT;
+        _targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}";
+        if [ -n "{{.CLI_ARGS}}" ]; then _targets="";
+        for _argument in {{.CLI_ARGS}}; do
+        if [ -e "$_argument" ]; then _targets="$_targets $_argument"; fi; done;
+        [ -n "$_targets" ] || _targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"; fi;
+        for _target in $_targets; do
+        if [ -d "$_target" ]; then find "$_target" -type f
+        \( -name "*.sql" -o -name "*.sql.j2" -o -name "*.dml" -o -name "*.ddl" \) -print0;
+        elif [ -f "$_target" ]; then printf "%s\000" "$_target"; fi; done
+        | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml"
+        filter "SKIPFILES_PATTERN=$_skip" >"$_files";
+        if [ ! -s "$_files" ]; then echo "No matching SQL files found"; exit 0; fi;
+        xargs -0 sqlfluff fix
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
+        {{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}}
+        {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        --config "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}" <"$_files"
+        && echo "✅ sqlfluff fixes applied" || exit 1; exit; fi;
         sqlfluff fix
-        {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
-        {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
         {{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}}
         {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}
         {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        {{if or .SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE .SQLFLUFF_LINT_SKIP_PATTERN}}
+        --config "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}"
+        {{else if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+        {{else if .CONFIG}}--config "{{.CONFIG}}"{{end}}
         && echo "✅ sqlfluff fixes applied"'
 
   parse:
@@ -132,21 +226,64 @@ tasks:
       Auto-installs sqlfluff if missing.
     deps:
       - install
+    dir: "{{.USER_WORKING_DIR}}"
     vars:
       TARGETS: "."
       CONFIG: ""
       DIALECT: ""
       EXTRA_ARGS: ""
     cmds:
+      - task: skipfiles:prepare-overlay
+        vars:
+          SKIPFILES_TOOL: sqlfluff
+          SKIPFILES_PATTERN: >-
+            {{if .SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}{{.SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}
+            {{- else}}{{.SQLFLUFF_LINT_SKIP_PATTERN}}{{end}}
+          SKIPFILES_SOURCE_CONFIG: >-
+            {{if .CONFIG_OVERRIDE}}{{.CONFIG_OVERRIDE}}{{else}}{{.CONFIG}}{{end}}
+          SKIPFILES_OUTPUT: "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}"
+      - defer:
+          task: skipfiles:cleanup
+          vars:
+            SKIPFILES_OUTPUT: "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}"
       - >-
         bash -c '{{.UV_LOAD}};
+        _skip="{{if .SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}{{.SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE}}
+        {{- else}}{{.SQLFLUFF_LINT_SKIP_PATTERN}}{{end}}";
+        if [ -n "$_skip" ]; then
+        _files="$(mktemp)"; trap "rm -f $_files" EXIT;
+        _targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}";
+        if [ -n "{{.CLI_ARGS}}" ]; then _targets="";
+        for _argument in {{.CLI_ARGS}}; do
+        if [ -e "$_argument" ]; then _targets="$_targets $_argument"; fi; done;
+        [ -n "$_targets" ] || _targets="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}"; fi;
+        for _target in $_targets; do
+        if [ -d "$_target" ]; then find "$_target" -type f
+        \( -name "*.sql" -o -name "*.sql.j2" -o -name "*.dml" -o -name "*.ddl" \) -print0;
+        elif [ -f "$_target" ]; then printf "%s\000" "$_target"; fi; done
+        | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml"
+        filter "SKIPFILES_PATTERN=$_skip" >"$_files";
+        if [ ! -s "$_files" ]; then echo "No matching SQL files found"; exit 0; fi;
+        xargs -0 sqlfluff parse
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
+        {{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}}
+        {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        --config "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}" <"$_files"; exit; fi;
         sqlfluff parse
-        {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
-        {{else if .CONFIG}}--config "{{.CONFIG}}" {{end}}
+        {{if .CLI_ARGS}}{{.CLI_ARGS}}
+        {{else}}
         {{if .DIALECT_OVERRIDE}}--dialect {{.DIALECT_OVERRIDE}}
         {{else if .DIALECT}}--dialect {{.DIALECT}} {{end}}
         {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else}}{{.TARGETS}}{{end}}
-        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+        {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}
+        {{- else}}{{.EXTRA_ARGS}}{{end}}{{end}}
+        {{if or .SQLFLUFF_LINT_SKIP_PATTERN_OVERRIDE .SQLFLUFF_LINT_SKIP_PATTERN}}
+        --config "{{.SQLFLUFF_INTERNAL_SKIP_CONFIG}}"
+        {{else if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
+        {{else if .CONFIG}}--config "{{.CONFIG}}"{{end}}'
 
   config:init:
     run: once

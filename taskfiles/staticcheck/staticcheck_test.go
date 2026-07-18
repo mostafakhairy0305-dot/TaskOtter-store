@@ -16,6 +16,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"STATICCHECK_LINT_SKIP_PATTERN",
 	"GLOBAL_GO_BIN",
 	"STATICCHECK_RELEASE_BASE_URL",
 	"STATICCHECK_VERSION",

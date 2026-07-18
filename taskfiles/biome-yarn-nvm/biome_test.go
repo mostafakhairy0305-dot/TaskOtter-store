@@ -26,6 +26,8 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"BIOME_LINT_SKIP_PATTERN",
+	"BIOME_FMT_SKIP_PATTERN",
 	"CONFIG",
 	"EXTRA_ARGS",
 	"TARGETS",

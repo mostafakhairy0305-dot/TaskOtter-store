@@ -57,3 +57,8 @@ task staticcheck:version
 | `STATICCHECK_VERSION`          | `2026.1`                                                 | Staticcheck release tag to download and enforce                           |
 | `STATICCHECK_RELEASE_BASE_URL` | `https://github.com/dominikh/go-tools/releases/download` | Base URL for Staticcheck release assets                                   |
 | `GLOBAL_GO_BIN`                | `$(go env GOBIN)` or `$(go env GOPATH)/bin`              | Go bin directory where the Staticcheck binary is installed                |
+| `STATICCHECK_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
+
+Staticcheck operates on Go packages. When a pattern matches any `.go` file, the entire containing package is omitted.

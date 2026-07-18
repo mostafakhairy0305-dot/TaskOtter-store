@@ -42,6 +42,11 @@ and `CONFIG` adds `--config-path <path>`.
 
 `EXTRA_ARGS` and arguments after `--` are appended to the command.
 
+- `BIOME_LINT_SKIP_PATTERN` (default empty): forward-slash path glob for files skipped by lint checks and fixes.
+- `BIOME_FMT_SKIP_PATTERN` (default empty): forward-slash path glob for files skipped by formatting checks and fixes.
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
+
 ## Examples
 
 ```bash

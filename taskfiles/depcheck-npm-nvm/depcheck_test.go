@@ -20,6 +20,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"DEPCHECK_LINT_SKIP_PATTERN",
 	"EXTRA_ARGS",
 	"IGNORE_PACKAGES",
 	"PROJECT_PATH",

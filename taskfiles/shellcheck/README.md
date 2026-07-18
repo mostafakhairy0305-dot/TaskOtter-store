@@ -51,6 +51,9 @@ task shellcheck:install
 | `EXTRA_ARGS` | `""` | Additional flags passed to `shellcheck` (e.g. `--shell`, `--severity`) |
 | `TARGETS` | `""` | Paths or globs of scripts to check; empty = discover all `*.sh` recursively |
 | `VERSION` | `""` | Pin a specific shellcheck release for `install`; empty installs latest. Exact availability depends on the platform's package manager/repository. |
+| `SHELLCHECK_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

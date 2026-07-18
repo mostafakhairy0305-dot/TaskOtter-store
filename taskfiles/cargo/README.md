@@ -102,6 +102,12 @@ task cargo:build RUST_TOOLCHAIN=1.79.0 EXTRA_ARGS=--release
 | `RUST_TOOLCHAIN` | empty (`stable`) | Optional toolchain channel or version, such as `nightly` or `1.79.0` |
 | `CARGO_BIN_UNIX` | `$HOME/.cargo/bin` | Directory containing the rustup-installed binaries, used as a PATH fallback |
 | `EXTRA_ARGS` | empty | Extra flags appended to Cargo subcommands |
+| `CARGO_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+| `CARGO_FMT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by formatting checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
+
+Cargo cannot exclude individual Rust source files. When a pattern matches any `.rs` file, both lint and format tasks skip its entire containing package.
 
 ## Notes
 

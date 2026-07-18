@@ -25,6 +25,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"KNIP_LINT_SKIP_PATTERN",
 	"CONFIG",
 	"EXTRA_ARGS",
 	"VERSION",

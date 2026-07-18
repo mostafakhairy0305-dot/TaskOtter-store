@@ -21,6 +21,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"ESLINT_LINT_SKIP_PATTERN",
 	"CACHE",
 	"CONFIG",
 	"EXTRA_ARGS",

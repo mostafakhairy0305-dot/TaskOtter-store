@@ -17,6 +17,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"SPECTRAL_LINT_SKIP_PATTERN",
 	"EXTRA_ARGS",
 	"RULESET",
 	"TARGETS",

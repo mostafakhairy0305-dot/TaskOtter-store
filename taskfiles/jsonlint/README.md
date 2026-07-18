@@ -48,6 +48,9 @@ task jsonlint:install JSONLINT_VERSION=3.0.6
 | `TARGETS` | `.` | File or directory to validate; directories are scanned recursively for `*.json` |
 | `EXTRA_ARGS` | `""` | Extra flags forwarded to jsonlint |
 | `UV_LOAD` | `export PATH="$HOME/.local/bin:$PATH"` | Shell snippet that puts uv-managed tools on PATH (unix) |
+| `JSONLINT_LINT_SKIP_PATTERN` | _(empty)_ | Forward-slash path glob for files skipped by lint checks and fixes |
+
+Skip patterns support `*` within one path segment, `**` across directories, and `?` for one character. Paths are matched relative to the task working directory; for example, `**/generated/**`.
 
 ## Notes
 

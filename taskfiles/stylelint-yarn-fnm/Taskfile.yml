@@ -14,6 +14,7 @@ includes:
     taskfile: ../yarn-fnm/Taskfile.yml
 
 vars:
+  STYLELINT_LINT_SKIP_PATTERN: ""
   TARGETS: ""
   STYLELINT_DEFAULT_TARGETS: "**/*.{css,scss,sass,less,vue,svelte,astro}"
   CONFIG: ""
@@ -103,6 +104,8 @@ tasks:
           ARGS: >-
             {{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}
             {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}}
+            {{if .STYLELINT_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-pattern "{{.STYLELINT_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .STYLELINT_LINT_SKIP_PATTERN}}--ignore-pattern "{{.STYLELINT_LINT_SKIP_PATTERN}}" {{end}}
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
             {{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}
@@ -128,6 +131,8 @@ tasks:
             {{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}
             {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}}
             --fix
+            {{if .STYLELINT_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-pattern "{{.STYLELINT_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .STYLELINT_LINT_SKIP_PATTERN}}--ignore-pattern "{{.STYLELINT_LINT_SKIP_PATTERN}}" {{end}}
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
             {{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}
@@ -153,6 +158,8 @@ tasks:
             {{if .STYLELINT_TARGETS_OVERRIDE}}{{.STYLELINT_TARGETS_OVERRIDE}}
             {{else}}{{if .TARGETS}}{{.TARGETS}}{{else}}{{.STYLELINT_DEFAULT_TARGETS}}{{end}}{{end}}
             --max-warnings=0
+            {{if .STYLELINT_LINT_SKIP_PATTERN_OVERRIDE}}--ignore-pattern "{{.STYLELINT_LINT_SKIP_PATTERN_OVERRIDE}}"
+            {{else if .STYLELINT_LINT_SKIP_PATTERN}}--ignore-pattern "{{.STYLELINT_LINT_SKIP_PATTERN}}" {{end}}
             {{if .CONFIG_OVERRIDE}}--config "{{.CONFIG_OVERRIDE}}"
             {{else}}{{if .CONFIG}}--config "{{.CONFIG}}" {{end}}{{end}}
             {{if .CACHE_OVERRIDE}}{{if eq .CACHE_OVERRIDE "true"}}--cache --cache-location .cache/stylelint/ {{end}}

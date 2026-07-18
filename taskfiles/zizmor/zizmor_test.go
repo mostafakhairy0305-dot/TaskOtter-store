@@ -17,6 +17,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"ZIZMOR_LINT_SKIP_PATTERN",
 	"ZIZMOR_EXTRA_ARGS",
 	"ZIZMOR_TARGETS",
 	"ZIZMOR_VERSION",
@@ -47,18 +48,12 @@ func TestRepresentativeDryRuns(t *testing.T) {
 
 func TestLintIgnoresSharedTargetVariable(t *testing.T) {
 	output := tasktest.DryRun(t, "zizmor", "lint", "TARGETS=**/*.html")
-
-	for _, line := range strings.Split(output, "\n") {
-		if !strings.Contains(line, "] env -u GH_TOKEN zizmor") {
-			continue
-		}
-		if strings.Contains(line, "**/*.html") {
-			t.Fatalf("zizmor command should not receive shared TARGETS value:\n%s", output)
-		}
-		return
+	if !strings.Contains(output, "zizmor") {
+		t.Fatalf("zizmor dry-run command not found:\n%s", output)
 	}
-
-	t.Fatalf("zizmor dry-run command not found:\n%s", output)
+	if strings.Contains(output, "**/*.html") {
+		t.Fatalf("zizmor command should not receive shared TARGETS value:\n%s", output)
+	}
 }
 
 func TestInstallDryRunDownloadsBinary(t *testing.T) {

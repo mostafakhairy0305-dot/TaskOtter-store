@@ -16,6 +16,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"HADOLINT_LINT_SKIP_PATTERN",
 	"CONFIG",
 	"DOCKERFILE",
 	"EXTRA_ARGS",

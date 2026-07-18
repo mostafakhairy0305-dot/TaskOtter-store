@@ -1,3 +1,4 @@
 .claude
 .vault-init-keys.json
 vault-snapshot.snap
+coverage.out

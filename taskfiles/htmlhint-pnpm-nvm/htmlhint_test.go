@@ -17,6 +17,7 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"HTMLHINT_LINT_SKIP_PATTERN",
 	"CONFIG",
 	"EXTRA_ARGS",
 	"TARGETS",

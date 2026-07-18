@@ -24,6 +24,8 @@ var publicTasks = []string{
 }
 
 var publicVars = []string{
+	"CARGO_LINT_SKIP_PATTERN",
+	"CARGO_FMT_SKIP_PATTERN",
 	"CARGO_BIN_UNIX",
 	"EXTRA_ARGS",
 	"RUST_TOOLCHAIN",

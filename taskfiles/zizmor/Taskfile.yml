@@ -9,7 +9,13 @@ output:
 
 silent: true
 
+includes:
+  skipfiles:
+    taskfile: ../internal/skipfiles/Taskfile.yml
+    internal: true
+
 vars:
+  ZIZMOR_LINT_SKIP_PATTERN: ""
   ZIZMOR_EXTRA_ARGS: "--offline"
   ZIZMOR_TARGETS: ".github"
   ZIZMOR_VERSION: "1.25.2"
@@ -32,32 +38,75 @@ tasks:
       Runs offline by default (no GitHub token required); override with
       ZIZMOR_EXTRA_ARGS="--gh-token $TOKEN" for online checks. Pass
       ZIZMOR_EXTRA_ARGS for additional flags such as --format or
-      --min-severity, or CLI arguments after -- to override all variables
-      directly. Auto-installs zizmor if missing.
+      --min-severity, or CLI arguments after -- to override targets and options.
+      ZIZMOR_LINT_SKIP_PATTERN remains active. Auto-installs zizmor if missing.
     dir: "{{.USER_WORKING_DIR}}"
     deps:
       - install
     cmds:
-      - cmd: >-
-          env -u GH_TOKEN zizmor
-          {{if .CLI_ARGS}}{{.CLI_ARGS}}
-          {{else}}
-          {{if .ZIZMOR_EXTRA_ARGS_OVERRIDE}}{{.ZIZMOR_EXTRA_ARGS_OVERRIDE}}
-          {{- else}}{{.ZIZMOR_EXTRA_ARGS}}{{end}}
-          {{if .ZIZMOR_TARGETS_OVERRIDE}}{{.ZIZMOR_TARGETS_OVERRIDE}}
-          {{- else}}{{.ZIZMOR_TARGETS}}{{end}}{{end}}
-          && echo "✅ zizmor audit passed" || { echo "❌ zizmor audit found issues"; exit 1; }
+      - cmd: |
+          skip_pattern='{{if .ZIZMOR_LINT_SKIP_PATTERN_OVERRIDE}}{{.ZIZMOR_LINT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.ZIZMOR_LINT_SKIP_PATTERN}}{{end}}'
+          if [ -z "$skip_pattern" ]; then
+            env -u GH_TOKEN zizmor \
+              {{if .CLI_ARGS}}{{.CLI_ARGS}} \
+              {{else}}{{if .ZIZMOR_EXTRA_ARGS_OVERRIDE}}{{.ZIZMOR_EXTRA_ARGS_OVERRIDE}}
+              {{- else}}{{.ZIZMOR_EXTRA_ARGS}}{{end}} \
+              {{if .ZIZMOR_TARGETS_OVERRIDE}}{{.ZIZMOR_TARGETS_OVERRIDE}}
+              {{- else}}{{.ZIZMOR_TARGETS}}{{end}}{{end}} \
+              && echo "✅ zizmor audit passed" || { echo "❌ zizmor audit found issues"; exit 1; }
+            exit
+          fi
+          file_list="$(mktemp)"
+          trap 'rm -f "$file_list"' EXIT
+          for target in {{if .ZIZMOR_TARGETS_OVERRIDE}}{{.ZIZMOR_TARGETS_OVERRIDE}}
+          {{- else}}{{.ZIZMOR_TARGETS}}{{end}}; do
+            if [ -d "$target" ]; then
+              find "$target" -type f \( -name '*.yml' -o -name '*.yaml' \) -print0
+            elif [ -f "$target" ]; then
+              printf '%s\000' "$target"
+            fi
+          done | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" \
+            filter "SKIPFILES_PATTERN=$skip_pattern" >"$file_list"
+          if [ ! -s "$file_list" ]; then
+            echo "✅ zizmor audit passed (no matching workflows found)"
+            exit 0
+          fi
+          xargs -0 env -u GH_TOKEN zizmor \
+            {{if .ZIZMOR_EXTRA_ARGS_OVERRIDE}}{{.ZIZMOR_EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.ZIZMOR_EXTRA_ARGS}}{{end}} \
+            {{.CLI_ARGS}} <"$file_list" \
+            && echo "✅ zizmor audit passed" || { echo "❌ zizmor audit found issues"; exit 1; }
         platforms: [linux, darwin]
       - cmd: >-
           powershell -NoProfile -ExecutionPolicy Bypass -Command
           "Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue;
+          $skipPattern='{{if .ZIZMOR_LINT_SKIP_PATTERN_OVERRIDE}}{{.ZIZMOR_LINT_SKIP_PATTERN_OVERRIDE}}
+          {{- else}}{{.ZIZMOR_LINT_SKIP_PATTERN}}{{end}}';
+          if (-not $skipPattern) {
+            zizmor {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}
+              {{if .ZIZMOR_EXTRA_ARGS_OVERRIDE}}{{.ZIZMOR_EXTRA_ARGS_OVERRIDE}}
+              {{- else}}{{.ZIZMOR_EXTRA_ARGS}}{{end}}
+              {{if .ZIZMOR_TARGETS_OVERRIDE}}{{.ZIZMOR_TARGETS_OVERRIDE}}
+              {{- else}}{{.ZIZMOR_TARGETS}}{{end}}{{end}};
+            exit $LASTEXITCODE
+          };
+          $targets='{{if .ZIZMOR_TARGETS_OVERRIDE}}{{.ZIZMOR_TARGETS_OVERRIDE}}
+          {{- else}}{{.ZIZMOR_TARGETS}}{{end}}';
+          $files=@($targets.Split(' ') | ForEach-Object {
+            if (Test-Path -LiteralPath $_ -PathType Container) {
+              Get-ChildItem -LiteralPath $_ -Recurse -File |
+                Where-Object { $_.Extension -in @('.yml', '.yaml') }
+            } elseif (Test-Path -LiteralPath $_ -PathType Leaf) { Get-Item -LiteralPath $_ }
+          });
+          $paths=@($files | ForEach-Object FullName |
+            task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
+              filter ('SKIPFILES_PATTERN=' + $skipPattern));
+          if (-not $paths) { Write-Host 'No matching workflows found'; exit 0 };
           zizmor
-          {{if .CLI_ARGS}}{{.CLI_ARGS}}
-          {{else}}
-          {{if .ZIZMOR_EXTRA_ARGS_OVERRIDE}}{{.ZIZMOR_EXTRA_ARGS_OVERRIDE}}
-          {{- else}}{{.ZIZMOR_EXTRA_ARGS}}{{end}}
-          {{if .ZIZMOR_TARGETS_OVERRIDE}}{{.ZIZMOR_TARGETS_OVERRIDE}}
-          {{- else}}{{.ZIZMOR_TARGETS}}{{end}}{{end}};
+            {{if .ZIZMOR_EXTRA_ARGS_OVERRIDE}}{{.ZIZMOR_EXTRA_ARGS_OVERRIDE}}
+            {{- else}}{{.ZIZMOR_EXTRA_ARGS}}{{end}}
+            {{.CLI_ARGS}} @paths;
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
           Write-Host '✅ zizmor audit passed'"
         platforms: [windows]
