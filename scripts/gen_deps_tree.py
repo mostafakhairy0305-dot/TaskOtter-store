@@ -61,6 +61,13 @@ def depth_of(name: str, deps: dict[str, list[str]], cache: dict[str, int]) -> in
     return value
 
 
+def module_link(name: str) -> str:
+    # internal/* modules are shared helpers under taskfiles/internal/ with no README.
+    if name.startswith("internal/"):
+        return f"taskfiles/{name}/Taskfile.yml"
+    return f"taskfiles/{name}/README.md"
+
+
 def is_js_variant(name: str) -> bool:
     return any(name.startswith(f"{tool}-") for tool in JS_TOOLS)
 
@@ -234,7 +241,7 @@ def generate(deps: dict[str, list[str]]) -> str:
         "Modules with no `includes:` dependencies.",
         "",
     ]
-    lines.extend(f"- [`{name}`](taskfiles/{name}/README.md)" for name in standalone)
+    lines.extend(f"- [`{name}`]({module_link(name)})" for name in standalone)
     lines.extend(["", "## Forward tree", ""])
 
     lines.append("### Node.js stacks")
