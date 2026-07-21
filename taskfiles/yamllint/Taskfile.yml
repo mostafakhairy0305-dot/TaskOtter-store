@@ -85,7 +85,20 @@ tasks:
       EXTRA_ARGS: ""
     cmds:
       - >-
-        bash -lc '{{.UV_LOAD}}; _skip="{{if .YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}}{{.YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}} {{- else}}{{.YAMLLINT_LINT_SKIP_PATTERN}}{{end}}"; if [ -z "$_skip" ]; then yamllint {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}} {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}} {{- else}}{{.EXTRA_ARGS}}{{end}}; else _files="$(mktemp)"; trap '"'"'rm -f "$_files"'"'"' EXIT; for _target in {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}; do if [ -d "$_target" ]; then find "$_target" -type f \( -name "*.yml" -o -name "*.yaml" \) -print0; elif [ -f "$_target" ]; then printf "%s\000" "$_target"; fi; done | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" filter "SKIPFILES_PATTERN=$_skip" >"$_files"; if [ -s "$_files" ]; then xargs -0 yamllint {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}} <"$_files"; else echo "No matching YAML files found"; fi; fi && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
+        bash -lc '{{.UV_LOAD}}; _skip="{{if
+        .YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}}{{.YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}} {{-
+        else}}{{.YAMLLINT_LINT_SKIP_PATTERN}}{{end}}"; if [ -z "$_skip" ]; then yamllint {{if .CONFIG_OVERRIDE}}-c
+        "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}} {{if
+        .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}} {{if
+        .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}} {{- else}}{{.EXTRA_ARGS}}{{end}}; else _files="$(mktemp)"; trap
+        '"'"'rm -f "$_files"'"'"' EXIT; for _target in {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if
+        .TARGETS}}{{.TARGETS}}{{else}}.{{end}}; do if [ -d "$_target" ]; then find "$_target" -type f \( -name "*.yml"
+        -o -name "*.yaml" \) -print0; elif [ -f "$_target" ]; then printf "%s\000" "$_target"; fi; done | task --silent
+        --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" filter "SKIPFILES_PATTERN=$_skip" >"$_files";
+        if [ -s "$_files" ]; then xargs -0 yamllint {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if
+        .CONFIG}}-c "{{.CONFIG}}" {{end}} {{if
+        .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}} <"$_files"; else echo "No matching
+        YAML files found"; fi; fi && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
   lint:fix:
     run: once
     dir: "{{.USER_WORKING_DIR}}"
@@ -103,7 +116,12 @@ tasks:
       EXTRA_ARGS: ""
     cmds:
       - >-
-        bash -lc '{{.UV_LOAD}}; _t="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}"; [ -d "$_t" ] || _t="."; find "$_t" \( -name "*.yml" -o -name "*.yaml" \) ! -name "Taskfile.yml" ! -name "Taskfile.yaml" -print0 | xargs -0 yamlfix {{if .YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}}--exclude "{{.YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}}" {{else if .YAMLLINT_LINT_SKIP_PATTERN}}--exclude "{{.YAMLLINT_LINT_SKIP_PATTERN}}" {{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
+        bash -lc '{{.UV_LOAD}}; _t="{{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if
+        .TARGETS}}{{.TARGETS}}{{else}}.{{end}}"; [ -d "$_t" ] || _t="."; find "$_t" \( -name "*.yml" -o -name "*.yaml"
+        \) ! -name "Taskfile.yml" ! -name "Taskfile.yaml" -print0 | xargs -0 yamlfix {{if
+        .YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}}--exclude "{{.YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}}" {{else if
+        .YAMLLINT_LINT_SKIP_PATTERN}}--exclude "{{.YAMLLINT_LINT_SKIP_PATTERN}}" {{end}} {{if
+        .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}}'
   ci:
     run: once
     dir: "{{.USER_WORKING_DIR}}"
@@ -120,7 +138,20 @@ tasks:
       EXTRA_ARGS: ""
     cmds:
       - >-
-        bash -lc '{{.UV_LOAD}}; _skip="{{if .YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}}{{.YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}} {{- else}}{{.YAMLLINT_LINT_SKIP_PATTERN}}{{end}}"; if [ -z "$_skip" ]; then yamllint --strict {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}} {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}} {{- else}}{{.EXTRA_ARGS}}{{end}}; else _files="$(mktemp)"; trap '"'"'rm -f "$_files"'"'"' EXIT; for _target in {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}}; do if [ -d "$_target" ]; then find "$_target" -type f \( -name "*.yml" -o -name "*.yaml" \) -print0; elif [ -f "$_target" ]; then printf "%s\000" "$_target"; fi; done | task --silent --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" filter "SKIPFILES_PATTERN=$_skip" >"$_files"; if [ -s "$_files" ]; then xargs -0 yamllint --strict {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}} {{if .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}} <"$_files"; else echo "No matching YAML files found"; fi; fi && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
+        bash -lc '{{.UV_LOAD}}; _skip="{{if
+        .YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}}{{.YAMLLINT_LINT_SKIP_PATTERN_OVERRIDE}} {{-
+        else}}{{.YAMLLINT_LINT_SKIP_PATTERN}}{{end}}"; if [ -z "$_skip" ]; then yamllint --strict {{if
+        .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if .CONFIG}}-c "{{.CONFIG}}" {{end}} {{if
+        .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if .TARGETS}}{{.TARGETS}}{{else}}.{{end}} {{if
+        .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}} {{- else}}{{.EXTRA_ARGS}}{{end}}; else _files="$(mktemp)"; trap
+        '"'"'rm -f "$_files"'"'"' EXIT; for _target in {{if .TARGETS_OVERRIDE}}{{.TARGETS_OVERRIDE}}{{else if
+        .TARGETS}}{{.TARGETS}}{{else}}.{{end}}; do if [ -d "$_target" ]; then find "$_target" -type f \( -name "*.yml"
+        -o -name "*.yaml" \) -print0; elif [ -f "$_target" ]; then printf "%s\000" "$_target"; fi; done | task --silent
+        --taskfile "{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml" filter "SKIPFILES_PATTERN=$_skip" >"$_files";
+        if [ -s "$_files" ]; then xargs -0 yamllint --strict {{if .CONFIG_OVERRIDE}}-c "{{.CONFIG_OVERRIDE}}" {{else if
+        .CONFIG}}-c "{{.CONFIG}}" {{end}} {{if
+        .EXTRA_ARGS_OVERRIDE}}{{.EXTRA_ARGS_OVERRIDE}}{{else}}{{.EXTRA_ARGS}}{{end}} <"$_files"; else echo "No matching
+        YAML files found"; fi; fi && echo "✅ yamllint passed" || { echo "❌ yamllint failed"; exit 1; }'
   config:init:
     run: once
     dir: "{{.USER_WORKING_DIR}}"
@@ -146,13 +177,15 @@ tasks:
     set: [errexit, nounset, pipefail]
     status:
       - >-
-        bash -lc '{{.UV_LOAD}}; command -v yamllint >/dev/null 2>&1 && { [ -z "{{.YAMLLINT_VERSION}}" ] || yamllint --version | grep -Fq "{{.YAMLLINT_VERSION}}"; }'
+        bash -lc '{{.UV_LOAD}}; command -v yamllint >/dev/null 2>&1 && { [ -z "{{.YAMLLINT_VERSION}}" ] || yamllint
+        --version | grep -Fq "{{.YAMLLINT_VERSION}}"; }'
     deps:
       - uv:install
     cmds:
       - echo 'Installing yamllint via uv...'
       - >-
-        bash -lc '{{.UV_LOAD}}; uv tool install --force "yamllint{{if .YAMLLINT_VERSION}}=={{.YAMLLINT_VERSION}}{{end}}"'
+        bash -lc '{{.UV_LOAD}}; uv tool install --force "yamllint{{if
+        .YAMLLINT_VERSION}}=={{.YAMLLINT_VERSION}}{{end}}"'
       - echo 'yamllint installed.'
   _install:yamlfix:unix:
     run: once
@@ -161,7 +194,8 @@ tasks:
     set: [errexit, nounset, pipefail]
     status:
       - >-
-        bash -lc '{{.UV_LOAD}}; command -v yamlfix >/dev/null 2>&1 && { [ -z "{{.YAMLFIX_VERSION}}" ] || yamlfix --version | grep -Fq "{{.YAMLFIX_VERSION}}"; }'
+        bash -lc '{{.UV_LOAD}}; command -v yamlfix >/dev/null 2>&1 && { [ -z "{{.YAMLFIX_VERSION}}" ] || yamlfix
+        --version | grep -Fq "{{.YAMLFIX_VERSION}}"; }'
     deps:
       - uv:install
     cmds:
@@ -175,7 +209,10 @@ tasks:
     platforms: [windows]
     status:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "$yamlfix = Get-Command yamlfix -ErrorAction SilentlyContinue; if (-not $yamlfix) { exit 1 }; $requested = '{{.YAMLFIX_VERSION}}'; if ([string]::IsNullOrWhiteSpace($requested) -or ((& $yamlfix.Source --version) -like ('*' + $requested + '*'))) { exit 0 }; exit 1"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$yamlfix = Get-Command yamlfix -ErrorAction
+        SilentlyContinue; if (-not $yamlfix) { exit 1 }; $requested = '{{.YAMLFIX_VERSION}}'; if
+        ([string]::IsNullOrWhiteSpace($requested) -or ((& $yamlfix.Source --version) -like ('*' + $requested + '*'))) {
+        exit 0 }; exit 1"
     deps:
       - uv:install
     cmds:
@@ -188,7 +225,10 @@ tasks:
     platforms: [windows]
     status:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "$yamllint = Get-Command yamllint -ErrorAction SilentlyContinue; if (-not $yamllint) { exit 1 }; $requested = '{{.YAMLLINT_VERSION}}'; if ([string]::IsNullOrWhiteSpace($requested) -or ((& $yamllint.Source --version) -like ('*' + $requested + '*'))) { exit 0 }; exit 1"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$yamllint = Get-Command yamllint -ErrorAction
+        SilentlyContinue; if (-not $yamllint) { exit 1 }; $requested = '{{.YAMLLINT_VERSION}}'; if
+        ([string]::IsNullOrWhiteSpace($requested) -or ((& $yamllint.Source --version) -like ('*' + $requested + '*'))) {
+        exit 0 }; exit 1"
     deps:
       - uv:install
     cmds:
@@ -212,7 +252,8 @@ tasks:
     platforms: [windows]
     status:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command yamllint -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command yamllint -ErrorAction SilentlyContinue)
+        { exit 1 } else { exit 0 }"
     cmds:
       - echo Removing yamllint via uv...
       - uv tool uninstall yamllint
@@ -228,7 +269,8 @@ tasks:
     cmds:
       - echo 'Upgrading yamllint via uv...'
       - >-
-        bash -lc '{{.UV_LOAD}}; uv tool install --force "yamllint{{if .YAMLLINT_VERSION}}=={{.YAMLLINT_VERSION}}{{end}}"'
+        bash -lc '{{.UV_LOAD}}; uv tool install --force "yamllint{{if
+        .YAMLLINT_VERSION}}=={{.YAMLLINT_VERSION}}{{end}}"'
       - echo 'yamllint upgraded.'
   _upgrade:windows:
     run: once
@@ -236,7 +278,8 @@ tasks:
     platforms: [windows]
     preconditions:
       - sh: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command yamllint -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command yamllint -ErrorAction
+          SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: yamllint is not installed. Run task install first.
     cmds:
       - echo Upgrading yamllint via uv...
