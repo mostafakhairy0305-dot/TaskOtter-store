@@ -1,19 +1,15 @@
 ---
 version: "3"
-
 output:
   group:
     begin: "::group::{{.TASK}}"
     end: "::endgroup::"
     error_only: false
-
 silent: true
-
 includes:
   skipfiles:
     taskfile: ../internal/skipfiles/Taskfile.yml
     internal: true
-
 vars:
   INSTALL_DIR_UNIX: "/usr/local"
   GO_ROOT_UNIX: "{{.INSTALL_DIR_UNIX}}/go"
@@ -48,7 +44,6 @@ vars:
         gobin="${gopath:-$HOME/go}/bin"
       fi
       printf '%s' "$gobin"
-
 tasks:
   default:
     run: once
@@ -56,7 +51,6 @@ tasks:
     summary: Display the list of available Go-related tasks defined in this Taskfile.
     cmds:
       - task --list
-
   install:
     run: once
     desc: Install Go on the current operating system
@@ -71,7 +65,6 @@ tasks:
       - task: _install:linux:tarball
       - task: _install:windows:msi
       - task: _shell:setup:linux
-
   install:undo:
     run: once
     desc: Remove Go from the current operating system
@@ -90,7 +83,6 @@ tasks:
       - task: _install:undo:macos
       - task: _install:undo:linux
       - task: _install:undo:windows
-
   install:golangci-lint:
     run: once
     desc: Install golangci-lint globally
@@ -99,17 +91,10 @@ tasks:
       - install
     cmds:
       - >-
-        GOBIN="{{.GLOBAL_GO_BIN}}"
-        go install
-        github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{default "latest" .GOLANGCI_LINT_VERSION}}
+        GOBIN="{{.GLOBAL_GO_BIN}}" go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{default "latest" .GOLANGCI_LINT_VERSION}}
     status:
       - >-
-        test -x "{{.GLOBAL_GO_BIN}}/golangci-lint"
-        && { test -z "{{.GOLANGCI_LINT_VERSION}}" || test "{{.GOLANGCI_LINT_VERSION}}" = "latest"
-        || go version -m "{{.GLOBAL_GO_BIN}}/golangci-lint"
-        | awk -v want="{{.GOLANGCI_LINT_VERSION}}"
-        '$1 == "mod" && $3 == want { found = 1 } END { exit !found }'; }
-
+        test -x "{{.GLOBAL_GO_BIN}}/golangci-lint" && { test -z "{{.GOLANGCI_LINT_VERSION}}" || test "{{.GOLANGCI_LINT_VERSION}}" = "latest" || go version -m "{{.GLOBAL_GO_BIN}}/golangci-lint" | awk -v want="{{.GOLANGCI_LINT_VERSION}}" '$1 == "mod" && $3 == want { found = 1 } END { exit !found }'; }
   install:govulncheck:
     run: once
     desc: Install govulncheck globally
@@ -118,16 +103,10 @@ tasks:
       - install
     cmds:
       - >-
-        GOBIN="{{.GLOBAL_GO_BIN}}"
-        go install golang.org/x/vuln/cmd/govulncheck@{{default "latest" .GOVULNCHECK_VERSION}}
+        GOBIN="{{.GLOBAL_GO_BIN}}" go install golang.org/x/vuln/cmd/govulncheck@{{default "latest" .GOVULNCHECK_VERSION}}
     status:
       - >-
-        test -x "{{.GLOBAL_GO_BIN}}/govulncheck"
-        && { test -z "{{.GOVULNCHECK_VERSION}}" || test "{{.GOVULNCHECK_VERSION}}" = "latest"
-        || go version -m "{{.GLOBAL_GO_BIN}}/govulncheck"
-        | awk -v want="{{.GOVULNCHECK_VERSION}}"
-        '$1 == "mod" && $3 == want { found = 1 } END { exit !found }'; }
-
+        test -x "{{.GLOBAL_GO_BIN}}/govulncheck" && { test -z "{{.GOVULNCHECK_VERSION}}" || test "{{.GOVULNCHECK_VERSION}}" = "latest" || go version -m "{{.GLOBAL_GO_BIN}}/govulncheck" | awk -v want="{{.GOVULNCHECK_VERSION}}" '$1 == "mod" && $3 == want { found = 1 } END { exit !found }'; }
   install:gosec:
     run: once
     desc: Install gosec globally
@@ -136,16 +115,10 @@ tasks:
       - install
     cmds:
       - >-
-        GOBIN="{{.GLOBAL_GO_BIN}}"
-        go install github.com/securego/gosec/v2/cmd/gosec@{{default "latest" .GOSEC_VERSION}}
+        GOBIN="{{.GLOBAL_GO_BIN}}" go install github.com/securego/gosec/v2/cmd/gosec@{{default "latest" .GOSEC_VERSION}}
     status:
       - >-
-        test -x "{{.GLOBAL_GO_BIN}}/gosec"
-        && { test -z "{{.GOSEC_VERSION}}" || test "{{.GOSEC_VERSION}}" = "latest"
-        || go version -m "{{.GLOBAL_GO_BIN}}/gosec"
-        | awk -v want="{{.GOSEC_VERSION}}"
-        '$1 == "mod" && $3 == want { found = 1 } END { exit !found }'; }
-
+        test -x "{{.GLOBAL_GO_BIN}}/gosec" && { test -z "{{.GOSEC_VERSION}}" || test "{{.GOSEC_VERSION}}" = "latest" || go version -m "{{.GLOBAL_GO_BIN}}/gosec" | awk -v want="{{.GOSEC_VERSION}}" '$1 == "mod" && $3 == want { found = 1 } END { exit !found }'; }
   fmt:
     run: once
     desc: Format Go files with golangci-lint formatters
@@ -155,7 +128,6 @@ tasks:
       to skip. Pass CLI arguments after -- to override the default target.
     cmds:
       - task: golangci-lint:fmt
-
   fmt:check:
     run: once
     desc: Check Go file formatting with golangci-lint formatters
@@ -166,7 +138,6 @@ tasks:
       path glob for files to skip. Use fmt to apply fixes.
     deps:
       - golangci-lint:fmt:check
-
   lint:
     run: once
     desc: Run all Go lint and security checks
@@ -179,7 +150,6 @@ tasks:
       - golangci-lint:fmt:check
       - govulncheck:lint
       - gosec:lint
-
   lint:fix:
     run: once
     desc: Auto-fix Go lint and formatting issues
@@ -191,7 +161,6 @@ tasks:
     cmds:
       - task: golangci-lint:lint:fix
       - task: fmt
-
   golangci-lint:lint:
     run: once
     desc: Lint Go packages with golangci-lint
@@ -207,7 +176,6 @@ tasks:
         vars:
           GO_LINT_FIX: ""
           GO_LINT_ARGS: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}"
-
   golangci-lint:lint:fix:
     run: once
     desc: Auto-fix Go lint issues with golangci-lint
@@ -223,10 +191,10 @@ tasks:
         vars:
           GO_LINT_FIX: "--fix"
           GO_LINT_ARGS: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}"
-
   _golangci-lint:lint:
     run: once
     internal: true
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - cmd: |
           skip_pattern='{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}}
@@ -266,28 +234,24 @@ tasks:
           exit "$lint_status"
         platforms: [linux, darwin]
       - cmd: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "$ErrorActionPreference='Stop';
-          $skipPattern = '{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}}
-          {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}';
-          if (-not $skipPattern) {
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $skipPattern = '{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}} {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}'; if (-not $skipPattern) {
+
             & '{{.GLOBAL_GO_BIN}}/golangci-lint' run
               {{.GO_LINT_FIX}}
               {{.GO_LINT_ARGS}};
             exit $LASTEXITCODE;
-          };
-          $configPath = (& '{{.GLOBAL_GO_BIN}}/golangci-lint' config path 2>$null | Select-Object -First 1);
-          if ($LASTEXITCODE -ne 0) {
+          }; $configPath = (& '{{.GLOBAL_GO_BIN}}/golangci-lint' config path 2>$null | Select-Object -First 1); if ($LASTEXITCODE -ne 0) {
+
             $configPath = '';
-          };
-          if ($configPath) {
+          }; if ($configPath) {
+
             $configPath = (Resolve-Path -LiteralPath $configPath).Path;
             $configDir = Split-Path -Parent $configPath;
           } else {
+
             $configDir = (Get-Location).Path;
-          };
-          $overlayConfig = Join-Path $configDir ('.golangci-taskotter.' + [Guid]::NewGuid().ToString('N') + '.yml');
-          try {
+          }; $overlayConfig = Join-Path $configDir ('.golangci-taskotter.' + [Guid]::NewGuid().ToString('N') + '.yml'); try {
+
             & task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
               prepare-overlay
               'SKIPFILES_TOOL=golangci'
@@ -303,11 +267,10 @@ tasks:
               --config $overlayConfig;
             $exitCode = $LASTEXITCODE;
           } finally {
-            Remove-Item -LiteralPath $overlayConfig -Force -ErrorAction SilentlyContinue;
-          };
-          exit $exitCode"
-        platforms: [windows]
 
+            Remove-Item -LiteralPath $overlayConfig -Force -ErrorAction SilentlyContinue;
+          }; exit $exitCode"
+        platforms: [windows]
   golangci-lint:fmt:
     run: once
     desc: Format Go files with golangci-lint formatters
@@ -323,7 +286,6 @@ tasks:
         vars:
           GO_FMT_DIFF: ""
           GO_FMT_TARGETS: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}"
-
   golangci-lint:fmt:check:
     run: once
     desc: Check Go formatting with golangci-lint formatters
@@ -340,10 +302,10 @@ tasks:
         vars:
           GO_FMT_DIFF: "--diff"
           GO_FMT_TARGETS: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}.{{end}}"
-
   _golangci-lint:fmt:
     run: once
     internal: true
+    dir: "{{.USER_WORKING_DIR}}"
     cmds:
       - cmd: |
           skip_pattern='{{if .GO_FMT_SKIP_PATTERN_OVERRIDE}}{{.GO_FMT_SKIP_PATTERN_OVERRIDE}}
@@ -393,19 +355,15 @@ tasks:
               {{.GO_FMT_FORMATTER_FLAGS}} <"$file_list"
         platforms: [linux, darwin]
       - cmd: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "$ErrorActionPreference='Stop';
-          $skipPattern = '{{if .GO_FMT_SKIP_PATTERN_OVERRIDE}}{{.GO_FMT_SKIP_PATTERN_OVERRIDE}}
-          {{- else}}{{.GO_FMT_SKIP_PATTERN}}{{end}}';
-          if (-not $skipPattern) {
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $skipPattern = '{{if .GO_FMT_SKIP_PATTERN_OVERRIDE}}{{.GO_FMT_SKIP_PATTERN_OVERRIDE}} {{- else}}{{.GO_FMT_SKIP_PATTERN}}{{end}}'; if (-not $skipPattern) {
+
             & '{{.GLOBAL_GO_BIN}}/golangci-lint' fmt
               {{.GO_FMT_DIFF}}
               {{.GO_FMT_FORMATTER_FLAGS}}
               {{.GO_FMT_TARGETS}};
             exit $LASTEXITCODE;
-          };
-          $targets = '{{.GO_FMT_TARGETS}}' -split '\s+';
-          $files = @($targets | ForEach-Object {
+          }; $targets = '{{.GO_FMT_TARGETS}}' -split '\s+'; $files = @($targets | ForEach-Object {
+
             $target = $_ -replace '\.\.\.$', '';
             $target = $target.TrimEnd('/').TrimEnd('\');
             if (-not $target) { $target = '.' };
@@ -415,15 +373,18 @@ tasks:
               Get-ChildItem -LiteralPath $target -Recurse -Filter '*.go' -File;
             };
           } | Where-Object {
+
             $path = [string](Resolve-Path -LiteralPath $_.FullName -Relative);
             $path = $path.Replace('\', '/');
             $path -notlike '*/node_modules/*' -and
               $path -notlike '*/testdata/*' -and
               $path -notlike '*/vendor/*';
           } | ForEach-Object FullName |
+
             task --silent --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
               filter ('SKIPFILES_PATTERN=' + $skipPattern));
           if ($files.Count -gt 0) {
+
             & '{{.GLOBAL_GO_BIN}}/golangci-lint' fmt
               {{.GO_FMT_DIFF}}
               {{.GO_FMT_FORMATTER_FLAGS}}
@@ -431,7 +392,6 @@ tasks:
             exit $LASTEXITCODE;
           }"
         platforms: [windows]
-
   govulncheck:lint:
     run: once
     desc: Scan Go packages with govulncheck
@@ -447,7 +407,6 @@ tasks:
         vars:
           GO_ANALYSIS_BINARY: "{{.GLOBAL_GO_BIN}}/govulncheck"
           GO_ANALYSIS_PREFIX_ARGS: ""
-
   gosec:lint:
     run: once
     desc: Scan Go packages with gosec
@@ -463,7 +422,6 @@ tasks:
         vars:
           GO_ANALYSIS_BINARY: "{{.GLOBAL_GO_BIN}}/gosec"
           GO_ANALYSIS_PREFIX_ARGS: "-exclude-generated"
-
   _go:package-analysis:
     internal: true
     dir: "{{.USER_WORKING_DIR}}"
@@ -506,33 +464,23 @@ tasks:
           xargs -0 "{{.GO_ANALYSIS_BINARY}}" {{.GO_ANALYSIS_PREFIX_ARGS}} $options <"$package_list"
         platforms: [linux, darwin]
       - cmd: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "$skipPattern='{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}}
-          {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}';
-          if (-not $skipPattern) {
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "$skipPattern='{{if .GO_LINT_SKIP_PATTERN_OVERRIDE}}{{.GO_LINT_SKIP_PATTERN_OVERRIDE}} {{- else}}{{.GO_LINT_SKIP_PATTERN}}{{end}}'; if (-not $skipPattern) {
+
             & '{{.GO_ANALYSIS_BINARY}}' {{.GO_ANALYSIS_PREFIX_ARGS}}
               {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}};
             exit $LASTEXITCODE
-          };
-          $targets=@(); $options=@();
-          foreach ($argument in '{{.CLI_ARGS}}'.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)) {
+          }; $targets=@(); $options=@(); foreach ($argument in '{{.CLI_ARGS}}'.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)) {
+
             if ($argument -eq '.' -or $argument.Contains('/') -or
                 $argument.Contains('\') -or $argument.EndsWith('...')) {
               $targets += $argument
             } else { $options += $argument }
-          };
-          if (-not $targets) { $targets=@('./...') };
-          $env:SKIPFILES_PATTERN = $skipPattern;
-          $env:SKIPFILES_GO_TARGETS = $targets -join ' ';
-          $packages=@(& task --silent
+          }; if (-not $targets) { $targets=@('./...') }; $env:SKIPFILES_PATTERN = $skipPattern; $env:SKIPFILES_GO_TARGETS = $targets -join ' '; $packages=@(& task --silent
+
             --taskfile '{{.TASKFILE_DIR}}/../internal/skipfiles/Taskfile.yml'
             go-packages);
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
-          if (-not $packages) { Write-Host 'No matching Go packages found'; exit 0 };
-          & '{{.GO_ANALYSIS_BINARY}}' {{.GO_ANALYSIS_PREFIX_ARGS}} @options @packages;
-          exit $LASTEXITCODE"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; if (-not $packages) { Write-Host 'No matching Go packages found'; exit 0 }; & '{{.GO_ANALYSIS_BINARY}}' {{.GO_ANALYSIS_PREFIX_ARGS}} @options @packages; exit $LASTEXITCODE"
         platforms: [windows]
-
   upgrade:
     run: once
     desc: Upgrade Go to the selected or latest stable release
@@ -553,7 +501,6 @@ tasks:
       - task: _shell:setup:linux
         vars:
           FORCE: "true"
-
   version:
     run: once
     desc: Show the installed Go version
@@ -563,7 +510,6 @@ tasks:
     cmds:
       - task: _version:unix
       - task: _version:windows
-
   which:
     run: once
     desc: Show the path to the Go binary
@@ -573,7 +519,6 @@ tasks:
     cmds:
       - task: _which:unix
       - task: _which:windows
-
   verify:
     run: once
     desc: Verify the Go installation and environment
@@ -586,7 +531,6 @@ tasks:
     cmds:
       - task: _verify:unix
       - task: _verify:windows
-
   test:
     run: once
     dir: "{{.USER_WORKING_DIR}}"
@@ -597,7 +541,6 @@ tasks:
       `task go:test -- -race -run TestName ./internal/...`.
     cmds:
       - go test {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}
-
   bench:
     run: once
     dir: "{{.USER_WORKING_DIR}}"
@@ -609,7 +552,6 @@ tasks:
       `task go:bench -- -bench BenchmarkName ./internal/parser`.
     cmds:
       - go test -run '^$' -bench . -benchmem {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}
-
   fuzz:
     run: once
     dir: "{{.USER_WORKING_DIR}}"
@@ -623,7 +565,6 @@ tasks:
       GO_FUZZ_TIME: '{{if .GO_FUZZTIME}}{{.GO_FUZZTIME}}{{else}}30s{{end}}'
     cmds:
       - go test -run '^$' -fuzztime '{{.GO_FUZZ_TIME}}' {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}-fuzz . .{{end}}
-
   coverage:
     run: once
     dir: "{{.USER_WORKING_DIR}}"
@@ -682,10 +623,8 @@ tasks:
           awk '{ printf "%5.1f%%  %s\n", $2, $3 }' "$coverage_sorted"
         platforms: [linux, darwin]
       - cmd: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "$ErrorActionPreference='Stop';
-          $coverageLog=[System.IO.Path]::GetTempFileName();
-          try {
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $coverageLog=[System.IO.Path]::GetTempFileName(); try {
+
             & go test -covermode atomic -coverprofile '{{.GO_COVER_OUT}}'
               {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}./...{{end}}
               *> $coverageLog;
@@ -733,10 +672,10 @@ tasks:
                 Write-Output ($percentage + '%  ' + $_.Package);
               };
           } finally {
+
             Remove-Item -LiteralPath $coverageLog -Force -ErrorAction SilentlyContinue;
           }"
         platforms: [windows]
-
   _install:macos:brew:
     run: once
     internal: true
@@ -754,7 +693,6 @@ tasks:
       - brew update
       - brew install go
       - echo 'Go installed successfully.'
-
   _upgrade:macos:brew:
     run: once
     internal: true
@@ -776,7 +714,6 @@ tasks:
         else
           brew install go
         fi
-
   _install:macos:pkg:
     run: once
     internal: true
@@ -788,18 +725,12 @@ tasks:
       GO_DARWIN_UNAME_ARCH:
         sh: uname -m
       GO_DARWIN_ARCH: >-
-        {{if or (eq .GO_DARWIN_UNAME_ARCH "arm64") (eq .GO_DARWIN_UNAME_ARCH "aarch64")}}arm64
-        {{- else if or (eq .GO_DARWIN_UNAME_ARCH "x86_64") (eq .GO_DARWIN_UNAME_ARCH "amd64")}}amd64
-        {{- else}}{{.GO_DARWIN_UNAME_ARCH}}{{end}}
+        {{if or (eq .GO_DARWIN_UNAME_ARCH "arm64") (eq .GO_DARWIN_UNAME_ARCH "aarch64")}}arm64 {{- else if or (eq .GO_DARWIN_UNAME_ARCH "x86_64") (eq .GO_DARWIN_UNAME_ARCH "amd64")}}amd64 {{- else}}{{.GO_DARWIN_UNAME_ARCH}}{{end}}
       GO_DARWIN_ARCH_SUPPORTED: >-
-        {{if or (eq .GO_DARWIN_ARCH "arm64") (eq .GO_DARWIN_ARCH "amd64")}}true
-        {{- else}}false{{end}}
+        {{if or (eq .GO_DARWIN_ARCH "arm64") (eq .GO_DARWIN_ARCH "amd64")}}true {{- else}}false{{end}}
     status:
       - >-
-        [ -z "{{.GO_VERSION}}" ]
-        || { [ "{{default "false" .FORCE}}" != "true" ]
-        && test -x "{{.GO_CMD_UNIX}}"
-        && [ "$("{{.GO_CMD_UNIX}}" version | awk '{print $3}')" = "{{.GO_VERSION}}" ]; }
+        [ -z "{{.GO_VERSION}}" ] || { [ "{{default "false" .FORCE}}" != "true" ] && test -x "{{.GO_CMD_UNIX}}" && [ "$("{{.GO_CMD_UNIX}}" version | awk '{print $3}')" = "{{.GO_VERSION}}" ]; }
     preconditions:
       - sh: 'case "{{.GO_VERSION}}" in ""|go*) exit 0 ;; *) exit 1 ;; esac'
         msg: GO_VERSION must use the official Go release format, for example go1.26.2.
@@ -844,7 +775,6 @@ tasks:
           else
             sudo installer -pkg "$work_dir/$package" -target /
           fi
-
   _install:linux:tarball:
     run: once
     internal: true
@@ -859,24 +789,13 @@ tasks:
       GO_UNAME_ARCH:
         sh: uname -m
       GO_LINUX_ARCH: >-
-        {{if or (eq .GO_UNAME_ARCH "x86_64") (eq .GO_UNAME_ARCH "amd64")}}amd64
-        {{- else if or (eq .GO_UNAME_ARCH "aarch64") (eq .GO_UNAME_ARCH "arm64")}}arm64
-        {{- else if eq .GO_UNAME_ARCH "armv6l"}}armv6l
-        {{- else if or (eq .GO_UNAME_ARCH "i386") (eq .GO_UNAME_ARCH "i686")}}386
-        {{- else if eq .GO_UNAME_ARCH "ppc64le"}}ppc64le
-        {{- else if eq .GO_UNAME_ARCH "s390x"}}s390x
-        {{- else}}{{.GO_UNAME_ARCH}}{{end}}
+        {{if or (eq .GO_UNAME_ARCH "x86_64") (eq .GO_UNAME_ARCH "amd64")}}amd64 {{- else if or (eq .GO_UNAME_ARCH "aarch64") (eq .GO_UNAME_ARCH "arm64")}}arm64 {{- else if eq .GO_UNAME_ARCH "armv6l"}}armv6l {{- else if or (eq .GO_UNAME_ARCH "i386") (eq .GO_UNAME_ARCH "i686")}}386 {{- else if eq .GO_UNAME_ARCH "ppc64le"}}ppc64le {{- else if eq .GO_UNAME_ARCH "s390x"}}s390x {{- else}}{{.GO_UNAME_ARCH}}{{end}}
       GO_LINUX_ARCH_SUPPORTED: >-
-        {{if or (eq .GO_LINUX_ARCH "amd64") (eq .GO_LINUX_ARCH "arm64")
-        (eq .GO_LINUX_ARCH "armv6l") (eq .GO_LINUX_ARCH "386")
-        (eq .GO_LINUX_ARCH "ppc64le") (eq .GO_LINUX_ARCH "s390x")}}true
-        {{- else}}false{{end}}
+        {{if or (eq .GO_LINUX_ARCH "amd64") (eq .GO_LINUX_ARCH "arm64") (eq .GO_LINUX_ARCH "armv6l") (eq .GO_LINUX_ARCH "386") (eq .GO_LINUX_ARCH "ppc64le") (eq .GO_LINUX_ARCH "s390x")}}true {{- else}}false{{end}}
     status:
       - '[ "{{default "false" .FORCE}}" != "true" ]'
       - >-
-        [ -z "{{.GO_VERSION}}" ]
-        || { command -v go >/dev/null 2>&1
-        && [ "$(go version | awk '{print $3}')" = "{{.GO_VERSION}}" ]; }
+        [ -z "{{.GO_VERSION}}" ] || { command -v go >/dev/null 2>&1 && [ "$(go version | awk '{print $3}')" = "{{.GO_VERSION}}" ]; }
       - command -v go >/dev/null 2>&1
     preconditions:
       - sh: 'case "{{.GO_VERSION}}" in ""|go*) exit 0 ;; *) exit 1 ;; esac'
@@ -957,7 +876,6 @@ tasks:
           fi
           privileged rm -rf "{{.GO_ROOT_UNIX}}.old"
           echo "Go installed to {{.GO_ROOT_UNIX}}."
-
   _install:windows:msi:
     run: once
     internal: true
@@ -968,25 +886,17 @@ tasks:
     platforms: [windows]
     status:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if ('{{default "false" .FORCE}}' -eq 'true') { exit 1 };
-        $requested = '{{.GO_VERSION}}';
-        if (Get-Command go -ErrorAction SilentlyContinue) {
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if ('{{default "false" .FORCE}}' -eq 'true') { exit 1 }; $requested = '{{.GO_VERSION}}'; if (Get-Command go -ErrorAction SilentlyContinue) {
+
           if ([string]::IsNullOrWhiteSpace($requested)
           -or ((& go version).Split()[2] -eq $requested)) { exit 0 }
-        };
-        exit 1"
+        }; exit 1"
     preconditions:
       - sh: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "$version = '{{.GO_VERSION}}';
-          if ([string]::IsNullOrWhiteSpace($version)
-          -or $version.StartsWith('go')) { exit 0 } else { exit 1 }"
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "$version = '{{.GO_VERSION}}'; if ([string]::IsNullOrWhiteSpace($version) -or $version.StartsWith('go')) { exit 0 } else { exit 1 }"
         msg: GO_VERSION must use the official Go release format, for example go1.26.2.
       - sh: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64'
-          -or $env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { exit 0 } else { exit 1 }"
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64' -or $env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { exit 0 } else { exit 1 }"
         msg: Go MSI install supports AMD64 and ARM64 Windows architectures.
     cmds:
       # Resolve the version, pick the architecture, download, verify and install
@@ -994,17 +904,11 @@ tasks:
       # required staging the version in a shared TEMP file and duplicating the
       # download for AMD64 and ARM64.
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "$ErrorActionPreference='Stop';
-        $version = '{{.GO_VERSION}}';
-        if ([string]::IsNullOrWhiteSpace($version)) {
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $version = '{{.GO_VERSION}}'; if ([string]::IsNullOrWhiteSpace($version)) {
+
           $version = ((Invoke-RestMethod -Uri '{{.GO_VERSION_URL}}') -split \"`n\")[0].Trim()
-        };
-        $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'amd64' };
-        $package = \"$version.windows-$arch.msi\";
-        $workDir = Join-Path $env:TEMP ('taskotter-go-' + [Guid]::NewGuid().ToString('N'));
-        New-Item -ItemType Directory -Path $workDir | Out-Null;
-        try {
+        }; $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'amd64' }; $package = \"$version.windows-$arch.msi\"; $workDir = Join-Path $env:TEMP ('taskotter-go-' + [Guid]::NewGuid().ToString('N')); New-Item -ItemType Directory -Path $workDir | Out-Null; try {
+
           $installer = Join-Path $workDir $package;
           Write-Host \"Downloading $package...\";
           Invoke-WebRequest -Uri \"{{.GO_DOWNLOAD_BASE_URL}}/$package\" -OutFile $installer;
@@ -1017,9 +921,9 @@ tasks:
           Start-Process msiexec.exe -Wait
             -ArgumentList @('/i', $installer, '/quiet', '/norestart');
         } finally {
+
           Remove-Item -LiteralPath $workDir -Recurse -Force -ErrorAction SilentlyContinue;
         }"
-
   _install:undo:macos:
     run: once
     internal: true
@@ -1037,7 +941,6 @@ tasks:
           rm -rf "{{.GO_ROOT_UNIX}}"
         fi
       - echo 'Go removed.'
-
   _install:undo:linux:
     run: once
     internal: true
@@ -1055,24 +958,18 @@ tasks:
       - cmd: sudo rm -rf "{{.GO_ROOT_UNIX}}"
         if: '[ "$(id -u)" -ne 0 ]'
       - echo 'Go removed.'
-
   _install:undo:windows:
     run: once
     internal: true
     platforms: [windows]
     status:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command go -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command go -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
     cmds:
       - echo Removing Go...
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "$pkg = Get-Package -Name 'Go Programming Language*' -ErrorAction SilentlyContinue;
-        if ($pkg) { $pkg | Uninstall-Package -Force }
-        else { Write-Warning 'Go package not found via Get-Package. Remove it manually from Apps & Features.' }"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$pkg = Get-Package -Name 'Go Programming Language*' -ErrorAction SilentlyContinue; if ($pkg) { $pkg | Uninstall-Package -Force } else { Write-Warning 'Go package not found via Get-Package. Remove it manually from Apps & Features.' }"
       - echo Go removed. Restart your terminal.
-
   _shell:setup:linux:
     run: once
     internal: true
@@ -1098,7 +995,6 @@ tasks:
           FORCE: "{{.FORCE}}"
           GO_PROFILE: "$HOME/.profile"
         if: '[ "$(basename "${SHELL:-}")" != "zsh" ] && [ "$(basename "${SHELL:-}")" != "bash" ]'
-
   _shell:setup:linux:profile:
     run: once
     internal: true
@@ -1111,8 +1007,7 @@ tasks:
         - GO_PROFILE
     status:
       - >-
-        [ "{{default "false" .FORCE}}" != "true" ] && command -v go >/dev/null 2>&1
-        || grep -qF "{{.GO_BIN_UNIX}}" "{{.GO_PROFILE}}" 2>/dev/null
+        [ "{{default "false" .FORCE}}" != "true" ] && command -v go >/dev/null 2>&1 || grep -qF "{{.GO_BIN_UNIX}}" "{{.GO_PROFILE}}" 2>/dev/null
     cmds:
       # The header and the export are appended by a single guarded block. As two
       # separately guarded commands, an interrupt between them left a "# Go"
@@ -1124,7 +1019,6 @@ tasks:
             printf '\n# Go\nexport PATH="$PATH:{{.GO_BIN_UNIX}}"\n' >> "{{.GO_PROFILE}}"
           fi
       - echo "Go PATH added to {{.GO_PROFILE}}. Restart your shell or run export PATH=\"\$PATH:{{.GO_BIN_UNIX}}\"."
-
   _version:unix:
     run: once
     internal: true
@@ -1145,7 +1039,6 @@ tasks:
           else
             "{{.GO_CMD_UNIX}}" version
           fi
-
   _version:windows:
     run: once
     internal: true
@@ -1154,12 +1047,10 @@ tasks:
     platforms: [windows]
     preconditions:
       - sh: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Go is not installed or not available in PATH.
     cmds:
       - go version
-
   _which:unix:
     run: once
     internal: true
@@ -1178,7 +1069,6 @@ tasks:
           else
             printf '%s\n' '{{.GO_CMD_UNIX}}'
           fi
-
   _which:windows:
     run: once
     internal: true
@@ -1187,12 +1077,10 @@ tasks:
     platforms: [windows]
     preconditions:
       - sh: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Go is not installed or not available in PATH.
     cmds:
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Command go).Source"
-
   _verify:unix:
     run: once
     internal: true
@@ -1213,7 +1101,6 @@ tasks:
           fi
           "$go_cmd" version
           "$go_cmd" env GOROOT GOPATH
-
   _verify:windows:
     run: once
     internal: true
@@ -1222,8 +1109,7 @@ tasks:
     platforms: [windows]
     preconditions:
       - sh: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command go -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Go is not installed or not available in PATH.
     cmds:
       - go version
