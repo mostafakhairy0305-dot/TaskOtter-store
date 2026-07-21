@@ -247,4 +247,10 @@ Linux installs replace `INSTALL_DIR_UNIX/go`. The task uses `sudo` when it is
 not already running as root, then adds `GO_BIN_UNIX` to the current user's shell
 profile if Go is not already available on PATH.
 
+Downloaded Go archives are checked against the official `.sha256` published
+alongside each release, and the new toolchain is extracted and smoke-tested in a
+temporary directory before it replaces `INSTALL_DIR_UNIX/go`. A failed download,
+a checksum mismatch, or a bad archive therefore leaves the existing installation
+untouched.
+
 macOS requires Homebrew to already be installed.
