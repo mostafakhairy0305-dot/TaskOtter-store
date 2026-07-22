@@ -16,11 +16,18 @@ task -t taskfiles/proto/Taskfile.yml gen
 task -t taskfiles/proto/Taskfile.yml version
 ```
 
-Lint a specific proto directory:
+Generate from a specific proto directory and keep generated files relative to
+the Go module root:
 
 ```sh
-task -t taskfiles/proto/Taskfile.yml gen PROTO_PATH=api PROTO_PATTERN="v1/*.proto"
+task -t taskfiles/proto/Taskfile.yml gen \
+  PROTO_PATH=api \
+  PROTO_PATTERN="v1/*.proto" \
+  GO_MODULE=github.com/example/project
 ```
+
+`GO_MODULE` must match the module-path prefix used by the proto files'
+`go_package` options. Leave it empty when module-relative output is not needed.
 
 Remove generated files before regenerating:
 
@@ -38,6 +45,7 @@ includes:
     vars:
       PROTO_PATH_OVERRIDE: "{{.PROTO_PATH}}"
       PROTO_PATTERN_OVERRIDE: "{{.PROTO_PATTERN}}"
+      GO_MODULE_OVERRIDE: "{{.GO_MODULE}}"
 ```
 
 Then run:
@@ -65,6 +73,7 @@ task proto:version
 |---|---|---|
 | `GO_CMD` | resolved from PATH | Go executable used to install protobuf plugins |
 | `GLOBAL_GO_BIN` | from `go env` | Global Go bin directory where plugins are installed |
+| `GO_MODULE` | `""` | Module path stripped from generated output paths |
 | `PROTO_PATH` | `"."` | Search root and value passed to protoc `--proto_path` |
 | `PROTO_PATTERN` | `"*.proto"` | `find -name` pattern for discovering .proto source files |
 | `PROTOC_VERSION` | `"34.0"` | Pinned protoc release for Linux binary download |
@@ -79,4 +88,7 @@ task proto:version
 - Go is installed automatically through the shared Go module before installing or upgrading the protobuf plugins.
 - Go plugins are installed with `go install` into `GLOBAL_GO_BIN`. Ensure that directory is on your PATH.
 - The `gen` task prepends `GLOBAL_GO_BIN` to PATH so protoc can resolve the plugins automatically.
+- Included Taskfiles must pass generation settings through
+  `GO_MODULE_OVERRIDE`, `PROTO_PATH_OVERRIDE`, and `PROTO_PATTERN_OVERRIDE`, as
+  shown above.
 - On macOS and Windows, the package manager controls the protoc version — `PROTOC_VERSION` applies to Linux only.

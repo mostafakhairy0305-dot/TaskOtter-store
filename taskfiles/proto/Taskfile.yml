@@ -1,18 +1,14 @@
 ---
 version: "3"
-
 output:
   group:
     begin: "::group::{{.TASK}}"
     end: "::endgroup::"
     error_only: false
-
 silent: true
-
 includes:
   go:
     taskfile: ../go/Taskfile.yml
-
 vars:
   GO_CMD:
     sh: |
@@ -44,7 +40,6 @@ vars:
   PROTOC_GEN_GO_VERSION: "v1.36.5"
   PROTOC_GEN_GO_GRPC_VERSION: "v1.5.1"
   PROTOC_VERSION: "34.0"
-
 tasks:
   default:
     run: once
@@ -52,7 +47,6 @@ tasks:
     summary: Display the list of available protobuf-related tasks defined in this Taskfile.
     cmds:
       - task --list
-
   gen:
     run: once
     desc: Generate Go files from proto definitions
@@ -60,6 +54,13 @@ tasks:
       Run protoc to generate Go and gRPC source files from all .proto files
       matching PROTO_PATTERN under PROTO_PATH. Auto-installs protoc and the
       Go plugins globally if they are not already present in PATH.
+
+      Set GO_MODULE to the Go module path so protoc strips it from the
+      go_package option and writes next to the sources instead of into a
+      nested <module path>/ tree. Callers that include this Taskfile must use
+      GO_MODULE_OVERRIDE (and PROTO_PATH_OVERRIDE / PROTO_PATTERN_OVERRIDE):
+      the vars declared below outrank vars supplied by an inclusion, so the
+      plain names are only settable from the environment.
     deps:
       - install
     cmds:
@@ -70,6 +71,7 @@ tasks:
           PROTO_PATTERN: "{{.PROTO_PATTERN}}"
           PROTO_PATTERN_OVERRIDE: "{{.PROTO_PATTERN_OVERRIDE}}"
           GO_MODULE: "{{.GO_MODULE}}"
+          GO_MODULE_OVERRIDE: "{{.GO_MODULE_OVERRIDE}}"
       - task: _gen:windows
         vars:
           PROTO_PATH: "{{.PROTO_PATH}}"
@@ -77,7 +79,7 @@ tasks:
           PROTO_PATTERN: "{{.PROTO_PATTERN}}"
           PROTO_PATTERN_OVERRIDE: "{{.PROTO_PATTERN_OVERRIDE}}"
           GO_MODULE: "{{.GO_MODULE}}"
-
+          GO_MODULE_OVERRIDE: "{{.GO_MODULE_OVERRIDE}}"
   install:
     run: once
     desc: Install protoc and Go proto plugins on the current operating system
@@ -94,7 +96,6 @@ tasks:
       - task: _install:protoc:linux
       - task: _install:protoc:windows
       - task: _install:plugins
-
   install:undo:
     run: once
     desc: Remove protoc and Go proto plugins from the current operating system
@@ -113,7 +114,6 @@ tasks:
       - task: _install:undo:protoc:linux
       - task: _install:undo:protoc:windows
       - task: _install:undo:plugins
-
   upgrade:
     run: once
     desc: Upgrade protoc and Go proto plugins
@@ -130,7 +130,6 @@ tasks:
       - task: _install:plugins
         vars:
           FORCE: "true"
-
   ungen:
     run: once
     desc: Remove generated protobuf (.pb.go) files from the working tree
@@ -140,7 +139,6 @@ tasks:
     cmds:
       - task: _ungen:unix
       - task: _ungen:windows
-
   version:
     run: once
     desc: Show the installed protoc version
@@ -149,17 +147,17 @@ tasks:
       - install
     cmds:
       - protoc --version
-
   _gen:unix:
     run: once
     internal: true
     platforms: [darwin, linux]
     set: [errexit, nounset, pipefail]
     env:
-      GO_MODULE: "{{.GO_MODULE}}"
+      GO_MODULE: "{{.RESOLVED_GO_MODULE}}"
     vars:
       RESOLVED_PROTO_PATH: '{{if .PROTO_PATH_OVERRIDE}}{{.PROTO_PATH_OVERRIDE}}{{else}}{{.PROTO_PATH}}{{end}}'
       RESOLVED_PROTO_PATTERN: '{{default .PROTO_PATTERN .PROTO_PATTERN_OVERRIDE}}'
+      RESOLVED_GO_MODULE: '{{if .GO_MODULE_OVERRIDE}}{{.GO_MODULE_OVERRIDE}}{{else}}{{.GO_MODULE}}{{end}}'
     cmds:
       - |
         export PATH="{{.GLOBAL_GO_BIN}}:$PATH"
@@ -178,36 +176,32 @@ tasks:
           --go_out=. ${module_opts} \
           --go-grpc_out=. ${module_opts} \
           {} +
-
   _gen:windows:
     run: once
     internal: true
     platforms: [windows]
     env:
-      GO_MODULE: "{{.GO_MODULE}}"
+      GO_MODULE: "{{.RESOLVED_GO_MODULE}}"
     vars:
       RESOLVED_PROTO_PATH: '{{if .PROTO_PATH_OVERRIDE}}{{.PROTO_PATH_OVERRIDE}}{{else}}{{.PROTO_PATH}}{{end}}'
       RESOLVED_PROTO_PATTERN: '{{default .PROTO_PATTERN .PROTO_PATTERN_OVERRIDE}}'
+      RESOLVED_GO_MODULE: '{{if .GO_MODULE_OVERRIDE}}{{.GO_MODULE_OVERRIDE}}{{else}}{{.GO_MODULE}}{{end}}'
     cmds:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "$ErrorActionPreference='Stop';
-        $env:Path='{{.GLOBAL_GO_BIN}};' + $env:Path;
-        $moduleOpts = @();
-        if ($env:GO_MODULE) {
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $env:Path='{{.GLOBAL_GO_BIN}};' + $env:Path; $moduleOpts = @(); if ($env:GO_MODULE) {
+
           $moduleOpts = @('--go_opt=module=' + $env:GO_MODULE, '--go-grpc_opt=module=' + $env:GO_MODULE);
-        }
-        $protos = Get-ChildItem -Path '{{.RESOLVED_PROTO_PATH}}' -Recurse -Filter '{{.RESOLVED_PROTO_PATTERN}}' -File |
+        } $protos = Get-ChildItem -Path '{{.RESOLVED_PROTO_PATH}}' -Recurse -Filter '{{.RESOLVED_PROTO_PATTERN}}' -File |
+
           Where-Object { $_.FullName -notmatch '\\\.git\\' };
-        if (-not $protos) { throw 'No .proto files found' };
-        protoc
+        if (-not $protos) { throw 'No .proto files found' }; protoc
+
           --proto_path='{{.RESOLVED_PROTO_PATH}}'
           --go_out=.
           @($moduleOpts)
           --go-grpc_out=.
           @($moduleOpts)
           @($protos | ForEach-Object { $_.FullName })"
-
   _install:protoc:macos:
     run: once
     internal: true
@@ -222,7 +216,6 @@ tasks:
       - echo 'Installing protoc via Homebrew...'
       - brew install protobuf
       - echo 'protoc installed.'
-
   _install:protoc:linux:
     run: once
     internal: true
@@ -232,9 +225,7 @@ tasks:
       PROTOC_UNAME_ARCH:
         sh: uname -m
       PROTOC_ARCH: >-
-        {{if or (eq .PROTOC_UNAME_ARCH "x86_64") (eq .PROTOC_UNAME_ARCH "amd64")}}x86_64
-        {{- else if or (eq .PROTOC_UNAME_ARCH "aarch64") (eq .PROTOC_UNAME_ARCH "arm64")}}aarch_64
-        {{- else}}{{.PROTOC_UNAME_ARCH}}{{end}}
+        {{if or (eq .PROTOC_UNAME_ARCH "x86_64") (eq .PROTOC_UNAME_ARCH "amd64")}}x86_64 {{- else if or (eq .PROTOC_UNAME_ARCH "aarch64") (eq .PROTOC_UNAME_ARCH "arm64")}}aarch_64 {{- else}}{{.PROTOC_UNAME_ARCH}}{{end}}
       PROTOC_ARCHIVE: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}.zip"
       PROTOC_TMP_DIR: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}"
     status:
@@ -251,9 +242,7 @@ tasks:
       - echo 'Installing protoc v{{.PROTOC_VERSION}} for Linux ({{.PROTOC_ARCH}})...'
       - mkdir -p "{{.PROTOC_TMP_DIR}}"
       - >-
-        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}";
-        archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip";
-        curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
+        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}"; archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip"; curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
       - unzip -o "{{.PROTOC_ARCHIVE}}" -d "{{.PROTOC_TMP_DIR}}"
       - cmd: cp "{{.PROTOC_TMP_DIR}}/bin/protoc" /usr/local/bin/protoc
         if: '[ "$(id -u)" -eq 0 ]'
@@ -269,27 +258,21 @@ tasks:
         if: '[ "$(id -u)" -ne 0 ]'
       - rm -rf "{{.PROTOC_ARCHIVE}}" "{{.PROTOC_TMP_DIR}}"
       - echo 'protoc installed.'
-
   _install:protoc:windows:
     run: once
     internal: true
     platforms: [windows]
     status:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "$protoc = Get-Command protoc -ErrorAction SilentlyContinue;
-        if ($protoc -and ((& $protoc.Source --version) -eq 'libprotoc {{.PROTOC_VERSION}}')) { exit 0 };
-        exit 1"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$protoc = Get-Command protoc -ErrorAction SilentlyContinue; if ($protoc -and ((& $protoc.Source --version) -eq 'libprotoc {{.PROTOC_VERSION}}')) { exit 0 }; exit 1"
     preconditions:
       - sh: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command
-          "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Scoop is required to install protoc on Windows. Install it from https://scoop.sh and re-run this task.
     cmds:
       - echo Installing protoc via Scoop...
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop install protobuf"
       - echo protoc installed. Restart your terminal if protoc is not found.
-
   _install:plugins:
     run: once
     internal: true
@@ -299,8 +282,7 @@ tasks:
       - test -x "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc"
       - '"{{.GLOBAL_GO_BIN}}/protoc-gen-go" --version | grep -Fqx "protoc-gen-go {{.PROTOC_GEN_GO_VERSION}}"'
       - >-
-        "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc" --version | grep -Fqx
-        "protoc-gen-go-grpc {{.PROTOC_GEN_GO_GRPC_VERSION}}"
+        "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc" --version | grep -Fqx "protoc-gen-go-grpc {{.PROTOC_GEN_GO_GRPC_VERSION}}"
       - '[ "{{.FORCE}}" != "true" ]'
     preconditions:
       - sh: command -v "{{.GO_CMD}}" >/dev/null 2>&1 || test -x "{{.GO_CMD}}"
@@ -308,13 +290,10 @@ tasks:
     cmds:
       - mkdir -p "{{.GLOBAL_GO_BIN}}"
       - >-
-        GOBIN="{{.GLOBAL_GO_BIN}}"
-        "{{.GO_CMD}}" install google.golang.org/protobuf/cmd/protoc-gen-go@{{.PROTOC_GEN_GO_VERSION}}
+        GOBIN="{{.GLOBAL_GO_BIN}}" "{{.GO_CMD}}" install google.golang.org/protobuf/cmd/protoc-gen-go@{{.PROTOC_GEN_GO_VERSION}}
       - >-
-        GOBIN="{{.GLOBAL_GO_BIN}}"
-        "{{.GO_CMD}}" install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
+        GOBIN="{{.GLOBAL_GO_BIN}}" "{{.GO_CMD}}" install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
       - echo 'protoc Go plugins installed.'
-
   _install:undo:protoc:macos:
     run: once
     internal: true
@@ -329,7 +308,6 @@ tasks:
       - echo 'Removing protoc via Homebrew...'
       - brew uninstall protobuf
       - echo 'protoc removed.'
-
   _install:undo:protoc:linux:
     run: once
     internal: true
@@ -348,27 +326,23 @@ tasks:
       - cmd: sudo rm -rf /usr/local/include/google/protobuf
         if: '[ "$(id -u)" -ne 0 ]'
       - echo 'protoc removed.'
-
   _install:undo:protoc:windows:
     run: once
     internal: true
     platforms: [windows]
     status:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "if (Get-Command protoc -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command protoc -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
     cmds:
       - echo Removing protoc via Scoop...
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop uninstall protobuf"
       - echo protoc removed.
-
   _install:undo:plugins:
     run: once
     internal: true
     cmds:
       - task: _install:undo:plugins:unix
       - task: _install:undo:plugins:windows
-
   _install:undo:plugins:unix:
     run: once
     internal: true
@@ -381,7 +355,6 @@ tasks:
       - echo 'Removing protoc Go plugins from {{.GLOBAL_GO_BIN}}...'
       - rm -f "{{.GLOBAL_GO_BIN}}/protoc-gen-go" "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc"
       - echo 'protoc Go plugins removed.'
-
   _install:undo:plugins:windows:
     run: once
     internal: true
@@ -389,13 +362,8 @@ tasks:
     cmds:
       - echo Removing protoc Go plugins...
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "Remove-Item -Force
-        '{{.GLOBAL_GO_BIN}}\protoc-gen-go.exe',
-        '{{.GLOBAL_GO_BIN}}\protoc-gen-go-grpc.exe'
-        -ErrorAction SilentlyContinue"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item -Force '{{.GLOBAL_GO_BIN}}\protoc-gen-go.exe', '{{.GLOBAL_GO_BIN}}\protoc-gen-go-grpc.exe' -ErrorAction SilentlyContinue"
       - echo protoc Go plugins removed.
-
   _upgrade:protoc:macos:
     run: once
     internal: true
@@ -411,7 +379,6 @@ tasks:
       - cmd: brew install protobuf
         if: "! brew list protobuf >/dev/null 2>&1"
       - echo 'protoc upgraded.'
-
   _upgrade:protoc:linux:
     run: once
     internal: true
@@ -421,9 +388,7 @@ tasks:
       PROTOC_UNAME_ARCH:
         sh: uname -m
       PROTOC_ARCH: >-
-        {{if or (eq .PROTOC_UNAME_ARCH "x86_64") (eq .PROTOC_UNAME_ARCH "amd64")}}x86_64
-        {{- else if or (eq .PROTOC_UNAME_ARCH "aarch64") (eq .PROTOC_UNAME_ARCH "arm64")}}aarch_64
-        {{- else}}{{.PROTOC_UNAME_ARCH}}{{end}}
+        {{if or (eq .PROTOC_UNAME_ARCH "x86_64") (eq .PROTOC_UNAME_ARCH "amd64")}}x86_64 {{- else if or (eq .PROTOC_UNAME_ARCH "aarch64") (eq .PROTOC_UNAME_ARCH "arm64")}}aarch_64 {{- else}}{{.PROTOC_UNAME_ARCH}}{{end}}
       PROTOC_ARCHIVE: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}.zip"
       PROTOC_TMP_DIR: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}"
     preconditions:
@@ -438,9 +403,7 @@ tasks:
       - echo 'Upgrading protoc to v{{.PROTOC_VERSION}} for Linux ({{.PROTOC_ARCH}})...'
       - mkdir -p "{{.PROTOC_TMP_DIR}}"
       - >-
-        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}";
-        archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip";
-        curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
+        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}"; archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip"; curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
       - unzip -o "{{.PROTOC_ARCHIVE}}" -d "{{.PROTOC_TMP_DIR}}"
       - cmd: cp "{{.PROTOC_TMP_DIR}}/bin/protoc" /usr/local/bin/protoc
         if: '[ "$(id -u)" -eq 0 ]'
@@ -456,7 +419,6 @@ tasks:
         if: '[ "$(id -u)" -ne 0 ]'
       - rm -rf "{{.PROTOC_ARCHIVE}}" "{{.PROTOC_TMP_DIR}}"
       - echo 'protoc upgraded.'
-
   _upgrade:protoc:windows:
     run: once
     internal: true
@@ -465,7 +427,6 @@ tasks:
       - echo Upgrading protoc via Scoop...
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop update protobuf"
       - echo protoc upgraded. Restart your terminal if prompted.
-
   _ungen:unix:
     run: once
     internal: true
@@ -474,13 +435,11 @@ tasks:
     cmds:
       - find . -type f -name "*.pb.go" -delete
       - echo 'Generated protobuf files removed.'
-
   _ungen:windows:
     run: once
     internal: true
     platforms: [windows]
     cmds:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command
-        "Get-ChildItem -Recurse -Filter *.pb.go | Remove-Item -Force"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Recurse -Filter *.pb.go | Remove-Item -Force"
       - echo Generated protobuf files removed.
