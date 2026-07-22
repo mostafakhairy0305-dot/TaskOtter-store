@@ -188,14 +188,20 @@ tasks:
       RESOLVED_GO_MODULE: '{{if .GO_MODULE_OVERRIDE}}{{.GO_MODULE_OVERRIDE}}{{else}}{{.GO_MODULE}}{{end}}'
     cmds:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $env:Path='{{.GLOBAL_GO_BIN}};' + $env:Path; $moduleOpts = @(); if ($env:GO_MODULE) {
-
-          $moduleOpts = @('--go_opt=module=' + $env:GO_MODULE, '--go-grpc_opt=module=' + $env:GO_MODULE);
-        } $protos = Get-ChildItem -Path '{{.RESOLVED_PROTO_PATH}}' -Recurse -Filter '{{.RESOLVED_PROTO_PATTERN}}' -File |
-
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$ErrorActionPreference='Stop';
+        $env:Path='{{.GLOBAL_GO_BIN}};' + $env:Path;
+        $moduleOpts = @();
+        if ($env:GO_MODULE) {
+          $moduleOpts = @(
+            '--go_opt=module=' + $env:GO_MODULE,
+            '--go-grpc_opt=module=' + $env:GO_MODULE
+          );
+        }
+        $protos = Get-ChildItem -Path '{{.RESOLVED_PROTO_PATH}}' -Recurse -Filter '{{.RESOLVED_PROTO_PATTERN}}' -File |
           Where-Object { $_.FullName -notmatch '\\\.git\\' };
-        if (-not $protos) { throw 'No .proto files found' }; protoc
-
+        if (-not $protos) { throw 'No .proto files found' };
+        protoc
           --proto_path='{{.RESOLVED_PROTO_PATH}}'
           --go_out=.
           @($moduleOpts)
@@ -225,7 +231,9 @@ tasks:
       PROTOC_UNAME_ARCH:
         sh: uname -m
       PROTOC_ARCH: >-
-        {{if or (eq .PROTOC_UNAME_ARCH "x86_64") (eq .PROTOC_UNAME_ARCH "amd64")}}x86_64 {{- else if or (eq .PROTOC_UNAME_ARCH "aarch64") (eq .PROTOC_UNAME_ARCH "arm64")}}aarch_64 {{- else}}{{.PROTOC_UNAME_ARCH}}{{end}}
+        {{if or (eq .PROTOC_UNAME_ARCH "x86_64") (eq .PROTOC_UNAME_ARCH "amd64")}}x86_64
+        {{- else if or (eq .PROTOC_UNAME_ARCH "aarch64") (eq .PROTOC_UNAME_ARCH "arm64")}}aarch_64
+        {{- else}}{{.PROTOC_UNAME_ARCH}}{{end}}
       PROTOC_ARCHIVE: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}.zip"
       PROTOC_TMP_DIR: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}"
     status:
@@ -242,7 +250,9 @@ tasks:
       - echo 'Installing protoc v{{.PROTOC_VERSION}} for Linux ({{.PROTOC_ARCH}})...'
       - mkdir -p "{{.PROTOC_TMP_DIR}}"
       - >-
-        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}"; archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip"; curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
+        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}";
+        archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip";
+        curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
       - unzip -o "{{.PROTOC_ARCHIVE}}" -d "{{.PROTOC_TMP_DIR}}"
       - cmd: cp "{{.PROTOC_TMP_DIR}}/bin/protoc" /usr/local/bin/protoc
         if: '[ "$(id -u)" -eq 0 ]'
@@ -264,10 +274,14 @@ tasks:
     platforms: [windows]
     status:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "$protoc = Get-Command protoc -ErrorAction SilentlyContinue; if ($protoc -and ((& $protoc.Source --version) -eq 'libprotoc {{.PROTOC_VERSION}}')) { exit 0 }; exit 1"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "$protoc = Get-Command protoc -ErrorAction SilentlyContinue;
+        if ($protoc -and ((& $protoc.Source --version) -eq 'libprotoc {{.PROTOC_VERSION}}')) { exit 0 };
+        exit 1"
     preconditions:
       - sh: >-
-          powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+          powershell -NoProfile -ExecutionPolicy Bypass -Command
+          "if (Get-Command scoop -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
         msg: Scoop is required to install protoc on Windows. Install it from https://scoop.sh and re-run this task.
     cmds:
       - echo Installing protoc via Scoop...
@@ -282,7 +296,8 @@ tasks:
       - test -x "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc"
       - '"{{.GLOBAL_GO_BIN}}/protoc-gen-go" --version | grep -Fqx "protoc-gen-go {{.PROTOC_GEN_GO_VERSION}}"'
       - >-
-        "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc" --version | grep -Fqx "protoc-gen-go-grpc {{.PROTOC_GEN_GO_GRPC_VERSION}}"
+        "{{.GLOBAL_GO_BIN}}/protoc-gen-go-grpc" --version | grep -Fqx
+        "protoc-gen-go-grpc {{.PROTOC_GEN_GO_GRPC_VERSION}}"
       - '[ "{{.FORCE}}" != "true" ]'
     preconditions:
       - sh: command -v "{{.GO_CMD}}" >/dev/null 2>&1 || test -x "{{.GO_CMD}}"
@@ -290,9 +305,11 @@ tasks:
     cmds:
       - mkdir -p "{{.GLOBAL_GO_BIN}}"
       - >-
-        GOBIN="{{.GLOBAL_GO_BIN}}" "{{.GO_CMD}}" install google.golang.org/protobuf/cmd/protoc-gen-go@{{.PROTOC_GEN_GO_VERSION}}
+        GOBIN="{{.GLOBAL_GO_BIN}}"
+        "{{.GO_CMD}}" install google.golang.org/protobuf/cmd/protoc-gen-go@{{.PROTOC_GEN_GO_VERSION}}
       - >-
-        GOBIN="{{.GLOBAL_GO_BIN}}" "{{.GO_CMD}}" install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
+        GOBIN="{{.GLOBAL_GO_BIN}}"
+        "{{.GO_CMD}}" install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
       - echo 'protoc Go plugins installed.'
   _install:undo:protoc:macos:
     run: once
@@ -332,7 +349,8 @@ tasks:
     platforms: [windows]
     status:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Command protoc -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "if (Get-Command protoc -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
     cmds:
       - echo Removing protoc via Scoop...
       - powershell -NoProfile -ExecutionPolicy Bypass -Command "scoop uninstall protobuf"
@@ -362,7 +380,11 @@ tasks:
     cmds:
       - echo Removing protoc Go plugins...
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item -Force '{{.GLOBAL_GO_BIN}}\protoc-gen-go.exe', '{{.GLOBAL_GO_BIN}}\protoc-gen-go-grpc.exe' -ErrorAction SilentlyContinue"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Remove-Item -Force
+        '{{.GLOBAL_GO_BIN}}\protoc-gen-go.exe',
+        '{{.GLOBAL_GO_BIN}}\protoc-gen-go-grpc.exe'
+        -ErrorAction SilentlyContinue"
       - echo protoc Go plugins removed.
   _upgrade:protoc:macos:
     run: once
@@ -388,7 +410,9 @@ tasks:
       PROTOC_UNAME_ARCH:
         sh: uname -m
       PROTOC_ARCH: >-
-        {{if or (eq .PROTOC_UNAME_ARCH "x86_64") (eq .PROTOC_UNAME_ARCH "amd64")}}x86_64 {{- else if or (eq .PROTOC_UNAME_ARCH "aarch64") (eq .PROTOC_UNAME_ARCH "arm64")}}aarch_64 {{- else}}{{.PROTOC_UNAME_ARCH}}{{end}}
+        {{if or (eq .PROTOC_UNAME_ARCH "x86_64") (eq .PROTOC_UNAME_ARCH "amd64")}}x86_64
+        {{- else if or (eq .PROTOC_UNAME_ARCH "aarch64") (eq .PROTOC_UNAME_ARCH "arm64")}}aarch_64
+        {{- else}}{{.PROTOC_UNAME_ARCH}}{{end}}
       PROTOC_ARCHIVE: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}.zip"
       PROTOC_TMP_DIR: "/tmp/taskotter-protoc-{{.PROTOC_VERSION}}"
     preconditions:
@@ -403,7 +427,9 @@ tasks:
       - echo 'Upgrading protoc to v{{.PROTOC_VERSION}} for Linux ({{.PROTOC_ARCH}})...'
       - mkdir -p "{{.PROTOC_TMP_DIR}}"
       - >-
-        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}"; archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip"; curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
+        archive_url="https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOC_VERSION}}";
+        archive_url="${archive_url}/protoc-{{.PROTOC_VERSION}}-linux-{{.PROTOC_ARCH}}.zip";
+        curl -fsSL -o "{{.PROTOC_ARCHIVE}}" "$archive_url"
       - unzip -o "{{.PROTOC_ARCHIVE}}" -d "{{.PROTOC_TMP_DIR}}"
       - cmd: cp "{{.PROTOC_TMP_DIR}}/bin/protoc" /usr/local/bin/protoc
         if: '[ "$(id -u)" -eq 0 ]'
@@ -441,5 +467,6 @@ tasks:
     platforms: [windows]
     cmds:
       - >-
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Recurse -Filter *.pb.go | Remove-Item -Force"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Get-ChildItem -Recurse -Filter *.pb.go | Remove-Item -Force"
       - echo Generated protobuf files removed.
